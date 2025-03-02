@@ -22,13 +22,25 @@ class WelcomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-              const Text(
-                "Tech Gear",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 25,
+                    child: CircleAvatar(
+                      radius: 23,
+                      child: Image.asset("assets/images/tech_gear_logo.png"),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  const Text(
+                    "Tech Gear",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
               Row(
