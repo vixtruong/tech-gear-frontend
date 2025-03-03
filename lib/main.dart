@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:techgear/screens/home_screen.dart';
+import 'package:techgear/screens/login_screen.dart';
+import 'package:techgear/screens/register_screen.dart';
 import 'package:techgear/screens/welcome_screen.dart';
+// import 'package:techgear/screens/welcome_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: "Poppins"),
-      home: const WelcomeScreen(),
+      home: const HomeScreen(),
     );
   }
 }
