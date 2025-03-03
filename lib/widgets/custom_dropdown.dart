@@ -24,15 +24,15 @@ class CustomDropdown extends StatelessWidget {
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.black),
-            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.black, width: 0),
+            borderRadius: BorderRadius.circular(16),
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: const BorderSide(color: Colors.black, width: 1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
         style: const TextStyle(color: Colors.black),

@@ -6,6 +6,10 @@ import 'package:techgear/widgets/product_card.dart';
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
 
+  static const IconData heart_solid = IconData(
+    0xf443,
+  );
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -13,21 +17,40 @@ class HomeContent extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: TextField(
-                onChanged: (value) {},
-                decoration: const InputDecoration(
-                  hintText: "Search...",
-                  prefixIcon: Icon(Icons.search, color: Colors.black54),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: TextField(
+                      onChanged: (value) {},
+                      decoration: const InputDecoration(
+                        hintText: "Search...",
+                        prefixIcon: Icon(Icons.search, color: Colors.black54),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                SizedBox(
+                  width: 5,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  child: IconButton(
+                    onPressed: () {},
+                    icon: Icon(Icons.favorite_border),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 15),
             Row(
@@ -38,7 +61,7 @@ class HomeContent extends StatelessWidget {
                   items: ["Name", "Best Selling"],
                   onChanged: (value) {},
                 ),
-                const SizedBox(width: 5),
+                const SizedBox(width: 8),
                 CustomDropdown(
                   label: "Categories",
                   items: ["T Shirt", "Jeans"],

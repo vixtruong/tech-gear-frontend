@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/product.dart';
 import 'package:techgear/screens/home_content.dart';
-import 'package:techgear/widgets/custom_dropdown.dart';
-import 'package:techgear/widgets/product_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -49,16 +46,39 @@ class _HomeScreenState extends State<HomeScreen> {
           selectedItemColor: Colors.black,
           unselectedItemColor: Colors.black54,
           type: BottomNavigationBarType.fixed,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined), label: "Home"),
+              icon: Icon(
+                _selectedIndex == 0 ? Icons.home : Icons.home_outlined,
+              ),
+              label: "Home",
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.widgets_outlined), label: "Categories"),
+              icon: Icon(
+                _selectedIndex == 1 ? Icons.widgets : Icons.widgets_outlined,
+              ),
+              label: "Categories",
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart_outlined), label: "Cart"),
+              icon: Icon(
+                _selectedIndex == 2
+                    ? Icons.shopping_cart
+                    : Icons.shopping_cart_outlined,
+              ),
+              label: "Cart",
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.chat_outlined), label: "Chat"),
-            BottomNavigationBarItem(icon: Icon(Icons.menu), label: "Menu"),
+              icon: Icon(
+                _selectedIndex == 3 ? Icons.chat : Icons.chat_outlined,
+              ),
+              label: "Chat",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                _selectedIndex == 4 ? Icons.menu : Icons.menu_outlined,
+              ),
+              label: "Menu",
+            ),
           ],
         ),
       ),
