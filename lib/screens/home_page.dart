@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/product.dart';
+import 'package:techgear/screens/cart_screen.dart';
 import 'package:techgear/widgets/custom_dropdown.dart';
 import 'package:techgear/widgets/product_card.dart';
+import 'package:badges/badges.dart' as badges;
 
-class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
-  static const IconData heart_solid = IconData(
-    0xf443,
-  );
+  final int cartItemCount = 3;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class HomeContent extends StatelessWidget {
                     child: TextField(
                       onChanged: (value) {},
                       decoration: const InputDecoration(
-                        hintText: "Search...",
+                        hintText: "Search",
                         prefixIcon: Icon(Icons.search, color: Colors.black54),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -38,7 +38,7 @@ class HomeContent extends StatelessWidget {
                   ),
                 ),
                 SizedBox(
-                  width: 5,
+                  width: 10,
                 ),
                 Container(
                   decoration: BoxDecoration(
@@ -48,6 +48,32 @@ class HomeContent extends StatelessWidget {
                   child: IconButton(
                     onPressed: () {},
                     icon: Icon(Icons.favorite_border),
+                  ),
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CartScreen(),
+                        ),
+                      );
+                    },
+                    icon: badges.Badge(
+                        badgeContent: Text(
+                          '$cartItemCount',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 10),
+                        ),
+                        child: Icon(Icons.shopping_cart_outlined)),
                   ),
                 ),
               ],

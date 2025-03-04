@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/screens/home_content.dart';
+import 'package:techgear/screens/home_page.dart';
+import 'package:badges/badges.dart' as badges;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,10 +11,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  int chatItemCount = 3;
 
   final List<Widget> _screens = [
-    const HomeContent(),
-    const Center(child: Text("Categories Page")),
+    const HomePage(),
     const Center(child: Text("Cart Page")),
     const Center(child: Text("Chat Page")),
     const Center(child: Text("Menu Page")),
@@ -55,29 +56,29 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                _selectedIndex == 1 ? Icons.widgets : Icons.widgets_outlined,
-              ),
-              label: "Categories",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(
                 _selectedIndex == 2
-                    ? Icons.shopping_cart
-                    : Icons.shopping_cart_outlined,
+                    ? Icons.article_outlined
+                    : Icons.article_outlined,
               ),
-              label: "Cart",
+              label: "Activities",
             ),
             BottomNavigationBarItem(
-              icon: Icon(
-                _selectedIndex == 3 ? Icons.chat : Icons.chat_outlined,
+              icon: badges.Badge(
+                badgeContent: Text(
+                  '$chatItemCount',
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+                child: Icon(
+                  _selectedIndex == 2 ? Icons.chat : Icons.chat_outlined,
+                ),
               ),
               label: "Chat",
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                _selectedIndex == 4 ? Icons.menu : Icons.menu_outlined,
+                _selectedIndex == 3 ? Icons.person : Icons.person_outlined,
               ),
-              label: "Menu",
+              label: "User",
             ),
           ],
         ),
