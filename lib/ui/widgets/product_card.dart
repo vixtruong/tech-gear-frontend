@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/product.dart';
+import 'package:techgear/data/models/product.dart';
+import 'package:techgear/ui/widgets/star_rating.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -84,16 +85,44 @@ class _ProductCardState extends State<ProductCard> {
                     Text(
                       "\$${widget.product.price}",
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.add_shopping_cart_outlined),
-                    ),
+                    // Padding(
+                    //   padding: const EdgeInsets.only(right: 8.0),
+                    //   child: GestureDetector(
+                    //     onTap: () {
+                    //       Navigator.push(
+                    //         context,
+                    //         MaterialPageRoute(
+                    //           builder: (context) => const CartScreen(),
+                    //         ),
+                    //       );
+                    //     },
+                    //     child: CircleAvatar(
+                    //       backgroundColor: Colors.grey[200],
+                    //       radius: 12,
+                    //       child: Icon(
+                    //         Icons.add_shopping_cart_outlined,
+                    //         size: 20,
+                    //         color: Colors.black,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
+                Row(
+                  children: [
+                    StarRating(rating: widget.product.rating),
+                    SizedBox(width: 5),
+                    Text(
+                      "1234",
+                      style: TextStyle(fontSize: 12, color: Colors.black38),
+                    ),
+                  ],
+                )
               ],
             ),
           ),

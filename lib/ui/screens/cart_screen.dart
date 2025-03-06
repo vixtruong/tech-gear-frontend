@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/product.dart';
-import 'package:techgear/widgets/cart_card.dart';
+import 'package:go_router/go_router.dart';
+import 'package:techgear/data/models/product.dart';
+import 'package:techgear/ui/widgets/cart_card.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -29,6 +30,8 @@ class _CartScreenState extends State<CartScreen> {
 
   bool _isSelectAll = false;
 
+  int itemChecks = 10;
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -38,16 +41,21 @@ class _CartScreenState extends State<CartScreen> {
           surfaceTintColor: Colors.white,
           backgroundColor: Colors.white,
           shadowColor: Colors.white,
-          leadingWidth: 110,
-          leading: Container(
-            alignment: Alignment.center,
-            child: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
+          leading: GestureDetector(
+              onTap: () {
+                context.pop();
               },
-              icon: const Icon(Icons.arrow_back_outlined),
-            ),
-          ),
+              child: Icon(Icons.arrow_back_outlined)),
+          // leadingWidth: 110,
+          // leading: Container(
+          //   alignment: Alignment.center,
+          //   child: IconButton(
+          //     onPressed: () {
+          //       Navigator.pop(context);
+          //     },
+          //     icon: const Icon(Icons.arrow_back_outlined),
+          //   ),
+          // ),
           title: const Text(
             "Shopping Cart",
             style: TextStyle(fontWeight: FontWeight.w600),
@@ -177,7 +185,7 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ),
                   child: Text(
-                    "Buy",
+                    "Buy ($itemChecks)",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,

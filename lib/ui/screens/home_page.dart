@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/product.dart';
-import 'package:techgear/screens/cart_screen.dart';
-import 'package:techgear/widgets/custom_dropdown.dart';
-import 'package:techgear/widgets/product_card.dart';
+import 'package:go_router/go_router.dart';
+import 'package:techgear/data/models/product.dart';
+import 'package:techgear/ui/widgets/custom_dropdown.dart';
+import 'package:techgear/ui/widgets/product_card.dart';
 import 'package:badges/badges.dart' as badges;
 
 class HomePage extends StatelessWidget {
@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
         child: Column(
           children: [
             Row(
@@ -60,12 +60,7 @@ class HomePage extends StatelessWidget {
                   ),
                   child: IconButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CartScreen(),
-                        ),
-                      );
+                      context.push('/cart');
                     },
                     icon: badges.Badge(
                         badgeContent: Text(
@@ -96,14 +91,19 @@ class HomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildPriceFilter("Under \$50"),
-                _buildPriceFilter("\$50 - \$100"),
-                _buildPriceFilter("\$100 - \$200"),
-                _buildPriceFilter("Above \$200"),
-              ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildPriceFilter("Under \$50"),
+                  SizedBox(width: 5),
+                  _buildPriceFilter("\$50 - \$100"),
+                  SizedBox(width: 5),
+                  _buildPriceFilter("\$100 - \$200"),
+                  SizedBox(width: 5),
+                  _buildPriceFilter("Above \$200"),
+                ],
+              ),
             ),
             const SizedBox(height: 15),
             GridView.builder(
@@ -113,7 +113,7 @@ class HomePage extends StatelessWidget {
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 0.75,
+                mainAxisExtent: 240,
               ),
               itemCount: 10,
               itemBuilder: (context, index) {
@@ -122,12 +122,11 @@ class HomePage extends StatelessWidget {
                     name: "Product $index",
                     colors: 5,
                     price: 300,
-                    rating: 100,
+                    rating: 4.5,
                   ),
                 );
               },
             ),
-            const SizedBox(height: 15),
           ],
         ),
       ),

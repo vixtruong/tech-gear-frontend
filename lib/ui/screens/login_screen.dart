@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/widgets/login_button.dart';
+import 'package:go_router/go_router.dart';
+import 'package:techgear/ui/widgets/login_button.dart';
 
 import '../widgets/custom_input_field.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
-                  "assets/images/register.png",
+                  "assets/images/login.png",
                   width: 200,
                   height: 200,
                 ),
@@ -32,43 +33,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _buildTitleText(),
                 const SizedBox(height: 30),
                 const CustomInputField(
-                  icon: Icons.person,
-                  hintText: "Full name",
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 15),
-                const CustomInputField(
                   icon: Icons.email,
                   hintText: "Email address",
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 15),
                 const CustomInputField(
-                  icon: Icons.phone,
-                  hintText: "Phone number",
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 15),
-                const CustomInputField(
-                  icon: Icons.location_on,
-                  hintText: "Delivery address",
-                  keyboardType: TextInputType.streetAddress,
-                ),
-                const SizedBox(height: 15),
-                const CustomInputField(
                   icon: Icons.lock,
                   hintText: "Password",
                   keyboardType: TextInputType.visiblePassword,
+                  obscureText: true,
                 ),
-                const SizedBox(height: 15),
-                const CustomInputField(
-                  icon: Icons.password,
-                  hintText: "Confirm Password",
-                  keyboardType: TextInputType.visiblePassword,
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      context.push('/recover-password');
+                    },
+                    child: const Text(
+                      "Forgot password?",
+                      style: TextStyle(color: Colors.black45),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
                 LoginButton(
-                  text: "Register",
+                  text: "Log in",
                   onPressed: () {},
                   color: Colors.blue,
                 ),
@@ -76,13 +67,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("If you have an account, please "),
+                    const Text("Don't have an account? "),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pop(context);
+                        context.push('/register');
                       },
                       child: const Text(
-                        "Log in",
+                        "Sign up",
                         style: TextStyle(
                           color: Colors.blue,
                           fontWeight: FontWeight.w500,
@@ -90,6 +81,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  "OR",
+                  style: TextStyle(
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                LoginButton(
+                  text: "Continue as Guest",
+                  onPressed: () {
+                    context.push('/home');
+                  },
+                  color: Colors.grey[700]!,
                 ),
               ],
             ),
@@ -103,13 +109,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return const Column(
       children: [
         Text(
-          "Register account",
+          "Log in your account",
           style: TextStyle(
               fontSize: 22, fontWeight: FontWeight.w600, color: Colors.black),
         ),
         SizedBox(height: 8),
         Text(
-          "Enter your information to create new account",
+          "Enter your login details to access your account",
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: Colors.black54),
         ),

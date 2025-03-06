@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/screens/home_page.dart';
+import 'package:techgear/ui/screens/home_page.dart';
 import 'package:badges/badges.dart' as badges;
 
 class HomeScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int chatItemCount = 3;
 
   final List<Widget> _screens = [
-    const HomePage(),
+    HomePage(),
     const Center(child: Text("Cart Page")),
     const Center(child: Text("Chat Page")),
     const Center(child: Text("Menu Page")),
