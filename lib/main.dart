@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/screens/home_screen.dart';
-// import 'package:techgear/screens/home_screen.dart';
+import 'package:techgear/core/routes.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const App());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(fontFamily: "Poppins"),
-      home: const HomeScreen(),
+      theme: ThemeData(
+        fontFamily: "Poppins",
+      ),
+      routerConfig: router,
     );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/screens/login_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -75,12 +75,7 @@ class WelcomeScreen extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                    );
+                    context.push('/login');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.greenAccent,
