@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
+        padding: const EdgeInsets.all(15.0),
         child: Column(
           children: [
             Row(
@@ -46,7 +46,9 @@ class HomePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16.0),
                   ),
                   child: IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.push('/wishlist');
+                    },
                     icon: Icon(Icons.favorite_border),
                   ),
                 ),
@@ -124,6 +126,7 @@ class HomePage extends StatelessWidget {
                     price: 300,
                     rating: 4.5,
                   ),
+                  atHome: true,
                 );
               },
             ),

@@ -1,13 +1,15 @@
 import 'package:go_router/go_router.dart';
 import 'package:techgear/ui/screens/cart_screen.dart';
+import 'package:techgear/ui/screens/wish_screen.dart';
 import 'package:techgear/ui/screens/home_screen.dart';
 import 'package:techgear/ui/screens/login_screen.dart';
+import 'package:techgear/ui/screens/product_detail_screen.dart';
 import 'package:techgear/ui/screens/recover_password_screen.dart';
 import 'package:techgear/ui/screens/register_screen.dart';
 import 'package:techgear/ui/screens/welcome_screen.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/welcome',
+  initialLocation: '/home',
   routes: [
     GoRoute(
       path: '/welcome',
@@ -39,6 +41,14 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/cart',
       builder: (context, state) => const CartScreen(),
+    ),
+    GoRoute(
+      path: '/product-detail',
+      builder: (context, state) => const ProductDetailScreen(),
+    ),
+    GoRoute(
+      path: '/wishlist',
+      builder: (context, state) => const WishScreen(),
     ),
   ],
 );
