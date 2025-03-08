@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
+
+  @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  int count = 1;
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +109,41 @@ class ProductDetailScreen extends StatelessWidget {
                       _buildColorOption(Colors.black, false),
                       _buildColorOption(Colors.blue, false),
                       _buildColorOption(Colors.grey, false),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    spacing: 10,
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Colors.grey[300],
+                        child: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              if (count > 1) {
+                                count--;
+                              }
+                            });
+                          },
+                          icon: Icon(Icons.remove),
+                          iconSize: 8,
+                        ),
+                      ),
+                      Text("$count"),
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Colors.grey[300],
+                        child: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              count++;
+                            });
+                          },
+                          icon: Icon(Icons.add),
+                          iconSize: 8,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 15),

@@ -37,7 +37,7 @@ class _WishScreenState extends State<WishScreen> {
   Widget build(BuildContext context) {
     return Center(
       child: Scaffold(
-        backgroundColor: Colors.grey[100],
+        backgroundColor: Colors.white,
         appBar: AppBar(
           surfaceTintColor: Colors.white,
           backgroundColor: Colors.white,
@@ -47,129 +47,116 @@ class _WishScreenState extends State<WishScreen> {
                 context.pop();
               },
               child: Icon(Icons.arrow_back_outlined)),
-          // leadingWidth: 110,
-          // leading: Container(
-          //   alignment: Alignment.center,
-          //   child: IconButton(
-          //     onPressed: () {
-          //       Navigator.pop(context);
-          //     },
-          //     icon: const Icon(Icons.arrow_back_outlined),
-          //   ),
-          // ),
           title: const Text(
             "Wishlist",
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           centerTitle: true,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(60),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CustomDropdown(
-                        label: "Sort by",
-                        items: ["Name", "Best Selling"],
-                        onChanged: (value) {},
-                      ),
-                      const SizedBox(width: 8),
-                      CustomDropdown(
-                        label: "Categories",
-                        items: ["T Shirt", "Jeans"],
-                        onChanged: (value) {},
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 10),
-              ],
-            ),
-          ),
         ),
         body: SingleChildScrollView(
-          child: Container(
-            padding: EdgeInsets.all(15.0),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                mainAxisExtent: 250,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(15),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CustomDropdown(
+                      label: "Sort by",
+                      items: ["Name", "Best Selling"],
+                      onChanged: (value) {},
+                    ),
+                    const SizedBox(width: 8),
+                    CustomDropdown(
+                      label: "Categories",
+                      items: ["T Shirt", "Jeans"],
+                      onChanged: (value) {},
+                    ),
+                  ],
+                ),
               ),
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                final product = cartItems[index];
-                _offsets.putIfAbsent(index, () => 0.0);
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 15.0),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 0,
+                    mainAxisExtent: 250,
+                  ),
+                  itemCount: cartItems.length,
+                  itemBuilder: (context, index) {
+                    final product = cartItems[index];
+                    _offsets.putIfAbsent(index, () => 0.0);
 
-                return GestureDetector(
-                  onHorizontalDragUpdate: (details) {
-                    setState(() {
-                      _offsets[index] =
-                          (_offsets[index]! + details.primaryDelta!)
-                              .clamp(-80.0, 0.0);
-                    });
-                  },
-                  onHorizontalDragEnd: (details) {
-                    setState(() {
-                      _offsets[index] = (_offsets[index]! < -40) ? -80.0 : 0.0;
-                    });
-                  },
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                cartItems.removeAt(index);
-                                _offsets.remove(index);
-                              });
+                    return GestureDetector(
+                      onHorizontalDragUpdate: (details) {
+                        setState(() {
+                          _offsets[index] =
+                              (_offsets[index]! + details.primaryDelta!)
+                                  .clamp(-80.0, 0.0);
+                        });
+                      },
+                      onHorizontalDragEnd: (details) {
+                        setState(() {
+                          _offsets[index] =
+                              (_offsets[index]! < -40) ? -80.0 : 0.0;
+                        });
+                      },
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    cartItems.removeAt(index);
+                                    _offsets.remove(index);
+                                  });
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    "${product.name} removed",
-                                    style: TextStyle(color: Colors.black),
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "${product.name} removed",
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                      backgroundColor: Colors.grey[200],
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 15),
+                                  width: 80,
+                                  height: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  backgroundColor: Colors.grey[200],
+                                  child: const Icon(Icons.delete,
+                                      color: Colors.white, size: 30),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 15),
-                              width: 80,
-                              height: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.delete,
-                                  color: Colors.white, size: 30),
                             ),
                           ),
-                        ),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            transform: Matrix4.translationValues(
+                                _offsets[index]!, 0, 0),
+                            child: ProductCard(
+                              product: product,
+                              atHome: false,
+                            ),
+                          ),
+                        ],
                       ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        transform:
-                            Matrix4.translationValues(_offsets[index]!, 0, 0),
-                        child: ProductCard(
-                          product: product,
-                          atHome: false,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
