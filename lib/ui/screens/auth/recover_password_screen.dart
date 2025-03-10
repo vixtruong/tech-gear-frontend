@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:techgear/ui/widgets/login_button.dart';
+import '../../widgets/custom_input_field.dart';
 
-import '../widgets/custom_input_field.dart';
-
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RecoverPasswordScreen extends StatefulWidget {
+  const RecoverPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RecoverPasswordScreen> createState() => _RecoverPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
-                  "assets/images/login.png",
+                  "assets/images/reset_password.png",
                   width: 200,
                   height: 200,
                 ),
@@ -44,58 +42,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.visiblePassword,
                   obscureText: true,
                 ),
+                const SizedBox(height: 15),
+                const CustomInputField(
+                  icon: Icons.password,
+                  hintText: "Confirm Password",
+                  keyboardType: TextInputType.visiblePassword,
+                ),
+                const SizedBox(height: 15),
+                const CustomInputField(
+                  icon: Icons.lock_outline,
+                  hintText: "OTP",
+                  keyboardType: TextInputType.visiblePassword,
+                ),
                 const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      context.push('/recover-password');
-                    },
+                    onPressed: () {},
                     child: const Text(
-                      "Forgot password?",
+                      "Send OTP",
                       style: TextStyle(color: Colors.black45),
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 LoginButton(
-                  text: "Log in",
+                  text: "Confirm",
                   onPressed: () {},
                   color: Colors.blue,
-                ),
-                const SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account? "),
-                    GestureDetector(
-                      onTap: () {
-                        context.push('/register');
-                      },
-                      child: const Text(
-                        "Sign up",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                const Text(
-                  "OR",
-                  style: TextStyle(
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 15),
-                LoginButton(
-                  text: "Continue as Guest",
-                  onPressed: () {
-                    context.push('/home');
-                  },
-                  color: Colors.grey[700]!,
                 ),
               ],
             ),
@@ -109,16 +83,16 @@ class _LoginScreenState extends State<LoginScreen> {
     return const Column(
       children: [
         Text(
-          "Log in your account",
+          "Reset password",
           style: TextStyle(
               fontSize: 22, fontWeight: FontWeight.w600, color: Colors.black),
         ),
-        SizedBox(height: 8),
-        Text(
-          "Enter your login details to access your account",
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.black54),
-        ),
+        // SizedBox(height: 8),
+        // Text(
+        //   "Enter your login details to access your account",
+        //   textAlign: TextAlign.center,
+        //   style: TextStyle(fontSize: 14, color: Colors.black54),
+        // ),
       ],
     );
   }

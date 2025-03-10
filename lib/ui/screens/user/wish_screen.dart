@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:techgear/data/models/product.dart';
+import 'package:techgear/models/product.dart';
 import 'package:techgear/ui/widgets/custom_dropdown.dart';
 import 'package:techgear/ui/widgets/product_card.dart';
 
@@ -12,20 +12,7 @@ class WishScreen extends StatefulWidget {
 }
 
 class _WishScreenState extends State<WishScreen> {
-  final List<Product> cartItems = [
-    Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
-    Product(name: "Jeans", colors: 3, price: 500, rating: 20),
-    Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
-    Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
-    Product(name: "Jeans", colors: 3, price: 500, rating: 20),
-    Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
-    Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
-    Product(name: "Jeans", colors: 3, price: 500, rating: 20),
-    Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
-    Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
-    Product(name: "Jeans", colors: 3, price: 500, rating: 20),
-    Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
-  ];
+  final List<Product> cartItems = [];
 
   final Map<int, double> _offsets = {};
 
@@ -84,7 +71,7 @@ class _WishScreenState extends State<WishScreen> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 0,
-                    mainAxisExtent: 250,
+                    mainAxisExtent: 265,
                   ),
                   itemCount: cartItems.length,
                   itemBuilder: (context, index) {

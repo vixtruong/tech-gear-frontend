@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:techgear/data/models/product.dart';
-import 'package:techgear/ui/widgets/cart_card.dart';
+import 'package:techgear/models/product.dart';
+import 'package:techgear/ui/widgets/cart_item.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -12,18 +12,18 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final List<Product> cartItems = [
-    Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
-    Product(name: "Jeans", colors: 3, price: 500, rating: 20),
-    Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
-    Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
-    Product(name: "Jeans", colors: 3, price: 500, rating: 20),
-    Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
-    Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
-    Product(name: "Jeans", colors: 3, price: 500, rating: 20),
-    Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
-    Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
-    Product(name: "Jeans", colors: 3, price: 500, rating: 20),
-    Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
+    // Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
+    // Product(name: "Jeans", colors: 3, price: 500, rating: 20),
+    // Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
+    // Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
+    // Product(name: "Jeans", colors: 3, price: 500, rating: 20),
+    // Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
+    // Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
+    // Product(name: "Jeans", colors: 3, price: 500, rating: 20),
+    // Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
+    // Product(name: "T Shirt", colors: 5, price: 300, rating: 10),
+    // Product(name: "Jeans", colors: 3, price: 500, rating: 20),
+    // Product(name: "Sneakers", colors: 2, price: 700, rating: 30),
   ];
 
   final Map<int, double> _offsets = {};
@@ -46,16 +46,6 @@ class _CartScreenState extends State<CartScreen> {
                 context.pop();
               },
               child: Icon(Icons.arrow_back_outlined)),
-          // leadingWidth: 110,
-          // leading: Container(
-          //   alignment: Alignment.center,
-          //   child: IconButton(
-          //     onPressed: () {
-          //       Navigator.pop(context);
-          //     },
-          //     icon: const Icon(Icons.arrow_back_outlined),
-          //   ),
-          // ),
           title: const Text(
             "Shopping Cart",
             style: TextStyle(fontWeight: FontWeight.w600),
@@ -146,7 +136,7 @@ class _CartScreenState extends State<CartScreen> {
                     duration: const Duration(milliseconds: 200),
                     transform:
                         Matrix4.translationValues(_offsets[index]!, 0, 0),
-                    child: CartCard(product: product),
+                    child: CartItem(product: product),
                   ),
                 ],
               ),
