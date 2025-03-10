@@ -30,7 +30,7 @@ class BrandProvider with ChangeNotifier {
     return brandData != null ? Brand.fromMap(brandData, brandData['id']) : null;
   }
 
-  Future<void> addBrand(Brand brand) async {
+  Future<void> addBrand(String brand) async {
     await _service.addBrand(brand);
     await fetchBrands();
   }

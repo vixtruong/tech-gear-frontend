@@ -12,7 +12,7 @@ import 'package:techgear/ui/screens/auth/register_screen.dart';
 import 'package:techgear/ui/screens/auth/welcome_screen.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/add-product',
+  initialLocation: '/add-brand',
   routes: [
     // auth screens
     GoRoute(

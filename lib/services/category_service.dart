@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../models/category.dart';
-
 class CategoryService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -35,9 +33,30 @@ class CategoryService {
     }
   }
 
-  Future<void> addCategory(Category category) async {
-    await _db.collection('category').doc(category.id).set({
-      'name': category.name,
+  Future<void> addCategory(String name) async {
+    String? categoryId = await generateID();
+
+    await _db.collection('category').doc(categoryId).set({
+      'id': categoryId,
+      'name': name,
     });
+  }
+
+  Future<String> generateID() async {
+    final FirebaseFirestore db = FirebaseFirestore.instance;
+
+    final snapshot = await db.collection('category').orderBy('id').get();
+
+    if (snapshot.docs.isEmpty) {
+      return 'c001';
+    }
+
+    final lastId = snapshot.docs.last.id;
+
+    int lastNumber = int.tryParse(lastId.substring(1)) ?? 0;
+
+    int newNumber = lastNumber + 1;
+
+    return 'c${newNumber.toString().padLeft(3, '0')}';
   }
 }
