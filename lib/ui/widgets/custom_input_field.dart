@@ -5,6 +5,7 @@ class CustomInputField extends StatefulWidget {
   final String hintText;
   final TextInputType keyboardType;
   final bool obscureText;
+  final FormFieldValidator<String>? validator;
 
   const CustomInputField({
     super.key,
@@ -12,6 +13,7 @@ class CustomInputField extends StatefulWidget {
     required this.hintText,
     required this.keyboardType,
     this.obscureText = false,
+    this.validator,
   });
 
   @override
@@ -42,7 +44,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
           ),
         ],
       ),
-      child: TextField(
+      child: TextFormField(
+        validator: widget.validator,
         keyboardType: widget.keyboardType,
         obscureText: _isObscure,
         enableInteractiveSelection: !widget.obscureText,

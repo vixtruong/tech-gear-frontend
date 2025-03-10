@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/data/models/product.dart';
+import 'package:techgear/models/product.dart';
 
-class CartCard extends StatefulWidget {
+class CartItem extends StatefulWidget {
   final Product product;
 
-  const CartCard({super.key, required this.product});
+  const CartItem({super.key, required this.product});
 
   @override
-  State<CartCard> createState() => _CartCardState();
+  State<CartItem> createState() => _CartItemState();
 }
 
-class _CartCardState extends State<CartCard> {
+class _CartItemState extends State<CartItem> {
   int count = 1;
   bool isCheck = false;
 
@@ -51,7 +51,7 @@ class _CartCardState extends State<CartCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(widget.product.name),
-                Text("${widget.product.colors}"),
+                // Text("${widget.product.colors}"),
                 Text("${widget.product.price}"),
               ],
             ),

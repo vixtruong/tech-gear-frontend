@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:techgear/data/models/product.dart';
+import 'package:intl/intl.dart';
+import 'package:techgear/models/product.dart';
 import 'package:techgear/ui/widgets/star_rating.dart';
+import 'package:techgear/utils/url_helper.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -16,11 +18,13 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   bool isFavorite = false;
 
+  late String imgUrl = UrlHelper.getGoogleDriveImageUrl(widget.product.imgUrl);
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.push('/product-detail');
+        context.push('/product-detail/${widget.product.id}');
       },
       child: Container(
         decoration: BoxDecoration(
@@ -43,7 +47,7 @@ class _ProductCardState extends State<ProductCard> {
                 ClipRRect(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                   child: Image.network(
-                    'https://product.hstatic.net/200000722513/product/ava_dea980b662854ab8a4dd359d3bd8d2b4_medium.png',
+                    imgUrl,
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -53,7 +57,7 @@ class _ProductCardState extends State<ProductCard> {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -64,46 +68,30 @@ class _ProductCardState extends State<ProductCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    "${widget.product.colors} colors",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    widget.product.description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "\$${widget.product.price}",
+                        NumberFormat("#,###", "vi_VN")
+                            .format(widget.product.price),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      // Padding(
-                      //   padding: const EdgeInsets.only(right: 8.0),
-                      //   child: GestureDetector(
-                      //     onTap: () {
-                      //       Navigator.push(
-                      //         context,
-                      //         MaterialPageRoute(
-                      //           builder: (context) => const CartScreen(),
-                      //         ),
-                      //       );
-                      //     },
-                      //     child: CircleAvatar(
-                      //       backgroundColor: Colors.grey[200],
-                      //       radius: 12,
-                      //       child: Icon(
-                      //         Icons.add_shopping_cart_outlined,
-                      //         size: 20,
-                      //         color: Colors.black,
-                      //       ),
-                      //     ),
-                      //   ),
-                      // ),
                     ],
                   ),
                   Row(
                     children: [
-                      StarRating(rating: widget.product.rating),
+                      StarRating(rating: 4.5),
                       SizedBox(width: 5),
                       Text(
                         "1234",

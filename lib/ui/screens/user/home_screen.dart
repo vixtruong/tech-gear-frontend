@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/ui/screens/home_page.dart';
+import 'package:techgear/ui/screens/user/home_page.dart';
 import 'package:badges/badges.dart' as badges;
 
 class HomeScreen extends StatefulWidget {

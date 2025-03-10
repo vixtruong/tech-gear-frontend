@@ -1,14 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:techgear/data/models/product.dart';
+import 'package:techgear/models/product.dart';
+import 'package:techgear/providers/product_provider.dart';
 import 'package:techgear/ui/widgets/custom_dropdown.dart';
+import 'package:techgear/ui/widgets/custom_text_field.dart';
 import 'package:techgear/ui/widgets/product_card.dart';
 import 'package:badges/badges.dart' as badges;
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final ProductProvider _productProvider = ProductProvider();
+  List<Product> _products = [];
+
+  final TextEditingController _searchController = TextEditingController();
+
   final int cartItemCount = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      await _productProvider.fetchProducts();
+      setState(() {
+        _products = _productProvider.products;
+      });
+    } catch (e) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,22 +54,11 @@ class HomePage extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: TextField(
-                          onChanged: (value) {},
-                          decoration: const InputDecoration(
-                            hintText: "Search",
-                            prefixIcon:
-                                Icon(Icons.search, color: Colors.black54),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
+                      child: CustomTextField(
+                        controller: _searchController,
+                        hint: "Search",
+                        isSearch: true,
+                        inputType: TextInputType.text,
                       ),
                     ),
                     SizedBox(
@@ -130,19 +146,11 @@ class HomePage extends StatelessWidget {
                   crossAxisCount: 2,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
-                  mainAxisExtent: 240,
+                  mainAxisExtent: 255,
                 ),
-                itemCount: 10,
+                itemCount: _products.length,
                 itemBuilder: (context, index) {
-                  return ProductCard(
-                    product: Product(
-                      name: "Product $index",
-                      colors: 5,
-                      price: 300,
-                      rating: 4.5,
-                    ),
-                    atHome: true,
-                  );
+                  return ProductCard(product: _products[index], atHome: true);
                 },
               ),
             ],
