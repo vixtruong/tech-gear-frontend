@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../models/brand.dart';
-
 class BrandService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -35,9 +33,30 @@ class BrandService {
     }
   }
 
-  Future<void> addBrand(Brand brand) async {
-    await _db.collection('brand').doc(brand.id).set({
-      'name': brand.name,
+  Future<void> addBrand(String brand) async {
+    String? id = await generateID();
+
+    await _db.collection('brand').doc(id).set({
+      'id': id,
+      'name': brand,
     });
+  }
+
+  Future<String> generateID() async {
+    final FirebaseFirestore db = FirebaseFirestore.instance;
+
+    final snapshot = await db.collection('brand').orderBy('id').get();
+
+    if (snapshot.docs.isEmpty) {
+      return 'b001';
+    }
+
+    final lastId = snapshot.docs.last.id;
+
+    int lastNumber = int.tryParse(lastId.substring(1)) ?? 0;
+
+    int newNumber = lastNumber + 1;
+
+    return 'b${newNumber.toString().padLeft(3, '0')}';
   }
 }

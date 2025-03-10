@@ -35,7 +35,7 @@ class CategoryProvider with ChangeNotifier {
         : null;
   }
 
-  Future<void> addCategory(Category category) async {
+  Future<void> addCategory(String category) async {
     await _service.addCategory(category);
     await fetchCategories();
   }

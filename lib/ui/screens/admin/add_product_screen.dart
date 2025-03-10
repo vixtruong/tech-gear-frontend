@@ -58,23 +58,39 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void _handleSubmit() async {
     if (!_key.currentState!.validate()) return;
 
-    _key.currentState!.save();
-
     String name = _nameController.text.trim();
     String description = _descriptionController.text.trim();
     double price = double.parse(_priceController.text.trim());
-    // String imgUrl = _imgController.text.trim();
 
-    Category? category =
-        await _categoryProvider.fetchCategoryByName(_selectedCategory!);
-    Brand? brand = await _brandProvider.fetchBrandByName(_selectedBrand!);
+    if (name.isEmpty || description.isEmpty || price.toString().isEmpty) {
+      return;
+    }
+
+    _key.currentState!.save();
+
+    String? categoryId;
+    String? brandId;
+
+    for (var item in _categories) {
+      if (item.name == _selectedCategory) {
+        categoryId = item.id;
+        break;
+      }
+    }
+
+    for (var item in _brands) {
+      if (item.name == _selectedBrand) {
+        brandId = item.id;
+        break;
+      }
+    }
 
     Product product = Product(
       name: name,
       price: price,
       description: description,
-      brandId: brand!.id,
-      categoryId: category!.id,
+      brandId: categoryId!,
+      categoryId: brandId!,
       imgFile: _selectedImage!,
       imgUrl: "",
     );
@@ -98,7 +114,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Failed to add product: $e"),
+          content: Text(
+            "Failed to add product: $e",
+            style: TextStyle(fontSize: 16),
+          ),
           backgroundColor: Colors.red[200],
         ),
       );
