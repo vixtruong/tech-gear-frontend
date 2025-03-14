@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/product.dart';
 import '../services/product_service.dart';
@@ -28,7 +28,4 @@ class ProductProvider with ChangeNotifier {
     await _service.addProduct(product);
     await fetchProducts();
   }
-
-  @override
-  void notifyListeners() {}
 }

@@ -71,7 +71,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: IconButton(
                         onPressed: () {
-                          context.push('/wishlist');
+                          context.push('/manage-product');
                         },
                         icon: Icon(Icons.favorite_border),
                       ),
