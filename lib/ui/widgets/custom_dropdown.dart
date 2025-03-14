@@ -5,6 +5,8 @@ class CustomDropdown extends StatefulWidget {
   final List<String> items;
   final ValueChanged<String?>? onChanged;
   final FormFieldValidator<String>? validator;
+  final String? value;
+  final String? hint;
 
   const CustomDropdown({
     super.key,
@@ -12,6 +14,8 @@ class CustomDropdown extends StatefulWidget {
     required this.items,
     this.onChanged,
     this.validator,
+    this.value,
+    this.hint,
   });
 
   @override
@@ -27,6 +31,8 @@ class _CustomDropdownState extends State<CustomDropdown> {
     return Expanded(
       child: DropdownButtonFormField<String>(
         key: _dropdownKey,
+        value: widget.value,
+        hint: Text(widget.hint ?? "", style: TextStyle(color: Colors.black54)),
         validator: widget.validator,
         decoration: InputDecoration(
           labelText: widget.label,

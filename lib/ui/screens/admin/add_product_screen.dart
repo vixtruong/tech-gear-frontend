@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:techgear/models/brand.dart';
 import 'package:techgear/models/category.dart';
 import 'package:techgear/models/product.dart';
@@ -19,9 +21,9 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
-  final CategoryProvider _categoryProvider = CategoryProvider();
-  final BrandProvider _brandProvider = BrandProvider();
-  final ProductProvider _productProvider = ProductProvider();
+  late ProductProvider _productProvider;
+  late CategoryProvider _categoryProvider;
+  late BrandProvider _brandProvider;
 
   List<Category> _categories = [];
   List<Brand> _brands = [];
@@ -39,8 +41,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
   File? _selectedImage;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _productProvider = Provider.of<ProductProvider>(context, listen: false);
+    _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    _brandProvider = Provider.of<BrandProvider>(context, listen: false);
+
     _loadProducts();
   }
 
@@ -89,8 +95,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       name: name,
       price: price,
       description: description,
-      brandId: categoryId!,
-      categoryId: brandId!,
+      brandId: brandId!,
+      categoryId: categoryId!,
       imgFile: _selectedImage!,
       imgUrl: "",
     );
@@ -109,6 +115,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
           backgroundColor: Colors.green[400],
         ),
       );
+
+      context.pop();
     } catch (e) {
       if (!mounted) return;
 
@@ -134,7 +142,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         shadowColor: Colors.white,
         leading: GestureDetector(
           onTap: () {
-            // context.pop();
+            context.pop();
           },
           child: Icon(Icons.arrow_back_outlined),
         ),
@@ -156,6 +164,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   children: [
                     CustomDropdown(
                       label: "Brands",
+                      hint: "Select a brand",
                       items: _brands.map((brand) => brand.name).toList(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -169,6 +178,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     SizedBox(width: 10),
                     CustomDropdown(
                       label: "Categories",
+                      hint: "Select a category",
                       items:
                           _categories.map((category) => category.name).toList(),
                       validator: (value) {

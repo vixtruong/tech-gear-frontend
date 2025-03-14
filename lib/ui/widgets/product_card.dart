@@ -3,13 +3,16 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:techgear/models/product.dart';
 import 'package:techgear/ui/widgets/star_rating.dart';
-import 'package:techgear/utils/url_helper.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
   final bool atHome;
 
-  const ProductCard({super.key, required this.product, required this.atHome});
+  const ProductCard({
+    super.key,
+    required this.product,
+    this.atHome = false,
+  });
 
   @override
   State<ProductCard> createState() => _ProductCardState();
@@ -18,13 +21,12 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   bool isFavorite = false;
 
-  late String imgUrl = UrlHelper.getGoogleDriveImageUrl(widget.product.imgUrl);
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.push('/product-detail/${widget.product.id}');
+        context.push(
+            '/product-detail?productId=${widget.product.id}&isAdmin=false');
       },
       child: Container(
         decoration: BoxDecoration(
@@ -47,7 +49,7 @@ class _ProductCardState extends State<ProductCard> {
                 ClipRRect(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                   child: Image.network(
-                    imgUrl,
+                    widget.product.imgUrl,
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -58,47 +60,55 @@ class _ProductCardState extends State<ProductCard> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    widget.product.name,
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    widget.product.description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.product.name,
+                          style: TextStyle(fontSize: 14, color: Colors.black87),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          widget.product.description,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              NumberFormat("#,###", "vi_VN")
+                                  .format(widget.product.price),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            StarRating(rating: 4.5),
+                            SizedBox(width: 5),
+                            Text(
+                              "1234",
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.black38),
+                            ),
+                          ],
+                        )
+                      ],
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        NumberFormat("#,###", "vi_VN")
-                            .format(widget.product.price),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      StarRating(rating: 4.5),
-                      SizedBox(width: 5),
-                      Text(
-                        "1234",
-                        style: TextStyle(fontSize: 12, color: Colors.black38),
-                      ),
-                    ],
-                  )
                 ],
               ),
             ),

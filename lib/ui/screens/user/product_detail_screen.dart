@@ -7,12 +7,13 @@ import 'package:techgear/models/product.dart';
 import 'package:techgear/providers/brand_provider.dart';
 import 'package:techgear/providers/category_provider.dart';
 import 'package:techgear/providers/product_provider.dart';
-import 'package:techgear/utils/url_helper.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
+  final bool isAdmin;
 
-  const ProductDetailScreen({super.key, required this.productId});
+  const ProductDetailScreen(
+      {super.key, required this.productId, this.isAdmin = false});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -26,8 +27,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Category? category;
   Brand? brand;
 
-  String? imgUrl;
-
   Future<void> _loadProduct() async {
     try {
       product = await _productProvider.fetchProductById(widget.productId);
@@ -35,8 +34,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       category = await _categoryProvider.fetchCategoryById(product!.categoryId);
 
       brand = await _brandProvider.fetchBrandById(product!.brandId);
-
-      imgUrl = UrlHelper.getGoogleDriveImageUrl(product!.imgUrl);
 
       setState(() {});
     } catch (e) {}
@@ -70,6 +67,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("isAdmin: ${widget.isAdmin}");
     return Scaffold(
       backgroundColor: Colors.white,
       extendBodyBehindAppBar: true,
@@ -90,10 +88,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   context.pop();
                 },
               ),
-              buildCircleButton(
-                icon: Icons.favorite_outline,
-                onTaped: () {},
-              ),
+              if (!widget.isAdmin)
+                buildCircleButton(
+                  icon: Icons.favorite_outline,
+                  onTaped: () {},
+                ),
             ],
           ),
         ),
@@ -113,7 +112,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     left: 0,
                     right: 0,
                     child: Image.network(
-                      imgUrl!,
+                      product!.imgUrl,
                       fit: BoxFit.cover,
                       height: MediaQuery.of(context).size.height * 0.5,
                       width: double.infinity,
@@ -178,25 +177,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 ],
                               ),
                               const SizedBox(height: 15),
-                              Row(
-                                children: [
-                                  buildCounterButton(Icons.remove, () {
-                                    setState(() {
-                                      if (count > 1) count--;
-                                    });
-                                  }),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10),
-                                    child: Text("$count"),
-                                  ),
-                                  buildCounterButton(Icons.add, () {
-                                    setState(() {
-                                      count++;
-                                    });
-                                  }),
-                                ],
-                              ),
+                              if (!widget.isAdmin)
+                                Row(
+                                  children: [
+                                    buildCounterButton(Icons.remove, () {
+                                      setState(() {
+                                        if (count > 1) count--;
+                                      });
+                                    }),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10),
+                                      child: Text("$count"),
+                                    ),
+                                    buildCounterButton(Icons.add, () {
+                                      setState(() {
+                                        count++;
+                                      });
+                                    }),
+                                  ],
+                                ),
                               const SizedBox(height: 15),
                               Row(
                                 mainAxisAlignment:
@@ -209,13 +209,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold),
                                   ),
-                                  Row(
-                                    children: [
-                                      buildButton("Buy Now", Colors.blue),
-                                      const SizedBox(width: 8),
-                                      buildButton("Add to Cart", Colors.blue),
-                                    ],
-                                  ),
+                                  if (!widget.isAdmin)
+                                    Row(
+                                      children: [
+                                        buildButton("Buy Now", Colors.blue),
+                                        SizedBox(width: 8),
+                                        buildButton("Add to Cart", Colors.blue),
+                                      ],
+                                    )
                                 ],
                               ),
                             ],
@@ -290,6 +291,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return ElevatedButton(
       onPressed: () {},
       style: ElevatedButton.styleFrom(
+        padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 20),
         backgroundColor: color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

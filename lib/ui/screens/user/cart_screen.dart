@@ -57,20 +57,28 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 28.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Checkbox(
-                        activeColor: Colors.orange,
-                        value: _isSelectAll,
-                        onChanged: (value) {
-                          setState(() {
-                            _isSelectAll = value!;
-                          });
-                        },
-                      ),
-                      const Text("Select All", style: TextStyle(fontSize: 14)),
-                    ],
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isSelectAll = !_isSelectAll;
+                      });
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          activeColor: Colors.orange,
+                          value: _isSelectAll,
+                          onChanged: (value) {
+                            setState(() {
+                              _isSelectAll = value!;
+                            });
+                          },
+                        ),
+                        const Text("Select All",
+                            style: TextStyle(fontSize: 14)),
+                      ],
+                    ),
                   ),
                 ),
               ],
