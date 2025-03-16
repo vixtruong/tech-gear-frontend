@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CustomDropdown extends StatefulWidget {
   final String label;
-  final List<String> items;
+  final List<Map<String, String>> items;
   final ValueChanged<String?>? onChanged;
   final FormFieldValidator<String>? validator;
   final String? value;
@@ -58,8 +58,9 @@ class _CustomDropdownState extends State<CustomDropdown> {
         dropdownColor: Colors.white,
         items: widget.items
             .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e, style: const TextStyle(color: Colors.black)),
+                  value: e['id'],
+                  child: Text(e['name'].toString(),
+                      style: const TextStyle(color: Colors.black)),
                 ))
             .toList(),
         onChanged: (value) {

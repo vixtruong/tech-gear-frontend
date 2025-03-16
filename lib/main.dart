@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/core/firebase_options.dart';
 import 'package:techgear/core/routes.dart';
-import 'package:techgear/providers/brand_provider.dart';
-import 'package:techgear/providers/category_provider.dart';
-import 'package:techgear/providers/product_item_provider.dart';
-import 'package:techgear/providers/product_provider.dart';
-import 'package:techgear/providers/variant_option_provider.dart';
-import 'package:techgear/providers/variant_value_provider.dart';
+import 'package:techgear/providers/product_providers/brand_provider.dart';
+import 'package:techgear/providers/product_providers/category_provider.dart';
+import 'package:techgear/providers/product_providers/product_config_provider.dart';
+import 'package:techgear/providers/product_providers/product_item_provider.dart';
+import 'package:techgear/providers/product_providers/product_provider.dart';
+import 'package:techgear/providers/product_providers/variant_option_provider.dart';
+import 'package:techgear/providers/product_providers/variant_value_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ Future<void> main() async {
       ChangeNotifierProvider(create: (context) => ProductItemProvider()),
       ChangeNotifierProvider(create: (context) => VariantOptionProvider()),
       ChangeNotifierProvider(create: (context) => VariantValueProvider()),
+      ChangeNotifierProvider(create: (context) => ProductConfigProvider()),
     ],
     child: App(),
   ));

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:techgear/models/product.dart';
-import 'package:techgear/services/google_drive_service.dart';
+import 'package:techgear/services/google_services/google_drive_service.dart';
 
 class ProductService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -8,9 +8,11 @@ class ProductService {
   Future<List<Map<String, dynamic>>> fetchProducts() async {
     final snapshot = await _db
         .collection('product')
-        .orderBy('createdAt', descending: true)
+        .where('isDisabled', isEqualTo: false)
         .get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    return snapshot.docs.reversed
+        .map((doc) => {...doc.data(), 'id': doc.id})
+        .toList();
   }
 
   Future<Map<String, dynamic>?> fetchProductById(String productId) async {
@@ -43,8 +45,11 @@ class ProductService {
         'brand': _db.collection('brand').doc(product.brandId),
         'category': _db.collection('category').doc(product.categoryId),
         'createdAt': FieldValue.serverTimestamp(),
+        'isDisabled': product.isDisabled,
       });
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
   }
 
   Future<String> generateID() async {

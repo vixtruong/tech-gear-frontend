@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:techgear/models/product_item.dart';
-import 'package:techgear/services/google_drive_service.dart';
+import 'package:techgear/services/google_services/google_drive_service.dart';
 
 class ProductItemService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -8,9 +8,12 @@ class ProductItemService {
   Future<List<Map<String, dynamic>>> fetchProductItems() async {
     final snapshot = await _db
         .collection('product_item')
-        .orderBy('createdAt', descending: true)
+        .where('isDisabled', isEqualTo: false)
+        // .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    return snapshot.docs.reversed
+        .map((doc) => {...doc.data(), 'id': doc.id})
+        .toList();
   }
 
   Future<List<Map<String, dynamic>>> fetchProductItemsByProductId(
@@ -19,8 +22,11 @@ class ProductItemService {
     final snapshot = await _db
         .collection('product_item')
         .where('product', isEqualTo: productRef)
+        .where('isDisabled', isEqualTo: false)
         .get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    return snapshot.docs.reversed
+        .map((doc) => {...doc.data(), 'id': doc.id})
+        .toList();
   }
 
   Future<Map<String, dynamic>?> fetchProductItemById(
@@ -47,14 +53,17 @@ class ProductItemService {
 
       await _db.collection('product_item').doc(productItemId).set({
         'id': productItemId,
-        'SKU': productItem.SKU,
+        'SKU': productItem.sku,
         'price': productItem.price,
         'imageUrl': imageUrl,
         'quantity': productItem.quantity,
         'product': _db.collection('product').doc(productItem.productId),
         'createdAt': FieldValue.serverTimestamp(),
+        'isDisabled': productItem.isDisabled,
       });
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
   }
 
   Future<String> generateID() async {

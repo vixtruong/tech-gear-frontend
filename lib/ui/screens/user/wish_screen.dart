@@ -50,13 +50,13 @@ class _WishScreenState extends State<WishScreen> {
                   children: [
                     CustomDropdown(
                       label: "Sort by",
-                      items: ["Name", "Best Selling"],
+                      items: [],
                       onChanged: (value) {},
                     ),
                     const SizedBox(width: 8),
                     CustomDropdown(
                       label: "Categories",
-                      items: ["T Shirt", "Jeans"],
+                      items: [],
                       onChanged: (value) {},
                     ),
                   ],

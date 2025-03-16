@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:techgear/models/product.dart';
 import 'package:techgear/models/product_item.dart';
-import 'package:techgear/providers/product_item_provider.dart';
-import 'package:techgear/providers/product_provider.dart';
+import 'package:techgear/providers/product_providers/product_item_provider.dart';
+import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/ui/widgets/custom_text_field.dart';
 import 'package:techgear/ui/widgets/product_item_card.dart';
 
@@ -20,14 +20,21 @@ class ManageProductVariantsScreen extends StatefulWidget {
 
 class _ManageProductVariantsScreenState
     extends State<ManageProductVariantsScreen> {
-  final ProductItemProvider _productItemProvider = ProductItemProvider();
-  final ProductProvider _productProvider = ProductProvider();
+  late ProductItemProvider _productItemProvider;
+  late ProductProvider _productProvider;
+
   List<ProductItem> _productItems = [];
   Product? product;
 
+  bool _isLoading = true;
+
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _productItemProvider =
+        Provider.of<ProductItemProvider>(context, listen: false);
+    _productProvider = Provider.of<ProductProvider>(context, listen: false);
+
     _loadProductItems();
   }
 
@@ -44,9 +51,18 @@ class _ManageProductVariantsScreenState
               a.createdAt!.millisecondsSinceEpoch;
         });
 
-        _productItems = _productItemProvider.productItems;
+        _isLoading = false;
       });
-    } catch (e) {}
+    } catch (e) {
+      if (!mounted) return;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Error: ${e.toString()}"),
+              backgroundColor: Colors.red[400]),
+        );
+      }
+    }
   }
 
   @override
@@ -68,56 +84,47 @@ class _ManageProductVariantsScreenState
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
-      ),
-      floatingActionButton: SpeedDial(
-        backgroundColor: Colors.white, // Màu nền trắng
-        foregroundColor: Colors.black,
-        animatedIcon: AnimatedIcons.menu_close,
-        shape: BeveledRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-        ),
-        elevation: 10.0,
-        children: [
-          SpeedDialChild(
-            child: Icon(Icons.settings, color: Colors.white),
-            backgroundColor: Colors.blueGrey,
-            label: 'Manage Variant Option',
-            labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
-              context.push('/manage-variant-options');
-            },
-          ),
-          SpeedDialChild(
-            child: Icon(Icons.add_circle, color: Colors.white),
-            backgroundColor: Colors.green,
-            label: 'Add Product Variant',
-            labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
+        actions: [
+          IconButton(
+            onPressed: () {
               context.push('/add-product-variants/${widget.productId}');
             },
+            icon: Icon(Icons.add_outlined),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(15.0),
-        child: Column(
-          children: [
-            CustomTextField(
-              controller: TextEditingController(),
-              hint: "Search",
-              inputType: TextInputType.text,
-              isSearch: true,
+      body: Consumer<ProductItemProvider>(
+        builder: (context, variantOptionProvider, child) {
+          if (_isLoading) {
+            return Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+            );
+          }
+          _productItems = _productItemProvider.productItems;
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(15.0),
+            child: Column(
+              children: [
+                CustomTextField(
+                  controller: TextEditingController(),
+                  hint: "Search",
+                  inputType: TextInputType.text,
+                  isSearch: true,
+                ),
+                SizedBox(height: 15),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: _productItems.length,
+                  itemBuilder: (context, index) =>
+                      ProductItemCard(productItem: _productItems[index]),
+                ),
+              ],
             ),
-            SizedBox(height: 15),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: _productItems.length,
-              itemBuilder: (context, index) =>
-                  ProductItemCard(productItem: _productItems[index]),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

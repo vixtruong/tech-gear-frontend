@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/variant_value.dart';
-import 'package:techgear/services/variant_value_service.dart';
+import 'package:techgear/services/product_services/variant_value_service.dart';
 
 class VariantValueProvider with ChangeNotifier {
   final VariantValueService _service = VariantValueService();
@@ -16,7 +16,9 @@ class VariantValueProvider with ChangeNotifier {
           .map((data) => VariantValue.fromMap(data, data['id'] as String))
           .toList();
       notifyListeners();
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
   }
 
   Future<VariantValue?> fetchVariantValueById(String id) async {
@@ -39,11 +41,18 @@ class VariantValueProvider with ChangeNotifier {
           .map((data) => VariantValue.fromMap(data, data['id'] as String))
           .toList();
       notifyListeners();
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
   }
 
   Future<void> addVariantValue(VariantValue item) async {
     await _service.addVariantValue(item);
+    await fetchVariantValues();
+  }
+
+  Future<void> deleteVariantValue(String id) async {
+    await _service.deleteVariantValue(id);
     await fetchVariantValues();
   }
 }

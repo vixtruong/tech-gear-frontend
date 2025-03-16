@@ -60,6 +60,10 @@ class VariantValueService {
     });
   }
 
+  Future<void> deleteVariantValue(String id) async {
+    await _db.collection('variant_value').doc(id).delete();
+  }
+
   Future<String> generateID() async {
     final FirebaseFirestore db = FirebaseFirestore.instance;
 

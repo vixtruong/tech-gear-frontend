@@ -2,16 +2,21 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:techgear/models/brand.dart';
 import 'package:techgear/models/category.dart';
 import 'package:techgear/models/product.dart';
+import 'package:techgear/models/product_config.dart';
+import 'package:techgear/models/product_item.dart';
 import 'package:techgear/models/variant_option.dart';
 import 'package:techgear/models/variant_value.dart';
-import 'package:techgear/providers/brand_provider.dart';
-import 'package:techgear/providers/category_provider.dart';
-import 'package:techgear/providers/product_provider.dart';
-import 'package:techgear/providers/variant_option_provider.dart';
-import 'package:techgear/providers/variant_value_provider.dart';
+import 'package:techgear/providers/product_providers/brand_provider.dart';
+import 'package:techgear/providers/product_providers/category_provider.dart';
+import 'package:techgear/providers/product_providers/product_config_provider.dart';
+import 'package:techgear/providers/product_providers/product_item_provider.dart';
+import 'package:techgear/providers/product_providers/product_provider.dart';
+import 'package:techgear/providers/product_providers/variant_option_provider.dart';
+import 'package:techgear/providers/product_providers/variant_value_provider.dart';
 import 'package:techgear/ui/widgets/custom_dropdown.dart';
 import 'package:techgear/ui/widgets/custom_text_field.dart';
 import 'package:techgear/ui/widgets/image_picker_field.dart';
@@ -27,40 +32,48 @@ class AddProductVariantsScreen extends StatefulWidget {
 }
 
 class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
-  final ProductProvider _productProvider = ProductProvider();
-  final CategoryProvider _categoryProvider = CategoryProvider();
-  final BrandProvider _brandProvider = BrandProvider();
-  final VariantOptionProvider _variantOptionProvider = VariantOptionProvider();
-  final VariantValueProvider _variantValueProvider = VariantValueProvider();
+  late ProductProvider _productProvider;
+  late ProductItemProvider _productItemProvider;
+  late CategoryProvider _categoryProvider;
+  late BrandProvider _brandProvider;
+  late VariantOptionProvider _variantOptionProvider;
+  late VariantValueProvider _variantValueProvider;
+  late ProductConfigProvider _productConfigProvider;
 
-  final List<Category> _categories = [];
-  final List<Brand> _brands = [];
   List<VariantOption> _variantOptions = [];
   List<VariantValue> _allVariantValues = [];
 
   Product? product;
+  Category? category;
+  Brand? brand;
 
   final _key = GlobalKey<FormState>();
 
-  String? _selectedBrand;
-  String? _selectedCategory;
-
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+
+  final List<String> _selectVariantValueIds = [];
 
   File? _selectedImage;
 
   bool _isLoading = true;
 
   @override
-  void initState() {
-    super.initState();
-    Future.delayed(Duration(seconds: 2), () {
-      setState(() {
-        _isLoading = false;
-      });
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _productProvider = Provider.of<ProductProvider>(context, listen: false);
+    _productItemProvider =
+        Provider.of<ProductItemProvider>(context, listen: false);
+    _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    _brandProvider = Provider.of<BrandProvider>(context, listen: false);
+    _variantOptionProvider =
+        Provider.of<VariantOptionProvider>(context, listen: false);
+    _variantValueProvider =
+        Provider.of<VariantValueProvider>(context, listen: false);
+    _productConfigProvider =
+        Provider.of<ProductConfigProvider>(context, listen: false);
+
     _loadInformation();
   }
 
@@ -68,11 +81,10 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
     try {
       Product? fetchedProduct =
           await _productProvider.fetchProductById(widget.productId);
-      Category? category =
+      category =
           await _categoryProvider.fetchCategoryById(fetchedProduct!.categoryId);
 
-      Brand? brand =
-          await _brandProvider.fetchBrandById(fetchedProduct.brandId);
+      brand = await _brandProvider.fetchBrandById(fetchedProduct.brandId);
 
       await _variantOptionProvider.fetchVariantOptionsByCateId(category!.id);
       await _variantValueProvider.fetchVariantValues();
@@ -80,16 +92,83 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
       setState(() {
         product = fetchedProduct;
 
-        _categories.add(category);
-        _brands.add(brand!);
-
         _variantOptions = _variantOptionProvider.variantOptions;
         _allVariantValues = _variantValueProvider.variantValues;
+
+        for (int i = 0; i < _variantOptions.length; i++) {
+          String? value = "";
+          _selectVariantValueIds.add(value);
+        }
+
+        _isLoading = false;
       });
-    } catch (e) {}
+    } catch (e) {
+      if (!mounted) return;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Error: ${e.toString()}"),
+              backgroundColor: Colors.red[400]),
+        );
+      }
+    }
   }
 
-  void _handleSubmit() async {}
+  void _handleSubmit() async {
+    if (!_key.currentState!.validate()) return;
+
+    String sku = _nameController.text.trim();
+    int quantity = int.parse(_quantityController.text.trim());
+    double price = double.parse(_priceController.text.trim());
+
+    if (sku.isEmpty ||
+        quantity.toString().isEmpty ||
+        price.toString().isEmpty) {
+      return;
+    }
+
+    String productItemId = await _productItemProvider.generateID();
+
+    ProductItem productItem = ProductItem(
+      id: productItemId,
+      sku: sku,
+      imgFile: _selectedImage!,
+      quantity: quantity,
+      price: price,
+      productId: product!.id,
+    );
+
+    try {
+      await _productItemProvider.addProductItem(productItem);
+
+      for (int i = 0; i < _variantOptions.length; i++) {
+        var config = ProductConfig(
+            productItemId: productItemId,
+            variantValueId: _selectVariantValueIds[i]);
+        await _productConfigProvider.addProductConfig(config);
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "${productItem.sku} added successfully!",
+            style: TextStyle(fontSize: 16),
+          ),
+          backgroundColor: Colors.green[400],
+        ),
+      );
+
+      context.pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text("Error: ${e.toString()}"),
+            backgroundColor: Colors.red[400]),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,36 +206,24 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
                     children: [
                       Row(
                         children: [
-                          CustomDropdown(
-                            label: "Brands",
-                            hint: "Select a brand",
-                            value: _brands[0].name,
-                            items: _brands.map((brand) => brand.name).toList(),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return "Please choose brand";
-                              }
-                              return null;
-                            },
-                            onChanged: (value) =>
-                                setState(() => _selectedBrand = value),
+                          Expanded(
+                            child: CustomTextField(
+                              controller: TextEditingController(),
+                              hint: brand!.name,
+                              inputType: TextInputType.text,
+                              isSearch: false,
+                              enabled: false,
+                            ),
                           ),
                           SizedBox(width: 10),
-                          CustomDropdown(
-                            label: "Categories",
-                            hint: "Select a category",
-                            value: _categories[0].name,
-                            items: _categories
-                                .map((category) => category.name)
-                                .toList(),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return "Please choose category";
-                              }
-                              return null;
-                            },
-                            onChanged: (value) =>
-                                setState(() => _selectedCategory = value),
+                          Expanded(
+                            child: CustomTextField(
+                              controller: TextEditingController(),
+                              hint: category!.name,
+                              inputType: TextInputType.text,
+                              isSearch: false,
+                              enabled: false,
+                            ),
                           ),
                         ],
                       ),
@@ -175,8 +242,8 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
                       ),
                       SizedBox(height: 15),
                       Wrap(
-                        spacing: 10, // Khoảng cách giữa các phần tử
-                        runSpacing: 15, // Khoảng cách giữa các hàng
+                        spacing: 10,
+                        runSpacing: 15,
                         children:
                             List.generate(_variantOptions.length, (index) {
                           var option = _variantOptions[index];
@@ -185,20 +252,37 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
                               .where((x) => x.variantOptionId == option.id)
                               .toList();
 
+                          bool isLastOdd = _variantOptions.length % 2 != 0 &&
+                              index == _variantOptions.length - 1;
+
                           return SizedBox(
-                            width: MediaQuery.of(context).size.width / 2 -
-                                20, // Chia đôi màn hình
+                            width: isLastOdd
+                                ? double.infinity
+                                : MediaQuery.of(context).size.width / 2 - 20,
                             child: CustomDropdown(
                               label: option.name,
                               hint: "Select ${option.name} value",
-                              items: variantValues.map((x) => x.name).toList(),
+                              items: variantValues
+                                  .map((x) => {'id': x.id, 'name': x.name})
+                                  .toList(),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please choose ${option.name}";
+                                }
+                                return null;
+                              },
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectVariantValueIds[index] = value!;
+                                });
+                              },
                             ),
                           );
                         }),
                       ),
                       SizedBox(height: 15),
                       CustomTextField(
-                        controller: _descriptionController,
+                        controller: _quantityController,
                         hint: "Quantity",
                         inputType: TextInputType.number,
                         isSearch: false,
@@ -232,18 +316,6 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
                         },
                       ),
                       SizedBox(height: 15),
-                      // CustomTextField(
-                      //     controller: _imgController,
-                      //     validator: (value) {
-                      //       if (value == null || value.isEmpty) {
-                      //         return "Please enter image url";
-                      //       }
-                      //       return null;
-                      //     },
-                      //     hint: "Image Url",
-                      //     inputType: TextInputType.url,
-                      //     isSearch: false),
-                      // SizedBox(height: 15),
                       ImagePickerField(
                         label: "Product Image",
                         onImagePicked: (value) {

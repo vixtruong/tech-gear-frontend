@@ -4,7 +4,7 @@ import 'package:techgear/ui/screens/admin/add_brand_screen.dart';
 import 'package:techgear/ui/screens/admin/add_category_screen.dart';
 import 'package:techgear/ui/screens/admin/add_product_screen.dart';
 import 'package:techgear/ui/screens/admin/add_product_variants_screen.dart';
-import 'package:techgear/ui/screens/admin/add_variant_option.dart';
+import 'package:techgear/ui/screens/admin/add_variant_option_screen.dart';
 import 'package:techgear/ui/screens/admin/manage_product_screen.dart';
 import 'package:techgear/ui/screens/admin/manage_variant_options_screen.dart';
 import 'package:techgear/ui/screens/admin/manage_product_variants_screen.dart';
@@ -18,7 +18,7 @@ import 'package:techgear/ui/screens/auth/register_screen.dart';
 import 'package:techgear/ui/screens/auth/welcome_screen.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/manage-product',
+  initialLocation: '/home',
   routes: [
     // auth screens
     GoRoute(
@@ -121,7 +121,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/add-variant-option',
-      builder: (context, state) => AddVariantOption(),
+      builder: (context, state) => AddVariantOptionScreen(),
     ),
   ],
 );

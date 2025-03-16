@@ -6,6 +6,7 @@ class CustomTextField extends StatefulWidget {
   final TextInputType inputType;
   final bool isSearch;
   final FormFieldValidator<String>? validator;
+  final bool enabled;
 
   const CustomTextField({
     super.key,
@@ -14,6 +15,7 @@ class CustomTextField extends StatefulWidget {
     required this.inputType,
     required this.isSearch,
     this.validator,
+    this.enabled = true,
   });
 
   @override
@@ -39,6 +41,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
               : const EdgeInsets.symmetric(horizontal: 15.0),
           child: TextFormField(
             controller: widget.controller,
+            enabled: widget.enabled,
             onChanged: (value) => {
               setState(() {
                 errorText = widget.validator?.call(value);

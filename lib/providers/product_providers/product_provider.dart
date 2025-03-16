@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import '../models/product.dart';
-import '../services/product_service.dart';
+import '../../models/product.dart';
+import '../../services/product_services/product_service.dart';
 
 class ProductProvider with ChangeNotifier {
   final ProductService _service = ProductService();
@@ -16,7 +16,9 @@ class ProductProvider with ChangeNotifier {
           .map((data) => Product.fromMap(data, data['id'] as String))
           .toList();
       notifyListeners();
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
   }
 
   Future<Product?> fetchProductById(String productId) async {

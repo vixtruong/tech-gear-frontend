@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:techgear/models/category.dart';
 import 'package:techgear/models/variant_option.dart';
 import 'package:techgear/models/variant_value.dart';
-import 'package:techgear/providers/category_provider.dart';
-import 'package:techgear/providers/variant_option_provider.dart';
-import 'package:techgear/providers/variant_value_provider.dart';
+import 'package:techgear/providers/product_providers/category_provider.dart';
+import 'package:techgear/providers/product_providers/variant_option_provider.dart';
+import 'package:techgear/providers/product_providers/variant_value_provider.dart';
 import 'package:techgear/ui/widgets/custom_dropdown.dart';
 import 'package:techgear/ui/widgets/custom_text_field.dart';
 
@@ -58,7 +58,35 @@ class _ManageVariantOptionsScreenState
         allVariantValues = _variantValueProvider.variantValues;
         _isLoading = false;
       });
-    } catch (e) {}
+    } catch (e) {
+      if (!mounted) return;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Error: ${e.toString()}"),
+              backgroundColor: Colors.red[400]),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteVariantValue(String id) async {
+    try {
+      await _variantValueProvider.deleteVariantValue(id);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Variant value already exists!",
+            style: TextStyle(fontSize: 16),
+          ),
+          backgroundColor: Colors.red[200],
+        ),
+      );
+    } catch (e) {
+      e.toString();
+    }
   }
 
   @override
@@ -91,7 +119,7 @@ class _ManageVariantOptionsScreenState
       ),
       body: Consumer<VariantOptionProvider>(
         builder: (context, variantOptionProvider, child) {
-          if (variantOptionProvider.variantOptions.isEmpty && _isLoading) {
+          if (_isLoading) {
             return Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
@@ -119,7 +147,9 @@ class _ManageVariantOptionsScreenState
                     children: [
                       CustomDropdown(
                         label: "Categories",
-                        items: categories.map((cate) => cate.name).toList(),
+                        items: categories
+                            .map((cate) => {'id': cate.id, 'name': cate.name})
+                            .toList(),
                         value: _selectCatgory,
                         hint: "Select a category",
                         validator: (value) {
@@ -132,11 +162,9 @@ class _ManageVariantOptionsScreenState
                           setState(() {
                             _selectCatgory = value;
                           });
-                          Category? category = categories.firstWhere(
-                            (category) => category.name == value,
-                            orElse: () => Category(id: '', name: 'Unknown'),
-                          );
-                          _variantOptionProvider.filterByCategory(category.id);
+
+                          _variantOptionProvider
+                              .filterByCategory(_selectCatgory);
                         },
                       ),
                     ],
@@ -224,7 +252,7 @@ class _ManageVariantOptionsScreenState
             shrinkWrap: true,
             itemCount: list.length,
             itemBuilder: (context, index) {
-              return _buildListTile(list[index].name);
+              return _buildListTile(list[index].name, list[index].id);
             },
           ),
         ),
@@ -233,10 +261,10 @@ class _ManageVariantOptionsScreenState
     );
   }
 
-  Widget _buildListTile(String title) {
+  Widget _buildListTile(String name, String id) {
     return ListTile(
       title: Text(
-        title,
+        name,
         style: TextStyle(fontSize: 16),
       ),
       trailing: SizedBox(
@@ -255,6 +283,7 @@ class _ManageVariantOptionsScreenState
               child: Text('Rename'),
             ),
             PopupMenuItem(
+              onTap: () => _deleteVariantValue(id),
               value: 'delete',
               child: Text('Delete'),
             ),
@@ -278,7 +307,8 @@ class _ManageVariantOptionsScreenState
       try {
         var existValue =
             await _variantValueProvider.fetchVariantValueByName(value);
-        if (existValue != null) {
+        if (existValue != null &&
+            existValue.variantOptionId == variantValue.variantOptionId) {
           if (!mounted) return;
 
           if (context.mounted) {
@@ -315,7 +345,16 @@ class _ManageVariantOptionsScreenState
             allVariantValues.add(variantValue);
           });
         }
-      } catch (e) {}
+      } catch (e) {
+        if (!mounted) return;
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text("Error: ${e.toString()}"),
+                backgroundColor: Colors.red[400]),
+          );
+        }
+      }
     }
 
     showDialog(
