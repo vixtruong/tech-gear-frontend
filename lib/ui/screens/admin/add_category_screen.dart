@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/category.dart';
-import 'package:techgear/providers/category_provider.dart';
+import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/ui/widgets/custom_text_field.dart';
 
 class AddCategoryScreen extends StatefulWidget {

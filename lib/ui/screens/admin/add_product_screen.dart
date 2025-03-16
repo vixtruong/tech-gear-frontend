@@ -6,9 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:techgear/models/brand.dart';
 import 'package:techgear/models/category.dart';
 import 'package:techgear/models/product.dart';
-import 'package:techgear/providers/brand_provider.dart';
-import 'package:techgear/providers/category_provider.dart';
-import 'package:techgear/providers/product_provider.dart';
+import 'package:techgear/providers/product_providers/brand_provider.dart';
+import 'package:techgear/providers/product_providers/category_provider.dart';
+import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/ui/widgets/custom_dropdown.dart';
 import 'package:techgear/ui/widgets/custom_text_field.dart';
 import 'package:techgear/ui/widgets/image_picker_field.dart';
@@ -30,8 +30,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   final _key = GlobalKey<FormState>();
 
-  String? _selectedBrand;
-  String? _selectedCategory;
+  String? _selectedBrandId;
+  String? _selectedCategoryId;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -58,7 +58,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
         _categories = _categoryProvider.categories;
         _brands = _brandProvider.brands;
       });
-    } catch (e) {}
+    } catch (e) {
+      if (!mounted) return;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Error: ${e.toString()}"),
+              backgroundColor: Colors.red[400]),
+        );
+      }
+    }
   }
 
   void _handleSubmit() async {
@@ -74,29 +83,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     _key.currentState!.save();
 
-    String? categoryId;
-    String? brandId;
-
-    for (var item in _categories) {
-      if (item.name == _selectedCategory) {
-        categoryId = item.id;
-        break;
-      }
-    }
-
-    for (var item in _brands) {
-      if (item.name == _selectedBrand) {
-        brandId = item.id;
-        break;
-      }
-    }
-
     Product product = Product(
       name: name,
       price: price,
       description: description,
-      brandId: brandId!,
-      categoryId: categoryId!,
+      brandId: _selectedBrandId!,
+      categoryId: _selectedCategoryId!,
       imgFile: _selectedImage!,
       imgUrl: "",
     );
@@ -165,7 +157,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     CustomDropdown(
                       label: "Brands",
                       hint: "Select a brand",
-                      items: _brands.map((brand) => brand.name).toList(),
+                      items: _brands
+                          .map((brand) => {'id': brand.id, 'name': brand.name})
+                          .toList(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return "Please choose brand";
@@ -173,14 +167,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         return null;
                       },
                       onChanged: (value) =>
-                          setState(() => _selectedBrand = value),
+                          setState(() => _selectedBrandId = value),
                     ),
                     SizedBox(width: 10),
                     CustomDropdown(
                       label: "Categories",
                       hint: "Select a category",
-                      items:
-                          _categories.map((category) => category.name).toList(),
+                      items: _categories
+                          .map((category) =>
+                              {'id': category.id, 'name': category.name})
+                          .toList(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return "Please choose category";
@@ -188,7 +184,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         return null;
                       },
                       onChanged: (value) =>
-                          setState(() => _selectedCategory = value),
+                          setState(() => _selectedCategoryId = value),
                     ),
                   ],
                 ),

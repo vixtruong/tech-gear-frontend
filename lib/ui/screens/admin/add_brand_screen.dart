@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/brand.dart';
-import 'package:techgear/providers/brand_provider.dart';
+import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/ui/widgets/custom_text_field.dart';
 
 class AddBrandScreen extends StatefulWidget {
