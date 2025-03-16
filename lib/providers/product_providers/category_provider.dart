@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/services/category_service.dart';
+import 'package:techgear/services/product_services/category_service.dart';
 
-import '../models/category.dart';
+import '../../models/category.dart';
 
 class CategoryProvider with ChangeNotifier {
   final CategoryService _service = CategoryService();
@@ -17,7 +17,9 @@ class CategoryProvider with ChangeNotifier {
           .map((data) => Category.fromMap(data, data['id'] as String))
           .toList();
       notifyListeners();
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
     notifyListeners();
   }
 

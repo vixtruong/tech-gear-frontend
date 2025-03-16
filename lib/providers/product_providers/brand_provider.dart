@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/brand.dart';
-import 'package:techgear/services/brand_service.dart';
+import 'package:techgear/services/product_services/brand_service.dart';
 
 class BrandProvider with ChangeNotifier {
   final BrandService _service = BrandService();
@@ -16,7 +16,9 @@ class BrandProvider with ChangeNotifier {
           .map((data) => Brand.fromMap(data, data['id'] as String))
           .toList();
       notifyListeners();
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
     notifyListeners();
   }
 

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:techgear/models/product.dart';
-import 'package:techgear/providers/product_provider.dart';
+import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/ui/widgets/custom_dropdown.dart';
 import 'package:techgear/ui/widgets/custom_text_field.dart';
 import 'package:techgear/ui/widgets/product_card.dart';
@@ -15,16 +16,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final ProductProvider _productProvider = ProductProvider();
+  late ProductProvider _productProvider;
   List<Product> _products = [];
 
   final TextEditingController _searchController = TextEditingController();
 
   final int cartItemCount = 3;
 
+  bool _isLoading = true;
+
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _productProvider = Provider.of<ProductProvider>(context, listen: false);
     _loadProducts();
   }
 
@@ -33,8 +37,17 @@ class _HomePageState extends State<HomePage> {
       await _productProvider.fetchProducts();
       setState(() {
         _products = _productProvider.products;
+
+        _isLoading = false;
       });
-    } catch (e) {}
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text("Error: ${e.toString()}"),
+            backgroundColor: Colors.red[400]),
+      );
+    }
   }
 
   @override
@@ -103,58 +116,72 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(15.0),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        body: Consumer<ProductProvider>(
+          builder: (context, productProvider, child) {
+            if (_isLoading) {
+              return Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+              );
+            }
+            _products = productProvider.products;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
                 children: [
-                  CustomDropdown(
-                    label: "Sort by",
-                    items: ["Name", "Best Selling"],
-                    onChanged: (value) {},
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CustomDropdown(
+                        label: "Sort by",
+                        items: [],
+                        onChanged: (value) {},
+                      ),
+                      const SizedBox(width: 8),
+                      CustomDropdown(
+                        label: "Categories",
+                        items: [],
+                        onChanged: (value) {},
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  CustomDropdown(
-                    label: "Categories",
-                    items: ["T Shirt", "Jeans"],
-                    onChanged: (value) {},
+                  const SizedBox(height: 10),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildPriceFilter("Under \$50"),
+                        SizedBox(width: 5),
+                        _buildPriceFilter("\$50 - \$100"),
+                        SizedBox(width: 5),
+                        _buildPriceFilter("\$100 - \$200"),
+                        SizedBox(width: 5),
+                        _buildPriceFilter("Above \$200"),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 15,
+                    children: List.generate(_products.length, (index) {
+                      bool isLastOdd = _products.length % 2 != 0 &&
+                          index == _products.length - 1;
+
+                      return SizedBox(
+                        width: isLastOdd
+                            ? double.infinity
+                            : MediaQuery.of(context).size.width / 2 - 20,
+                        child: ProductCard(
+                            product: _products[index], atHome: true),
+                      );
+                    }),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildPriceFilter("Under \$50"),
-                    SizedBox(width: 5),
-                    _buildPriceFilter("\$50 - \$100"),
-                    SizedBox(width: 5),
-                    _buildPriceFilter("\$100 - \$200"),
-                    SizedBox(width: 5),
-                    _buildPriceFilter("Above \$200"),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 15),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  mainAxisExtent: 255,
-                ),
-                itemCount: _products.length,
-                itemBuilder: (context, index) {
-                  return ProductCard(product: _products[index], atHome: true);
-                },
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

@@ -56,6 +56,7 @@ class _ProductCardState extends State<ProductCard> {
                   ),
                 ),
                 _buttonFavorite(widget.atHome),
+                _buttonAddIntoCart(widget.atHome),
               ],
             ),
             Padding(
@@ -82,18 +83,13 @@ class _ProductCardState extends State<ProductCard> {
                             color: Colors.grey[600],
                           ),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              NumberFormat("#,###", "vi_VN")
-                                  .format(widget.product.price),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          NumberFormat("#,###", "vi_VN")
+                              .format(widget.product.price),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Row(
                           children: [
@@ -122,7 +118,7 @@ class _ProductCardState extends State<ProductCard> {
     if (atHome) {
       return Positioned(
         top: 8,
-        right: 8,
+        left: 8,
         child: GestureDetector(
           onTap: () {
             setState(() {
@@ -133,8 +129,31 @@ class _ProductCardState extends State<ProductCard> {
             radius: 20,
             backgroundColor: Colors.grey[400]!.withAlpha((0.5 * 255).toInt()),
             child: Icon(
+              size: 20,
               isFavorite ? Icons.favorite : Icons.favorite_border,
               color: isFavorite ? Colors.red[300] : Colors.black54,
+            ),
+          ),
+        ),
+      );
+    }
+    return Text("");
+  }
+
+  Widget _buttonAddIntoCart(bool atHome) {
+    if (atHome) {
+      return Positioned(
+        top: 8,
+        right: 8,
+        child: CircleAvatar(
+          radius: 20,
+          backgroundColor: Colors.grey[400]!.withAlpha((0.5 * 255).toInt()),
+          child: IconButton(
+            onPressed: () {},
+            iconSize: 20,
+            icon: Icon(
+              Icons.add_shopping_cart_outlined,
+              color: Colors.black54,
             ),
           ),
         ),

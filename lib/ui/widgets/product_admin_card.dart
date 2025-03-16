@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:techgear/models/product.dart';
 
 class ProductAdminCard extends StatefulWidget {
@@ -57,7 +58,9 @@ class _ProductAdminCardState extends State<ProductAdminCard> {
                     overflow: TextOverflow.ellipsis,
                     widget.product.description,
                   ),
-                  Text("${widget.product.price}"),
+                  Text(
+                    NumberFormat("#,###", "vi_VN").format(widget.product.price),
+                  ),
                 ],
               ),
             ),
@@ -72,8 +75,10 @@ class _ProductAdminCardState extends State<ProductAdminCard> {
                   child: Text('Edit'),
                 ),
                 PopupMenuItem(
-                  value: 'delete',
-                  child: Text('Delete'),
+                  value: (widget.product.isDisabled) ? 'Enable' : "Disable",
+                  child: (widget.product.isDisabled)
+                      ? Text('Enable')
+                      : Text('Disable'),
                 ),
                 PopupMenuItem(
                   onTap: () {

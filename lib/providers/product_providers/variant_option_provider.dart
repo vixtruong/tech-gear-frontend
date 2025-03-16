@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/variant_option.dart';
-import 'package:techgear/services/variant_option_service.dart';
+import 'package:techgear/services/product_services/variant_option_service.dart';
 
 class VariantOptionProvider with ChangeNotifier {
   final VariantOptionService _service = VariantOptionService();
@@ -23,7 +23,9 @@ class VariantOptionProvider with ChangeNotifier {
           .map((data) => VariantOption.fromMap(data, data['id'] as String))
           .toList();
       notifyListeners();
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
   }
 
   Future<VariantOption?> fetchVariantOptionById(String id) async {
@@ -46,7 +48,9 @@ class VariantOptionProvider with ChangeNotifier {
           .map((data) => VariantOption.fromMap(data, data['id'] as String))
           .toList();
       notifyListeners();
-    } catch (e) {}
+    } catch (e) {
+      e.toString();
+    }
   }
 
   void filterByCategory(String? categoryId) {

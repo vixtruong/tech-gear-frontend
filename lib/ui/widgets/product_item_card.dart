@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:techgear/models/product_item.dart';
 
 class ProductItemCard extends StatefulWidget {
@@ -43,7 +44,7 @@ class _ProductItemCardState extends State<ProductItemCard> {
                 Text(
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  widget.productItem.SKU,
+                  widget.productItem.sku,
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 Text(
@@ -52,7 +53,10 @@ class _ProductItemCardState extends State<ProductItemCard> {
                   "8GB 256GB BLACK",
                 ),
                 Text("Stock ${widget.productItem.quantity}"),
-                Text("${widget.productItem.price}"),
+                Text(
+                  NumberFormat("#,###", "vi_VN")
+                      .format(widget.productItem.price),
+                ),
               ],
             ),
           ),
@@ -67,8 +71,10 @@ class _ProductItemCardState extends State<ProductItemCard> {
                 child: Text('Edit'),
               ),
               PopupMenuItem(
-                value: 'delete',
-                child: Text('Delete'),
+                value: (widget.productItem.isDisabled) ? 'Enable' : "Disable",
+                child: (widget.productItem.isDisabled)
+                    ? Text('Enable')
+                    : Text('Disable'),
               ),
             ],
             icon: Icon(Icons.more_vert_outlined),
