@@ -102,6 +102,7 @@ class _ManageProductVariantsScreenState
               ),
             );
           }
+          _productItemProvider.fetchProductItemsByProductId(widget.productId);
           _productItems = _productItemProvider.productItems;
           return SingleChildScrollView(
             padding: EdgeInsets.all(15.0),

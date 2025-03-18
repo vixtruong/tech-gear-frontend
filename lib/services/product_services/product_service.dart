@@ -34,13 +34,14 @@ class ProductService {
       String? fileId = await driveService.uploadFile(product.imgFile);
       driveService.dispose();
 
-      String imageUrl = "https://drive.google.com/uc?export=view&id=$fileId";
+      String directImageUrl =
+          "https://lh3.googleusercontent.com/d/$fileId=w300";
 
       await _db.collection('product').doc(productId).set({
         'id': productId,
         'name': product.name,
         'price': product.price,
-        'imageUrl': imageUrl,
+        'imageUrl': directImageUrl,
         'description': product.description,
         'brand': _db.collection('brand').doc(product.brandId),
         'category': _db.collection('category').doc(product.categoryId),
