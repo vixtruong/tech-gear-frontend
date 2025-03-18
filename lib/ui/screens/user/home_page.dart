@@ -166,13 +166,8 @@ class _HomePageState extends State<HomePage> {
                     spacing: 10,
                     runSpacing: 15,
                     children: List.generate(_products.length, (index) {
-                      bool isLastOdd = _products.length % 2 != 0 &&
-                          index == _products.length - 1;
-
                       return SizedBox(
-                        width: isLastOdd
-                            ? double.infinity
-                            : MediaQuery.of(context).size.width / 2 - 20,
+                        width: MediaQuery.of(context).size.width / 2 - 20,
                         child: ProductCard(
                             product: _products[index], atHome: true),
                       );

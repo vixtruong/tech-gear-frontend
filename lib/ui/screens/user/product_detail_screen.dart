@@ -53,6 +53,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   bool _isLoading = true;
 
+  bool _isDiscontinued = true;
+
   String? centerImageUrl;
 
   @override
@@ -115,6 +117,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       productSpec = ProductSpecification(
           productId: widget.productId, specs: specs, colors: colors);
 
+      if (specs.isEmpty && colors.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _isDiscontinued = false;
+        });
+        return;
+      }
+
       groupProductItemsBySpecs();
 
       if (!mounted) return;
@@ -126,11 +136,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         }
       });
 
-      colorSpecsList = getColorsForSelectedSpecs();
-      if (colorSpecsList.isNotEmpty) {
-        var firstEntry = colorSpecsList.first.entries.first;
+      if (colors.isNotEmpty) {
+        colorSpecsList = getColorsForSelectedSpecs();
+        if (colorSpecsList.isNotEmpty) {
+          var firstEntry = colorSpecsList.first.entries.first;
+          setState(() {
+            selectedItem = firstEntry.key;
+          });
+        }
+      } else {
         setState(() {
-          selectedColorItem = firstEntry.key;
+          selectedItem = specs.first.entries.first.key;
         });
       }
     } catch (e) {
@@ -159,8 +175,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
     }
 
-    colors.add({item: colorsList});
-    specs.add({item: valuesList});
+    if (colorsList.isNotEmpty) {
+      colors.add({item: colorsList});
+    }
+
+    if (valuesList.isNotEmpty) {
+      specs.add({item: valuesList});
+    }
   }
 
   void groupProductItemsBySpecs() {
@@ -210,7 +231,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isExpanded = true;
 
   GroupProductSpecs? selectedSpecs;
-  ProductItem? selectedColorItem;
+  ProductItem? selectedItem;
 
   int count = 1;
 
@@ -254,7 +275,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: widget.isAdmin
+      bottomNavigationBar: widget.isAdmin || !_isDiscontinued
           ? null
           : BottomAppBar(
               surfaceTintColor: Colors.white,
@@ -288,9 +309,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   Row(
                     children: [
-                      buildButton("Add to Cart", Colors.blue),
+                      buildButton("Add to Cart", Colors.blue,
+                          (widget.isAdmin || !_isDiscontinued) ? null : () {}),
                       SizedBox(width: 8),
-                      buildButton("Buy now", Colors.blue),
+                      buildButton("Buy now", Colors.blue,
+                          (widget.isAdmin || !_isDiscontinued) ? null : () {}),
                     ],
                   )
                 ],
@@ -382,65 +405,127 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   color: Colors.grey[600], fontSize: 14),
                             ),
                             const SizedBox(height: 15),
-                            Text(
-                              "VARIANTS",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
                             const SizedBox(height: 5),
-                            Row(
-                              spacing: 8,
-                              children: [
-                                for (var specs in groupedList)
-                                  SpecsVariantBox(
-                                    specs: specs,
-                                    isSelect: selectedSpecs == specs,
-                                    onTap: () {
-                                      setState(() {
-                                        selectedSpecs = specs;
-
-                                        colorSpecsList =
-                                            getColorsForSelectedSpecs();
-
-                                        if (colorSpecsList.isNotEmpty) {
-                                          var firstEntry = colorSpecsList
-                                              .first.entries.first;
-                                          selectedColorItem = firstEntry.key;
-                                        } else {
-                                          selectedColorItem = null;
-                                        }
-                                      });
-                                    },
-                                  ),
-                              ],
-                            ),
-                            if (selectedSpecs != null) ...[
-                              const SizedBox(height: 15),
+                            if (colors.isNotEmpty && specs.isNotEmpty) ...[
                               Text(
-                                "COLORS",
+                                "VARIANTS",
                                 style: TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold),
                               ),
-                              const SizedBox(height: 5),
                               Row(
                                 spacing: 8,
                                 children: [
-                                  for (var colorSpec in colorSpecsList)
-                                    for (var entry in colorSpec.entries)
-                                      for (var color in entry.value)
+                                  for (var specs in groupedList)
+                                    SpecsVariantBox(
+                                      specs: specs,
+                                      isSelect: selectedSpecs == specs,
+                                      onTap: () {
+                                        setState(() {
+                                          if (selectedSpecs == specs) return;
+
+                                          selectedSpecs = specs;
+
+                                          colorSpecsList =
+                                              getColorsForSelectedSpecs();
+
+                                          if (colorSpecsList.isNotEmpty) {
+                                            var firstEntry = colorSpecsList
+                                                .first.entries.first;
+                                            selectedItem = firstEntry.key;
+                                          } else {
+                                            selectedItem = null;
+                                          }
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                              if (selectedSpecs != null) ...[
+                                const SizedBox(height: 15),
+                                Text(
+                                  "COLORS",
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  spacing: 8,
+                                  children: [
+                                    for (var colorSpec in colorSpecsList)
+                                      for (var entry in colorSpec.entries)
+                                        for (var color in entry.value)
+                                          ColorVariantBox(
+                                            color: color,
+                                            selectedProductItem: entry.key,
+                                            isSelected:
+                                                selectedItem == entry.key,
+                                            onTap: () {
+                                              setState(() {
+                                                selectedItem = entry.key;
+                                              });
+                                            },
+                                          ),
+                                  ],
+                                )
+                              ]
+                            ] else if (colors.isEmpty && specs.isNotEmpty) ...[
+                              Text(
+                                "VARIANTS",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              Row(
+                                spacing: 8,
+                                children: [
+                                  for (var spec in specs)
+                                    for (var entry in spec.entries)
+                                      for (var value in entry.value)
                                         ColorVariantBox(
-                                          color: color,
+                                          color: value,
                                           selectedProductItem: entry.key,
-                                          isSelected:
-                                              selectedColorItem == entry.key,
+                                          isSelected: selectedItem == entry.key,
                                           onTap: () {
                                             setState(() {
-                                              selectedColorItem = entry.key;
+                                              selectedItem = entry.key;
                                             });
                                           },
                                         ),
                                 ],
                               )
+                            ] else if (colors.isNotEmpty && specs.isEmpty) ...[
+                              Text(
+                                "VARIANTS",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              Row(
+                                spacing: 8,
+                                children: [
+                                  for (var spec in colors)
+                                    for (var entry in spec.entries)
+                                      for (var value in entry.value)
+                                        ColorVariantBox(
+                                          color: value,
+                                          selectedProductItem: entry.key,
+                                          isSelected: selectedItem == entry.key,
+                                          onTap: () {
+                                            setState(() {
+                                              selectedItem = entry.key;
+                                            });
+                                          },
+                                        ),
+                                ],
+                              )
+                            ] else ...[
+                              Text(
+                                "This product is discontinued.",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red,
+                                ),
+                              ),
                             ]
                           ],
                         ),
@@ -497,7 +582,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget buildButton(String text, Color color) {
+  Widget buildButton(String text, Color color, VoidCallback? onPressed) {
     return ElevatedButton(
       onPressed: () {},
       style: ElevatedButton.styleFrom(
