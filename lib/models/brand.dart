@@ -7,9 +7,9 @@ class Brand {
     required this.name,
   });
 
-  factory Brand.fromMap(Map<String, dynamic> data, String documentId) {
+  factory Brand.fromMap(Map<String, dynamic> data) {
     return Brand(
-      id: documentId,
+      id: data['id']?.toString() ?? '',
       name: data['name'] ?? '',
     );
   }

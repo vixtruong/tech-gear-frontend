@@ -7,9 +7,9 @@ class Category {
     required this.name,
   });
 
-  factory Category.fromMap(Map<String, dynamic> data, String documentId) {
+  factory Category.fromMap(Map<String, dynamic> data) {
     return Category(
-      id: documentId,
+      id: data['id']?.toString() ?? '',
       name: data['name'] ?? '',
     );
   }

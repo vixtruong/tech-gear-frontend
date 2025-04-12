@@ -1,62 +1,55 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class BrandService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final String apiUrl = "https://10.0.2.2:5001/api/brand";
 
   Future<List<Map<String, dynamic>>> fetchBrands() async {
-    final snapshot = await _db.collection('brand').get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    final response = await http.get(Uri.parse('$apiUrl/all'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData
+          .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } else {
+      throw Exception('Failed to load brands');
+    }
   }
 
   Future<Map<String, dynamic>?> fetchBrandById(String brandId) async {
-    final doc = await _db.collection('brand').doc(brandId).get();
+    final response = await http.get(Uri.parse('$apiUrl/$brandId'));
 
-    if (doc.exists) {
-      return {...doc.data()!, 'id': doc.id};
-    } else {
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
       return null;
+    } else {
+      throw Exception('Failed to load brand by ID');
     }
   }
 
   Future<Map<String, dynamic>?> fetchBrandByName(String brandName) async {
-    final querySnapshot = await _db
-        .collection('brand')
-        .where('name', isEqualTo: brandName)
-        .limit(1) // Chỉ lấy 1 kết quả
-        .get();
+    final response = await http.get(Uri.parse('$apiUrl/by-name/$brandName'));
 
-    if (querySnapshot.docs.isNotEmpty) {
-      final doc = querySnapshot.docs.first;
-      return {...doc.data(), 'id': doc.id};
-    } else {
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
       return null;
+    } else {
+      throw Exception('Failed to load brand by name');
     }
   }
 
-  Future<void> addBrand(String brand) async {
-    String? id = await generateID();
+  Future<void> addBrand(String brandName) async {
+    final response = await http.post(
+      Uri.parse('$apiUrl/add'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(brandName),
+    );
 
-    await _db.collection('brand').doc(id).set({
-      'id': id,
-      'name': brand,
-    });
-  }
-
-  Future<String> generateID() async {
-    final FirebaseFirestore db = FirebaseFirestore.instance;
-
-    final snapshot = await db.collection('brand').orderBy('id').get();
-
-    if (snapshot.docs.isEmpty) {
-      return 'b001';
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to add brand');
     }
-
-    final lastId = snapshot.docs.last.id;
-
-    int lastNumber = int.tryParse(lastId.substring(1)) ?? 0;
-
-    int newNumber = lastNumber + 1;
-
-    return 'b${newNumber.toString().padLeft(3, '0')}';
   }
 }

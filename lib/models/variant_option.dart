@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class VariantOption {
   String id;
   String name;
@@ -11,11 +9,11 @@ class VariantOption {
     required this.categoryId,
   });
 
-  factory VariantOption.fromMap(Map<String, dynamic> data, String documentId) {
+  factory VariantOption.fromMap(Map<String, dynamic> data) {
     return VariantOption(
-      id: documentId,
+      id: data['id']?.toString() ?? '',
       name: data['name'] ?? '',
-      categoryId: (data['category'] as DocumentReference).id,
+      categoryId: data['categoryId']?.toString() ?? '',
     );
   }
 }

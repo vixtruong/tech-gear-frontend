@@ -1,7 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class ProductConfig {
-  String id;
+  String? id;
   String productItemId;
   String variantValueId;
 
@@ -11,11 +9,18 @@ class ProductConfig {
     required this.variantValueId,
   });
 
-  factory ProductConfig.fromMap(Map<String, dynamic> data, String documentId) {
+  factory ProductConfig.fromMap(Map<String, dynamic> data) {
     return ProductConfig(
-      id: documentId,
-      productItemId: (data['product_item'] as DocumentReference).id,
-      variantValueId: (data['variant_value'] as DocumentReference).id,
+      id: data['id']?.toString() ?? '',
+      productItemId: data['productItemId']?.toString() ?? '',
+      variantValueId: data['variationOptionId']?.toString() ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'productItemId': int.parse(productItemId),
+      'variationOptionId': int.parse(variantValueId),
+    };
   }
 }

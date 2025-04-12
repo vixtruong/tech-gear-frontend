@@ -1,51 +1,45 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:techgear/models/product_config.dart';
 
 class ProductConfigService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final String apiUrl = 'https://10.0.2.2:5001/api/productconfig';
 
   Future<List<Map<String, dynamic>>> fetchProductConfigs() async {
-    final snapshot = await _db.collection('product_configuration').get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    final response = await http.get(Uri.parse('$apiUrl/all'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception('Failed to fetch product configs');
+    }
   }
 
   Future<List<Map<String, dynamic>>> fetchProductConfigsByProductItemId(
       String productItemId) async {
-    final productItemRef = _db.doc('/product_item/$productItemId');
-    final snapshot = await _db
-        .collection('product_configuration')
-        .where('product_item', isEqualTo: productItemRef)
-        .get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
-  }
+    final response =
+        await http.get(Uri.parse('$apiUrl/by-productItemId/$productItemId'));
 
-  Future<void> addProductConfig(ProductConfig config) async {
-    String? id = await generateID();
-
-    await _db.collection('product_configuration').doc(id).set({
-      'id': id,
-      'product_item': _db.collection('product_item').doc(config.productItemId),
-      "variant_value":
-          _db.collection('variant_value').doc(config.variantValueId),
-    });
-  }
-
-  Future<String> generateID() async {
-    final FirebaseFirestore db = FirebaseFirestore.instance;
-
-    final snapshot =
-        await db.collection('product_configuration').orderBy('id').get();
-
-    if (snapshot.docs.isEmpty) {
-      return 'pconf001';
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception('Failed to fetch configs by productItemId');
     }
+  }
 
-    final lastId = snapshot.docs.last.id;
+  Future<void> addProductConfigs(List<ProductConfig> configs) async {
+    final body = jsonEncode(configs.map((e) => e.toJson()).toList());
 
-    int lastNumber = int.tryParse(lastId.substring(5)) ?? 0;
+    final response = await http.post(
+      Uri.parse('$apiUrl/add'),
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
 
-    int newNumber = lastNumber + 1;
-
-    return 'pconf${newNumber.toString().padLeft(3, '0')}';
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to add product configs');
+    }
   }
 }

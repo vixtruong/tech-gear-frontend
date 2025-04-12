@@ -13,9 +13,8 @@ class ProductConfigProvider with ChangeNotifier {
     try {
       List<Map<String, dynamic>> fetchData =
           await _service.fetchProductConfigs();
-      _productConfigs = fetchData
-          .map((data) => ProductConfig.fromMap(data, data['id'] as String))
-          .toList();
+      _productConfigs =
+          fetchData.map((data) => ProductConfig.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
@@ -26,17 +25,16 @@ class ProductConfigProvider with ChangeNotifier {
     try {
       List<Map<String, dynamic>> fetchData =
           await _service.fetchProductConfigsByProductItemId(productItemId);
-      _productConfigs = fetchData
-          .map((data) => ProductConfig.fromMap(data, data['id'] as String))
-          .toList();
+      _productConfigs =
+          fetchData.map((data) => ProductConfig.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
     }
   }
 
-  Future<void> addProductConfig(ProductConfig config) async {
-    await _service.addProductConfig(config);
+  Future<void> addProductConfigs(List<ProductConfig> configs) async {
+    await _service.addProductConfigs(configs);
     await fetchProductConfigs();
   }
 }

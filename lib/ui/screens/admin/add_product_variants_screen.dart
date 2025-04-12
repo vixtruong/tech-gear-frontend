@@ -127,10 +127,7 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
       return;
     }
 
-    String productItemId = await _productItemProvider.generateID();
-
     ProductItem productItem = ProductItem(
-      id: productItemId,
       sku: sku,
       imgFile: _selectedImage!,
       quantity: quantity,
@@ -139,14 +136,18 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
     );
 
     try {
-      await _productItemProvider.addProductItem(productItem);
+      ProductItem? newItem =
+          await _productItemProvider.addProductItem(productItem);
 
+      List<ProductConfig> configs = [];
       for (int i = 0; i < _variantOptions.length; i++) {
         var config = ProductConfig(
-            productItemId: productItemId,
+            productItemId: newItem!.id!,
             variantValueId: _selectVariantValueIds[i]);
-        await _productConfigProvider.addProductConfig(config);
+        configs.add(config);
       }
+
+      await _productConfigProvider.addProductConfigs(configs);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

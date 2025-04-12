@@ -1,84 +1,80 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:techgear/models/variant_value.dart';
 
 class VariantValueService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final String apiUrl = 'https://10.0.2.2:5001/api/variationoption';
 
   Future<List<Map<String, dynamic>>> fetchVariantValues() async {
-    final snapshot = await _db
-        .collection('variant_value')
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    final response = await http.get(Uri.parse('$apiUrl/all'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception('Failed to fetch variant values');
+    }
   }
 
   Future<Map<String, dynamic>?> fetchVariantValueById(String id) async {
-    final doc = await _db.collection('variant_value').doc(id).get();
+    final response = await http.get(Uri.parse('$apiUrl/$id'));
 
-    if (doc.exists) {
-      return {...doc.data()!, 'id': doc.id};
-    } else {
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
       return null;
+    } else {
+      throw Exception('Failed to fetch variant value by ID');
     }
   }
 
   Future<Map<String, dynamic>?> fetchVariantValueByName(String name) async {
-    final querySnapshot = await _db
-        .collection('variant_value')
-        .where('name', isEqualTo: name)
-        .limit(1)
-        .get();
+    final response = await http.get(Uri.parse('$apiUrl/by-value/$name'));
 
-    if (querySnapshot.docs.isNotEmpty) {
-      final doc = querySnapshot.docs.first;
-      return {...doc.data(), 'id': doc.id};
-    } else {
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
       return null;
+    } else {
+      throw Exception('Failed to fetch variant value by name');
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchVariantValuesByOptionId(
       String optionId) async {
-    final optionRef = _db.doc('/variant_option/$optionId');
+    final response =
+        await http.get(Uri.parse('$apiUrl/by-variationId/$optionId'));
 
-    final snapshot = await _db
-        .collection('variant_option')
-        .where('variant_option', isEqualTo: optionRef)
-        .get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception('Failed to fetch variant values by option ID');
+    }
   }
 
   Future<void> addVariantValue(VariantValue value) async {
-    String? id = await generateID();
-
-    await _db.collection('variant_value').doc(id).set({
-      'id': id,
-      'name': value.name,
-      'variant_option':
-          _db.collection('variant_option').doc(value.variantOptionId),
-      'createdAt': FieldValue.serverTimestamp(),
+    final body = jsonEncode({
+      'value': value.name,
+      'variationId': int.parse(value.variantOptionId),
     });
+
+    final response = await http.post(
+      Uri.parse('$apiUrl/add'),
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to add variant value');
+    }
   }
 
   Future<void> deleteVariantValue(String id) async {
-    await _db.collection('variant_value').doc(id).delete();
-  }
+    final response = await http.delete(Uri.parse('$apiUrl/$id'));
 
-  Future<String> generateID() async {
-    final FirebaseFirestore db = FirebaseFirestore.instance;
-
-    final snapshot = await db.collection('variant_value').orderBy('id').get();
-
-    if (snapshot.docs.isEmpty) {
-      return 'vl001';
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete variant value');
     }
-
-    final lastId = snapshot.docs.last.id;
-
-    int lastNumber = int.tryParse(lastId.substring(2)) ?? 0;
-
-    int newNumber = lastNumber + 1;
-
-    return 'vl${newNumber.toString().padLeft(3, '0')}';
   }
 }

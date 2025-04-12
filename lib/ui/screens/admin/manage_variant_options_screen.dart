@@ -74,14 +74,17 @@ class _ManageVariantOptionsScreenState
     try {
       await _variantValueProvider.deleteVariantValue(id);
 
+      setState(() {
+        allVariantValues = _variantValueProvider.variantValues;
+      });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Variant value already exists!",
+            "Variant value is deleted successful!",
             style: TextStyle(fontSize: 16),
           ),
-          backgroundColor: Colors.red[200],
+          backgroundColor: Colors.green[400],
         ),
       );
     } catch (e) {

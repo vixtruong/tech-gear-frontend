@@ -19,9 +19,8 @@ class VariantOptionProvider with ChangeNotifier {
     try {
       List<Map<String, dynamic>> fetchedData =
           await _service.fetchVariantOptions();
-      _variantOptions = fetchedData
-          .map((data) => VariantOption.fromMap(data, data['id'] as String))
-          .toList();
+      _variantOptions =
+          fetchedData.map((data) => VariantOption.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
@@ -30,23 +29,20 @@ class VariantOptionProvider with ChangeNotifier {
 
   Future<VariantOption?> fetchVariantOptionById(String id) async {
     final varData = await _service.fetchVariantOptionById(id);
-    return varData != null ? VariantOption.fromMap(varData, id) : null;
+    return varData != null ? VariantOption.fromMap(varData) : null;
   }
 
   Future<VariantOption?> fetchVariantOptionByName(String name) async {
     final varData = await _service.fetchVariantOptionByName(name);
-    return varData != null
-        ? VariantOption.fromMap(varData, varData['id'])
-        : null;
+    return varData != null ? VariantOption.fromMap(varData) : null;
   }
 
   Future<void> fetchVariantOptionsByCateId(String cateId) async {
     try {
       List<Map<String, dynamic>> fetchedData =
           await _service.fetchVariantOptionsByCateId(cateId);
-      _variantOptions = fetchedData
-          .map((data) => VariantOption.fromMap(data, data['id'] as String))
-          .toList();
+      _variantOptions =
+          fetchedData.map((data) => VariantOption.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
