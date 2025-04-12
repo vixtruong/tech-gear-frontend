@@ -61,7 +61,10 @@ class _HomePageState extends State<HomePage> {
           shadowColor: Colors.white,
           leadingWidth: double.infinity,
           leading: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 15.0,
+              vertical: 4,
+            ),
             child: Column(
               children: [
                 Row(

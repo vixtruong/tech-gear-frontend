@@ -46,7 +46,7 @@ class ProductService {
         'brand': _db.collection('brand').doc(product.brandId),
         'category': _db.collection('category').doc(product.categoryId),
         'createdAt': FieldValue.serverTimestamp(),
-        'isDisabled': product.isDisabled,
+        'isDisabled': product.available,
       });
     } catch (e) {
       e.toString();

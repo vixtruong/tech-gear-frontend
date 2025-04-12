@@ -75,8 +75,8 @@ class _ProductAdminCardState extends State<ProductAdminCard> {
                   child: Text('Edit'),
                 ),
                 PopupMenuItem(
-                  value: (widget.product.isDisabled) ? 'Enable' : "Disable",
-                  child: (widget.product.isDisabled)
+                  value: (widget.product.available) ? 'Enable' : "Disable",
+                  child: (widget.product.available)
                       ? Text('Enable')
                       : Text('Disable'),
                 ),
