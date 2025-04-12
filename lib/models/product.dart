@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Product {
   final String id;
   final String name;
@@ -12,6 +10,7 @@ class Product {
   final String brandId;
   final String categoryId;
   final bool available;
+
   const Product({
     required this.name,
     this.id = "",
@@ -21,20 +20,20 @@ class Product {
     required this.categoryId,
     required this.imgFile,
     required this.imgUrl,
-    this.available = false,
+    this.available = true,
   });
 
-  factory Product.fromMap(Map<String, dynamic> data, String documentId) {
+  factory Product.fromMap(Map<String, dynamic> data) {
     return Product(
-      id: documentId,
+      id: data['id']?.toString() ?? '',
       name: data['name'] ?? '',
       price: (data['price'] ?? 0).toDouble(),
       description: data['description'] ?? '',
-      imgFile: File(""),
-      imgUrl: data['imageUrl'] ?? '',
-      brandId: (data['brand'] as DocumentReference).id,
-      categoryId: (data['category'] as DocumentReference).id,
-      available: data['isDisabled'] ?? false,
+      imgFile: File(''),
+      imgUrl: data['productImage'] ?? '',
+      brandId: data['brandId']?.toString() ?? '',
+      categoryId: data['categoryId']?.toString() ?? '',
+      available: data['available'] ?? true,
     );
   }
 }

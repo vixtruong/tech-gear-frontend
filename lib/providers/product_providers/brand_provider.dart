@@ -12,9 +12,7 @@ class BrandProvider with ChangeNotifier {
   Future<void> fetchBrands() async {
     try {
       List<Map<String, dynamic>> fetchedData = await _service.fetchBrands();
-      _brands = fetchedData
-          .map((data) => Brand.fromMap(data, data['id'] as String))
-          .toList();
+      _brands = fetchedData.map((data) => Brand.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
@@ -24,12 +22,12 @@ class BrandProvider with ChangeNotifier {
 
   Future<Brand?> fetchBrandById(String brandId) async {
     final brandData = await _service.fetchBrandById(brandId);
-    return brandData != null ? Brand.fromMap(brandData, brandId) : null;
+    return brandData != null ? Brand.fromMap(brandData) : null;
   }
 
   Future<Brand?> fetchBrandByName(String brandName) async {
     final brandData = await _service.fetchBrandByName(brandName);
-    return brandData != null ? Brand.fromMap(brandData, brandData['id']) : null;
+    return brandData != null ? Brand.fromMap(brandData) : null;
   }
 
   Future<void> addBrand(String brand) async {

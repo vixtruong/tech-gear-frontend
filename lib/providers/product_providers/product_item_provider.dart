@@ -12,9 +12,8 @@ class ProductItemProvider with ChangeNotifier {
     try {
       List<Map<String, dynamic>> fetchedData =
           await _service.fetchProductItems();
-      _productItems = fetchedData
-          .map((data) => ProductItem.fromMap(data, data['id'] as String))
-          .toList();
+      _productItems =
+          fetchedData.map((data) => ProductItem.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
@@ -25,31 +24,26 @@ class ProductItemProvider with ChangeNotifier {
     try {
       List<Map<String, dynamic>> fetchedData =
           await _service.fetchProductItemsByProductId(productId);
-      _productItems = fetchedData
-          .map((data) => ProductItem.fromMap(data, data['id'] as String))
-          .toList();
+      _productItems =
+          fetchedData.map((data) => ProductItem.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
     }
   }
 
-  Future<ProductItem?> fetchProductItemById(String productItemId) async {
-    final productData = await _service.fetchProductItemById(productItemId);
-    return productData != null
-        ? ProductItem.fromMap(productData, productItemId)
-        : null;
+  Future<ProductItem?> addProductItem(ProductItem productItem) async {
+    try {
+      final result = await _service.addProductItem(productItem);
+      if (result != null) {
+        final addedItem = ProductItem.fromMap(result);
+        _productItems.add(addedItem);
+        notifyListeners();
+        return addedItem;
+      }
+    } catch (e) {
+      e.toString();
+    }
+    return null;
   }
-
-  Future<void> addProductItem(ProductItem productItem) async {
-    await _service.addProductItem(productItem);
-    await fetchProductItems();
-  }
-
-  Future<String> generateID() async {
-    return await _service.generateID();
-  }
-
-  @override
-  void notifyListeners() {}
 }

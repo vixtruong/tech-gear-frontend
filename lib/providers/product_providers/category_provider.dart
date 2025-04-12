@@ -13,9 +13,7 @@ class CategoryProvider with ChangeNotifier {
   Future<void> fetchCategories() async {
     try {
       List<Map<String, dynamic>> fetchedData = await _service.fetchCategories();
-      _categories = fetchedData
-          .map((data) => Category.fromMap(data, data['id'] as String))
-          .toList();
+      _categories = fetchedData.map((data) => Category.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
@@ -26,16 +24,12 @@ class CategoryProvider with ChangeNotifier {
 
   Future<Category?> fetchCategoryById(String categoryId) async {
     final categoryData = await _service.fetchCategoryById(categoryId);
-    return categoryData != null
-        ? Category.fromMap(categoryData, categoryId)
-        : null;
+    return categoryData != null ? Category.fromMap(categoryData) : null;
   }
 
   Future<Category?> fetchCategoryByName(String categoryName) async {
     final categoryData = await _service.fetchCategoryByName(categoryName);
-    return categoryData != null
-        ? Category.fromMap(categoryData, categoryData['id'])
-        : null;
+    return categoryData != null ? Category.fromMap(categoryData) : null;
   }
 
   Future<void> addCategory(String category) async {

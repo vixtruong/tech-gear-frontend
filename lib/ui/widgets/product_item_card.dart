@@ -71,10 +71,10 @@ class _ProductItemCardState extends State<ProductItemCard> {
                 child: Text('Edit'),
               ),
               PopupMenuItem(
-                value: (widget.productItem.isDisabled) ? 'Enable' : "Disable",
-                child: (widget.productItem.isDisabled)
-                    ? Text('Enable')
-                    : Text('Disable'),
+                value: (widget.productItem.available) ? 'Disable' : "Enable",
+                child: (widget.productItem.available)
+                    ? Text('Disable')
+                    : Text('Enable'),
               ),
             ],
             icon: Icon(Icons.more_vert_outlined),

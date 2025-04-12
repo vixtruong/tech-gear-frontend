@@ -1,79 +1,72 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:techgear/models/variant_option.dart';
 
 class VariantOptionService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final String apiUrl = 'https://10.0.2.2:5001/api/variation';
 
   Future<List<Map<String, dynamic>>> fetchVariantOptions() async {
-    final snapshot = await _db
-        .collection('variant_option')
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    final response = await http.get(Uri.parse('$apiUrl/all'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception('Failed to fetch variant options');
+    }
   }
 
   Future<Map<String, dynamic>?> fetchVariantOptionById(String id) async {
-    final doc = await _db.collection('variant_option').doc(id).get();
+    final response = await http.get(Uri.parse('$apiUrl/$id'));
 
-    if (doc.exists) {
-      return {...doc.data()!, 'id': doc.id};
-    } else {
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
       return null;
+    } else {
+      throw Exception('Failed to fetch variant option by ID');
     }
   }
 
   Future<Map<String, dynamic>?> fetchVariantOptionByName(String name) async {
-    final querySnapshot = await _db
-        .collection('variant_option')
-        .where('name', isEqualTo: name)
-        .limit(1)
-        .get();
+    final response = await http.get(Uri.parse('$apiUrl/by-name/$name'));
 
-    if (querySnapshot.docs.isNotEmpty) {
-      final doc = querySnapshot.docs.first;
-      return {...doc.data(), 'id': doc.id};
-    } else {
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    } else if (response.statusCode == 404) {
       return null;
+    } else {
+      throw Exception('Failed to fetch variant option by name');
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchVariantOptionsByCateId(
       String cateId) async {
-    final cateRef = _db.doc('/category/$cateId');
+    final response = await http.get(Uri.parse('$apiUrl/by-categoryId/$cateId'));
 
-    final snapshot = await _db
-        .collection('variant_option')
-        .where('category', isEqualTo: cateRef)
-        .get();
-    return snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception('Failed to fetch variant options by category ID');
+    }
   }
 
   Future<void> addVariantOption(VariantOption option) async {
-    String? id = await generateID();
-
-    await _db.collection('variant_option').doc(id).set({
-      'id': id,
+    final body = jsonEncode({
       'name': option.name,
-      'category': _db.collection('category').doc(option.categoryId),
-      'createdAt': FieldValue.serverTimestamp(),
+      'categoryId': option.categoryId,
+      'createdAt': DateTime.now().toIso8601String() // nếu cần
     });
-  }
 
-  Future<String> generateID() async {
-    final FirebaseFirestore db = FirebaseFirestore.instance;
+    final response = await http.post(
+      Uri.parse('$apiUrl/add'),
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
 
-    final snapshot = await db.collection('variant_option').orderBy('id').get();
-
-    if (snapshot.docs.isEmpty) {
-      return 'vo001';
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to add variant option');
     }
-
-    final lastId = snapshot.docs.last.id;
-
-    int lastNumber = int.tryParse(lastId.substring(2)) ?? 0;
-
-    int newNumber = lastNumber + 1;
-
-    return 'vo${newNumber.toString().padLeft(3, '0')}';
   }
 }

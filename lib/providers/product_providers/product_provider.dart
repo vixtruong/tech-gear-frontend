@@ -12,9 +12,7 @@ class ProductProvider with ChangeNotifier {
   Future<void> fetchProducts() async {
     try {
       List<Map<String, dynamic>> fetchedData = await _service.fetchProducts();
-      _products = fetchedData
-          .map((data) => Product.fromMap(data, data['id'] as String))
-          .toList();
+      _products = fetchedData.map((data) => Product.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();
@@ -23,7 +21,7 @@ class ProductProvider with ChangeNotifier {
 
   Future<Product?> fetchProductById(String productId) async {
     final productData = await _service.fetchProductById(productId);
-    return productData != null ? Product.fromMap(productData, productId) : null;
+    return productData != null ? Product.fromMap(productData) : null;
   }
 
   Future<void> addProduct(Product product) async {
