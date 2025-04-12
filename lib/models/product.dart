@@ -11,7 +11,7 @@ class Product {
   final String imgUrl;
   final String brandId;
   final String categoryId;
-  final bool isDisabled;
+  final bool available;
   const Product({
     required this.name,
     this.id = "",
@@ -21,7 +21,7 @@ class Product {
     required this.categoryId,
     required this.imgFile,
     required this.imgUrl,
-    this.isDisabled = false,
+    this.available = false,
   });
 
   factory Product.fromMap(Map<String, dynamic> data, String documentId) {
@@ -34,7 +34,7 @@ class Product {
       imgUrl: data['imageUrl'] ?? '',
       brandId: (data['brand'] as DocumentReference).id,
       categoryId: (data['category'] as DocumentReference).id,
-      isDisabled: data['isDisabled'] ?? false,
+      available: data['isDisabled'] ?? false,
     );
   }
 }

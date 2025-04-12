@@ -20,6 +20,7 @@ class CategoryProvider with ChangeNotifier {
     } catch (e) {
       e.toString();
     }
+
     notifyListeners();
   }
 
