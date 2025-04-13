@@ -1,51 +1,40 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:techgear/services/dio_client.dart';
 
 class CategoryService {
-  final String apiUrl = "https://10.0.2.2:5001/api/category";
+  final Dio _dio = DioClient.instance;
+  final String apiUrl = '/api/category';
 
   Future<List<Map<String, dynamic>>> fetchCategories() async {
-    final response = await http.get(Uri.parse('$apiUrl/all'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData
-          .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
-          .toList();
-    } else {
-      throw Exception('Failed to load categories');
-    }
+    final response = await _dio.get('$apiUrl/all');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<Map<String, dynamic>?> fetchCategoryById(String categoryId) async {
-    final response = await http.get(Uri.parse('$apiUrl/$categoryId'));
-
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body));
-    } else if (response.statusCode == 404) {
-      return null;
-    } else {
-      throw Exception('Failed to load category by ID');
+    try {
+      final response = await _dio.get('$apiUrl/$categoryId');
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
   Future<Map<String, dynamic>?> fetchCategoryByName(String categoryName) async {
-    final response = await http.get(Uri.parse('$apiUrl/by-name/$categoryName'));
-
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body));
-    } else if (response.statusCode == 404) {
-      return null;
-    } else {
-      throw Exception('Failed to load category by name');
+    try {
+      final response = await _dio.get('$apiUrl/by-name/$categoryName');
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
   Future<void> addCategory(String name) async {
-    final response = await http.post(
-      Uri.parse('$apiUrl/add'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(name),
+    final response = await _dio.post(
+      '$apiUrl/add',
+      data: name,
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {

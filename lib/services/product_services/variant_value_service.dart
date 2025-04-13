@@ -1,77 +1,65 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:techgear/models/variant_value.dart';
+import 'package:dio/dio.dart';
+import 'package:techgear/services/dio_client.dart';
+import 'package:techgear/models/product/variant_value.dart';
 
 class VariantValueService {
-  final String apiUrl = 'https://10.0.2.2:5001/api/variationoption';
+  final Dio _dio = DioClient.instance;
+  final String apiUrl = '/api/variationoption';
 
+  /// Lấy tất cả variant values
   Future<List<Map<String, dynamic>>> fetchVariantValues() async {
-    final response = await http.get(Uri.parse('$apiUrl/all'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
-    } else {
-      throw Exception('Failed to fetch variant values');
-    }
+    final response = await _dio.get('$apiUrl/all');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  /// Lấy variant value theo ID
   Future<Map<String, dynamic>?> fetchVariantValueById(String id) async {
-    final response = await http.get(Uri.parse('$apiUrl/$id'));
-
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body));
-    } else if (response.statusCode == 404) {
-      return null;
-    } else {
-      throw Exception('Failed to fetch variant value by ID');
+    try {
+      final response = await _dio.get('$apiUrl/$id');
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
+  /// Lấy variant value theo tên
   Future<Map<String, dynamic>?> fetchVariantValueByName(String name) async {
-    final response = await http.get(Uri.parse('$apiUrl/by-value/$name'));
-
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body));
-    } else if (response.statusCode == 404) {
-      return null;
-    } else {
-      throw Exception('Failed to fetch variant value by name');
+    try {
+      final response = await _dio.get('$apiUrl/by-value/$name');
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
+  /// Lấy danh sách variant value theo variationId
   Future<List<Map<String, dynamic>>> fetchVariantValuesByOptionId(
       String optionId) async {
-    final response =
-        await http.get(Uri.parse('$apiUrl/by-variationId/$optionId'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
-    } else {
-      throw Exception('Failed to fetch variant values by option ID');
-    }
+    final response = await _dio.get('$apiUrl/by-variationId/$optionId');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  /// Thêm variant value mới
   Future<void> addVariantValue(VariantValue value) async {
-    final body = jsonEncode({
+    final body = {
       'value': value.name,
       'variationId': int.parse(value.variantOptionId),
-    });
+    };
 
-    final response = await http.post(
-      Uri.parse('$apiUrl/add'),
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    );
+    final response = await _dio.post('$apiUrl/add', data: body);
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to add variant value');
     }
   }
 
+  /// Xoá variant value
   Future<void> deleteVariantValue(String id) async {
-    final response = await http.delete(Uri.parse('$apiUrl/$id'));
+    final response = await _dio.delete('$apiUrl/$id');
 
     if (response.statusCode != 204) {
       throw Exception('Failed to delete variant value');

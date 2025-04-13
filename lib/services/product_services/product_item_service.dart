@@ -1,45 +1,33 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:techgear/models/product_item.dart';
+import 'package:dio/dio.dart';
+import 'package:techgear/models/product/product_item.dart';
+import 'package:techgear/services/dio_client.dart';
 import 'package:techgear/services/google_services/google_drive_service.dart';
 
 class ProductItemService {
-  final String apiUrl = 'https://10.0.2.2:5001/api/productitem';
+  final Dio _dio = DioClient.instance;
+  final String apiUrl = '/api/productitem';
 
   Future<List<Map<String, dynamic>>> fetchProductItems() async {
-    final response = await http.get(Uri.parse('$apiUrl/all'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
-    } else {
-      throw Exception('Failed to fetch product items');
-    }
+    final response = await _dio.get('$apiUrl/all');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<List<Map<String, dynamic>>> fetchProductItemsByProductId(
       String productId) async {
-    final response =
-        await http.get(Uri.parse('$apiUrl/by-productId/$productId'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
-    } else {
-      throw Exception('Failed to fetch product items by product ID');
-    }
+    final response = await _dio.get('$apiUrl/by-productId/$productId');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<Map<String, dynamic>?> fetchProductItemById(
       String productItemId) async {
-    final response = await http.get(Uri.parse('$apiUrl/$productItemId'));
-
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body));
-    } else if (response.statusCode == 404) {
-      return null;
-    } else {
-      throw Exception('Failed to fetch product item by ID');
+    try {
+      final response = await _dio.get('$apiUrl/$productItemId');
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
@@ -47,12 +35,12 @@ class ProductItemService {
     try {
       final driveService = GoogleDriveService();
       await driveService.init();
-      String? fileId = await driveService.uploadFile(productItem.imgFile);
+      final fileId = await driveService.uploadFile(productItem.imgFile);
       driveService.dispose();
 
-      String imageUrl = "https://lh3.googleusercontent.com/d/$fileId=w300";
+      final imageUrl = 'https://lh3.googleusercontent.com/d/$fileId=w300';
 
-      final body = jsonEncode({
+      final body = {
         'sku': productItem.sku,
         'price': productItem.price.toInt(),
         'productImage': imageUrl,
@@ -60,22 +48,17 @@ class ProductItemService {
         'productId': int.parse(productItem.productId),
         'available': productItem.available,
         'createAt': DateTime.now().toIso8601String(),
-      });
+      };
 
-      final response = await http.post(
-        Uri.parse('$apiUrl/add'),
-        headers: {'Content-Type': 'application/json'},
-        body: body,
-      );
+      final response = await _dio.post('$apiUrl/add', data: body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        return Map<String, dynamic>.from(response.data);
       } else {
-        throw Exception('Failed to add product item: ${response.body}');
+        throw Exception('Failed to add product item');
       }
     } catch (e) {
-      e.toString();
+      return null;
     }
-    return null;
   }
 }

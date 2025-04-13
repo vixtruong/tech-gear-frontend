@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/product_config.dart';
+import 'package:techgear/models/product/product_config.dart';
 import 'package:techgear/services/product_services/product_config_service.dart';
 
 class ProductConfigProvider with ChangeNotifier {

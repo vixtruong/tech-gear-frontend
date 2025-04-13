@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/services/product_services/category_service.dart';
 
-import '../../models/category.dart';
+import '../../models/product/category.dart';
 
 class CategoryProvider with ChangeNotifier {
   final CategoryService _service = CategoryService();

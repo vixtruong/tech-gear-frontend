@@ -6,6 +6,21 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth > 800) {
+        return const WelcomeWebLayout();
+      } else {
+        return const WelcomeMobileLayout();
+      }
+    });
+  }
+}
+
+class WelcomeMobileLayout extends StatelessWidget {
+  const WelcomeMobileLayout({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -31,7 +46,7 @@ class WelcomeScreen extends StatelessWidget {
                       child: Image.asset("assets/images/tech_gear_logo.png"),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   const Text(
                     "Tech Gear",
                     style: TextStyle(
@@ -101,7 +116,7 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRowText(String text) {
+  static Widget _buildRowText(String text) {
     return Container(
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
@@ -115,6 +130,120 @@ class WelcomeScreen extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+// --------------------------
+// ✅ Web layout mở rộng
+// --------------------------
+class WelcomeWebLayout extends StatelessWidget {
+  const WelcomeWebLayout({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/images/welcome.jpg"),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 700),
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset("assets/images/tech_gear_logo.png", width: 80),
+                const SizedBox(height: 16),
+                const Text(
+                  "Tech Gear",
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Wrap(
+                  spacing: 12,
+                  children: [
+                    _Tag(text: "Build"),
+                    _Tag(text: "Upgrade"),
+                    _Tag(text: "Dominate"),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  "Welcome to Tech Gear!",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Discover the best computers and components to upgrade your setup.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: () {
+                    context.go('/login');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.greenAccent,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    "Get started",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  final String text;
+  const _Tag({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      backgroundColor: Colors.grey[800],
     );
   }
 }

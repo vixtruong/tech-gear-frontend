@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/variant_value.dart';
+import 'package:techgear/models/product/variant_value.dart';
 import 'package:techgear/services/product_services/variant_value_service.dart';
 
 class VariantValueProvider with ChangeNotifier {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/brand.dart';
+import 'package:techgear/models/product/brand.dart';
 import 'package:techgear/services/product_services/brand_service.dart';
 
 class BrandProvider with ChangeNotifier {

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../../models/product.dart';
+import '../../models/product/product.dart';
 import '../../services/product_services/product_service.dart';
 
 class ProductProvider with ChangeNotifier {
