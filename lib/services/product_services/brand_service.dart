@@ -1,51 +1,41 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:techgear/services/dio_client.dart';
 
 class BrandService {
-  final String apiUrl = "https://10.0.2.2:5001/api/brand";
+  final Dio _dio = DioClient.instance;
+  final String apiUrl = '/api/brand';
 
   Future<List<Map<String, dynamic>>> fetchBrands() async {
-    final response = await http.get(Uri.parse('$apiUrl/all'));
+    final response = await _dio.get('$apiUrl/all');
+    final List data = response.data;
 
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData
-          .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
-          .toList();
-    } else {
-      throw Exception('Failed to load brands');
-    }
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<Map<String, dynamic>?> fetchBrandById(String brandId) async {
-    final response = await http.get(Uri.parse('$apiUrl/$brandId'));
-
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body));
-    } else if (response.statusCode == 404) {
-      return null;
-    } else {
-      throw Exception('Failed to load brand by ID');
+    try {
+      final response = await _dio.get('$apiUrl/$brandId');
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
   Future<Map<String, dynamic>?> fetchBrandByName(String brandName) async {
-    final response = await http.get(Uri.parse('$apiUrl/by-name/$brandName'));
-
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body));
-    } else if (response.statusCode == 404) {
-      return null;
-    } else {
-      throw Exception('Failed to load brand by name');
+    try {
+      final response = await _dio.get('$apiUrl/by-name/$brandName');
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
   Future<void> addBrand(String brandName) async {
-    final response = await http.post(
-      Uri.parse('$apiUrl/add'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(brandName),
+    final response = await _dio.post(
+      '$apiUrl/add',
+      data: brandName,
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {

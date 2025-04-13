@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/product_item.dart';
+import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/services/product_services/product_item_service.dart';
 
 class ProductItemProvider with ChangeNotifier {

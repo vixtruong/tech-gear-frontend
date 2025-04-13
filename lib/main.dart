@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/core/routes.dart';
+import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_config_provider.dart';
@@ -12,7 +13,6 @@ import 'package:techgear/providers/product_providers/variant_value_provider.dart
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   HttpOverrides.global = MyHttpOverrides();
 
   runApp(
@@ -25,6 +25,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => VariantOptionProvider()),
         ChangeNotifierProvider(create: (context) => VariantValueProvider()),
         ChangeNotifierProvider(create: (context) => ProductConfigProvider()),
+        ChangeNotifierProvider(create: (context) => NavigationProvider()),
       ],
       child: const App(),
     ),

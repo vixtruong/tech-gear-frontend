@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/variant_option.dart';
+import 'package:techgear/models/product/variant_option.dart';
 import 'package:techgear/services/product_services/variant_option_service.dart';
 
 class VariantOptionProvider with ChangeNotifier {

@@ -1,41 +1,33 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:techgear/models/product_config.dart';
+import 'package:dio/dio.dart';
+import 'package:techgear/services/dio_client.dart';
+import 'package:techgear/models/product/product_config.dart';
 
 class ProductConfigService {
-  final String apiUrl = 'https://10.0.2.2:5001/api/productconfig';
+  final Dio _dio = DioClient.instance;
+  final String apiUrl = '/api/productconfig';
 
+  /// Lấy tất cả cấu hình
   Future<List<Map<String, dynamic>>> fetchProductConfigs() async {
-    final response = await http.get(Uri.parse('$apiUrl/all'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
-    } else {
-      throw Exception('Failed to fetch product configs');
-    }
+    final response = await _dio.get('$apiUrl/all');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  /// Lấy cấu hình theo productItemId
   Future<List<Map<String, dynamic>>> fetchProductConfigsByProductItemId(
       String productItemId) async {
-    final response =
-        await http.get(Uri.parse('$apiUrl/by-productItemId/$productItemId'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData.map((e) => Map<String, dynamic>.from(e)).toList();
-    } else {
-      throw Exception('Failed to fetch configs by productItemId');
-    }
+    final response = await _dio.get('$apiUrl/by-productItemId/$productItemId');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  /// Thêm danh sách cấu hình mới
   Future<void> addProductConfigs(List<ProductConfig> configs) async {
-    final body = jsonEncode(configs.map((e) => e.toJson()).toList());
+    final body = configs.map((e) => e.toJson()).toList();
 
-    final response = await http.post(
-      Uri.parse('$apiUrl/add'),
-      headers: {'Content-Type': 'application/json'},
-      body: body,
+    final response = await _dio.post(
+      '$apiUrl/add',
+      data: body,
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
