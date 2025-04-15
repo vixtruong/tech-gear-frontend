@@ -3,7 +3,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:techgear/dtos/average_rating_dto.dart';
 import 'package:techgear/models/product/product.dart';
+import 'package:techgear/providers/product_providers/rating_provider.dart';
 // import 'package:techgear/services/cart_service/cart_service.dart';
 import 'package:techgear/ui/widgets/review/star_rating.dart';
 
@@ -22,12 +25,44 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
-  // late CartService _cartService;
+  late RatingProvider _ratingProvider;
 
+  AverageRatingDto? averageRating;
   bool isFavorite = false;
+
+  bool _isLoading = true;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _ratingProvider = Provider.of<RatingProvider>(context, listen: false);
+    _loadInformations();
+  }
+
+  Future<void> _loadInformations() async {
+    try {
+      final result = await _ratingProvider
+          .fetchProductAvarageRating(int.parse(widget.product.id));
+
+      setState(() {
+        averageRating = result;
+        _isLoading = false;
+      });
+    } catch (e) {
+      e.toString();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+        ),
+      );
+    }
+
     return GestureDetector(
       onTap: () {
         if (kIsWeb) {
@@ -45,8 +80,8 @@ class _ProductCardState extends State<ProductCard> {
           boxShadow: [
             BoxShadow(
               color: Colors.black12,
-              blurRadius: kIsWeb ? 8 : 6,
-              offset: Offset(0, kIsWeb ? 4 : 2),
+              blurRadius: 6,
+              offset: Offset(0, 2),
             ),
           ],
         ),
@@ -64,18 +99,21 @@ class _ProductCardState extends State<ProductCard> {
                       imageUrl: widget.product.imgUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          Center(child: CircularProgressIndicator()),
+                      placeholder: (context, url) => Center(
+                          child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      )),
                       errorWidget: (context, url, error) => Icon(
                         Icons.broken_image,
-                        size: kIsWeb ? 100 : 80,
+                        size: 80,
                         color: Colors.grey,
                       ),
                     ),
                   ),
                 ),
                 _buttonFavorite(widget.atHome),
-                _buttonAddToCart(widget.atHome),
+                // _buttonAddToCart(
+                //     widget.atHome, () => _addToCart(widget.product.id)),
               ],
             ),
             Padding(
@@ -115,10 +153,10 @@ class _ProductCardState extends State<ProductCard> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      StarRating(rating: 4.5),
+                      StarRating(rating: averageRating!.averageRating),
                       const SizedBox(width: 6),
                       Text(
-                        "1234",
+                        '${averageRating?.ratingCount}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -140,16 +178,16 @@ class _ProductCardState extends State<ProductCard> {
       visible: visible,
       child: Positioned(
         top: 8,
-        left: 8,
+        right: 8,
         child: GestureDetector(
           onTap: () {
             setState(() {
               isFavorite = !isFavorite;
-              // TODO: Sync with WishlistProvider
             });
           },
           child: CircleAvatar(
             radius: 20,
+            // ignore: deprecated_member_use
             backgroundColor: Colors.grey.withOpacity(0.4),
             child: Icon(
               size: 20,
@@ -162,33 +200,26 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  Widget _buttonAddToCart(bool visible) {
-    return Visibility(
-      visible: visible,
-      child: Positioned(
-        top: 8,
-        right: 8,
-        child: CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey.withOpacity(0.4),
-          child: IconButton(
-            onPressed: () {
-              // TODO: Add to CartProvider
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("${widget.product.name} added to cart"),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            iconSize: 20,
-            icon: const Icon(
-              Icons.add_shopping_cart_outlined,
-              color: Colors.black54,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buttonAddToCart(bool visible, VoidCallback onPressed) {
+  //   return Visibility(
+  //     visible: visible,
+  //     child: Positioned(
+  //       top: 8,
+  //       right: 8,
+  //       child: CircleAvatar(
+  //         radius: 20,
+  //         // ignore: deprecated_member_use
+  //         backgroundColor: Colors.grey.withOpacity(0.4),
+  //         child: IconButton(
+  //           onPressed: onPressed,
+  //           iconSize: 20,
+  //           icon: const Icon(
+  //             Icons.add_shopping_cart_outlined,
+  //             color: Colors.black54,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }

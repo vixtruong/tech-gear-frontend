@@ -8,6 +8,7 @@ import 'package:techgear/services/dio_client.dart';
 class AuthService {
   final Dio _dio = DioClient.instance;
   final String apiUrl = '/api/v1/auth';
+  final CartService _cartService = CartService();
 
   Future<void> login(LoginRequestDto request) async {
     try {
@@ -56,7 +57,7 @@ class AuthService {
 
       if (response.statusCode == 200) {
         await SessionService.clearSessions();
-        await CartService.clearCart();
+        await _cartService.clearCart();
       }
     } on DioException catch (e) {
       e.toString();

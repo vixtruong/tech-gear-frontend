@@ -154,6 +154,7 @@ class WelcomeWebLayout extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 700),
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
+              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.4),
               borderRadius: BorderRadius.circular(24),
             ),

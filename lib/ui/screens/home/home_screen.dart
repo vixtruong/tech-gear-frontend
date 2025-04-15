@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/product/product.dart';
 import 'package:techgear/models/product/category.dart';
+import 'package:techgear/providers/cart_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/ui/widgets/common/custom_dropdown.dart';
@@ -21,6 +22,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late ProductProvider _productProvider;
   late CategoryProvider _categoryProvider;
+  late CartProvider _cartProvider;
+
   late TabController _tabController;
 
   List<Category> _categories = [];
@@ -30,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<Product> _promotionProducts = [];
 
   final TextEditingController _searchController = TextEditingController();
-  final int cartItemCount = 3;
+  int? _cartItemCount = 0;
   bool _isLoading = true;
 
   // Biến để lưu trạng thái bộ lọc
@@ -56,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.didChangeDependencies();
     _productProvider = Provider.of<ProductProvider>(context, listen: false);
     _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    _cartProvider = Provider.of<CartProvider>(context, listen: false);
     _loadProducts();
   }
 
@@ -66,12 +70,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await _productProvider.fetchBestSellerProducts();
       await _productProvider.fetchNewProducts();
       await _productProvider.fetchPromotionProducts();
+      await _cartProvider.loadCartFromStorage();
+
+      var numberItemCart = _cartProvider.itemCount;
       setState(() {
+        _cartItemCount = numberItemCart;
         _categories = _categoryProvider.categories;
         _products = _productProvider.products;
         _newProducts = _productProvider.newProducts;
         _bestSellerProducts = _productProvider.bestSellerProducts;
         _promotionProducts = _productProvider.promotionProducts;
+
+        _cartItemCount = numberItemCart;
         _isLoading = false;
       });
     } catch (e) {
@@ -96,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       backgroundColor: Colors.white,
       builder: (context) {
         return DraggableScrollableSheet(
-          initialChildSize: 0.75,
+          initialChildSize: 0.85,
           minChildSize: 0.5,
           maxChildSize: 0.95,
           expand: false,
@@ -105,157 +115,163 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               builder: (BuildContext context, StateSetter setModalState) {
                 return Container(
                   padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(10),
+                  child: SingleChildScrollView(
+                    // Thêm SingleChildScrollView
+                    controller:
+                        controller, // Gắn controller để hỗ trợ DraggableScrollableSheet
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Filter Options",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Filter Options",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        "Sort by",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
+                        const SizedBox(height: 20),
+                        const Text(
+                          "Sort by",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black54,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      CustomDropdown(
-                        label: "Sort",
-                        items: [
-                          {'id': '', 'name': 'Không sắp xếp'},
-                          {
-                            'id': 'price_low_to_high',
-                            'name': 'Giá: Thấp đến Cao'
-                          },
-                          {
-                            'id': 'price_high_to_low',
-                            'name': 'Giá: Cao đến Thấp'
-                          },
-                        ],
-                        onChanged: (value) {
-                          setModalState(() {
-                            _selectedSortOption = value;
-                          });
-                          setState(() {});
-                        },
-                        value: _selectedSortOption,
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        "Categories",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      CustomDropdown(
-                        label: "Categories",
-                        items: [
-                          {'id': '', 'name': 'Tất cả danh mục'},
-                          ..._categories.map(
-                              (cate) => {'id': cate.id, 'name': cate.name}),
-                        ],
-                        onChanged: (value) {
-                          setModalState(() {
-                            _selectedCategoryId = value;
-                          });
-                          setState(() {});
-                        },
-                        value: _selectedCategoryId,
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        "Price",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildPriceFilterChip(
-                            label: "Dưới 2 triệu",
-                            value: 'under_2m',
-                            updateState: setModalState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "2 - 5 triệu",
-                            value: '2m_5m',
-                            updateState: setModalState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "5 - 10 triệu",
-                            value: '5m_10m',
-                            updateState: setModalState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "10 - 20 triệu",
-                            value: '10m_20m',
-                            updateState: setModalState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "20 - 30 triệu",
-                            value: '20m_30m',
-                            updateState: setModalState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "Trên 30 triệu",
-                            value: 'above_30m',
-                            updateState: setModalState,
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
+                        const SizedBox(height: 10),
+                        CustomDropdown(
+                          label: "Sort",
+                          items: [
+                            {'id': '', 'name': 'Không sắp xếp'},
+                            {
+                              'id': 'price_low_to_high',
+                              'name': 'Giá: Thấp đến Cao'
+                            },
+                            {
+                              'id': 'price_high_to_low',
+                              'name': 'Giá: Cao đến Thấp'
+                            },
+                          ],
+                          onChanged: (value) {
+                            setModalState(() {
+                              _selectedSortOption = value;
+                            });
                             setState(() {});
-                            Navigator.pop(context);
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[600],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
+                          value: _selectedSortOption,
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          "Categories",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black54,
                           ),
-                          child: const Text(
-                            "Apply filter",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                        ),
+                        const SizedBox(height: 10),
+                        CustomDropdown(
+                          label: "Categories",
+                          items: [
+                            {'id': '', 'name': 'Tất cả danh mục'},
+                            ..._categories.map(
+                                (cate) => {'id': cate.id, 'name': cate.name}),
+                          ],
+                          onChanged: (value) {
+                            setModalState(() {
+                              _selectedCategoryId = value;
+                            });
+                            setState(() {});
+                          },
+                          value: _selectedCategoryId,
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          "Price",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildPriceFilterChip(
+                              label: "Dưới 2 triệu",
+                              value: 'under_2m',
+                              updateState: setModalState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "2 - 5 triệu",
+                              value: '2m_5m',
+                              updateState: setModalState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "5 - 10 triệu",
+                              value: '5m_10m',
+                              updateState: setModalState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "10 - 20 triệu",
+                              value: '10m_20m',
+                              updateState: setModalState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "20 - 30 triệu",
+                              value: '20m_30m',
+                              updateState: setModalState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "Trên 30 triệu",
+                              value: 'above_30m',
+                              updateState: setModalState,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                            height: 20), // Đảm bảo đủ không gian ở cuối
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {});
+                              Navigator.pop(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[600],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              "Apply filter",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },
@@ -350,57 +366,95 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return const Center(child: Text("No products available"));
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...filteredCategories.map((category) {
-          final categoryProducts = filteredProducts
-              .where((product) => product.categoryId == category.id)
-              .toList();
-          if (categoryProducts.isEmpty) {
-            return const SizedBox.shrink();
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Text(
-                  category.name,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Wrap(
-                spacing: 10,
-                runSpacing: 15,
-                children: List.generate(categoryProducts.length, (index) {
-                  final screenWidth = MediaQuery.of(context).size.width;
-                  final isWeb = screenWidth >= 800;
-                  final itemsPerRow = isWeb ? 4.2 : 2;
-                  final totalSpacing = (itemsPerRow - 1) * 10;
-                  final availableWidth = isWeb
-                      ? (screenWidth >= 1200 ? 1200 : screenWidth - 40)
-                      : screenWidth - 30;
-                  final cardWidth =
-                      (availableWidth - totalSpacing) / itemsPerRow;
+    // Map để theo dõi trạng thái "Xem thêm" của từng danh mục
+    final Map<String, bool> expandedCategories = {};
 
-                  return SizedBox(
-                    width: cardWidth,
-                    child: ProductCard(
-                      product: categoryProducts[index],
-                      atHome: true,
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...filteredCategories.map((category) {
+              final categoryProducts = filteredProducts
+                  .where((product) => product.categoryId == category.id)
+                  .toList();
+              if (categoryProducts.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              final screenWidth = MediaQuery.of(context).size.width;
+              final isWeb = screenWidth >= 800;
+              final maxItem = (isWeb) ? 10 : 4;
+
+              // Kiểm tra trạng thái mở rộng của danh mục
+              final isExpanded = expandedCategories[category.id] ?? false;
+              final displayProducts = isExpanded
+                  ? categoryProducts
+                  : categoryProducts.take(maxItem).toList();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Text(
+                      category.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 20),
-            ],
-          );
-        }),
-      ],
+                  ),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 15,
+                    children: List.generate(displayProducts.length, (index) {
+                      final itemsPerRow = isWeb ? 5.2 : 2;
+                      final totalSpacing = (itemsPerRow - 1) * 10;
+                      final availableWidth = isWeb
+                          ? (screenWidth >= 1200 ? 1200 : screenWidth - 40)
+                          : screenWidth - 30;
+                      final cardWidth =
+                          (availableWidth - totalSpacing) / itemsPerRow;
+
+                      return SizedBox(
+                        width: cardWidth,
+                        child: ProductCard(
+                          product: displayProducts[index],
+                          atHome: true,
+                        ),
+                      );
+                    }),
+                  ),
+                  // Hiển thị nút "Xem thêm" nếu danh mục có nhiều hơn 8 sản phẩm
+                  if (categoryProducts.length > maxItem)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Center(
+                        child: TextButton(
+                          onPressed: () {
+                            setState(() {
+                              expandedCategories[category.id] = !(isExpanded);
+                            });
+                          },
+                          child: Text(
+                            isExpanded ? "Thu gọn" : "Xem thêm",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.blue[600],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                ],
+              );
+            }),
+          ],
+        );
+      },
     );
   }
 
@@ -448,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             padding: EdgeInsets.all(5),
                           ),
                           badgeContent: Text(
-                            '$cartItemCount',
+                            '$_cartItemCount',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -609,11 +663,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       // TabBar
                       TabBar(
                         controller: _tabController,
-                        labelColor: Colors.black,
+                        labelColor: Colors.blue,
                         unselectedLabelColor: Colors.grey[600],
                         overlayColor: WidgetStateProperty.all(Colors.grey[200]),
-                        indicatorColor: Colors.black,
-                        indicatorWeight: 2.0, // Độ dày của indicator
+                        indicatorColor: Colors.blue,
+                        indicatorWeight: 2.0,
                         indicatorSize:
                             TabBarIndicatorSize.tab, // Indicator dài bằng tab
                         labelPadding: const EdgeInsets.symmetric(

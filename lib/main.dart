@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:techgear/core/routes.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/auth_provider.dart';
+import 'package:techgear/providers/cart_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_config_provider.dart';
 import 'package:techgear/providers/product_providers/product_item_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
+import 'package:techgear/providers/product_providers/rating_provider.dart';
 import 'package:techgear/providers/product_providers/variant_option_provider.dart';
 import 'package:techgear/providers/product_providers/variant_value_provider.dart';
 
@@ -20,6 +22,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => ProductProvider()),
         ChangeNotifierProvider(create: (context) => BrandProvider()),
         ChangeNotifierProvider(create: (context) => CategoryProvider()),
@@ -27,7 +30,8 @@ void main() async {
         ChangeNotifierProvider(create: (context) => VariantOptionProvider()),
         ChangeNotifierProvider(create: (context) => VariantValueProvider()),
         ChangeNotifierProvider(create: (context) => ProductConfigProvider()),
-        ChangeNotifierProvider(create: (context) => AuthProvider()),
+        ChangeNotifierProvider(create: (context) => RatingProvider()),
+        ChangeNotifierProvider(create: (context) => CartProvider()),
       ],
       child: const App(),
     ),

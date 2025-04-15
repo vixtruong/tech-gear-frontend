@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 class NavigationProvider with ChangeNotifier {
   int _selectedIndex = 0;
@@ -28,7 +29,7 @@ class NavigationProvider with ChangeNotifier {
           _selectedIndex = 3;
           break;
         default:
-          _selectedIndex = -1;
+          _selectedIndex = (kIsWeb) ? -1 : 0;
       }
       notifyListeners();
     });

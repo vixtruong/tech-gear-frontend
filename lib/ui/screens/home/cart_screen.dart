@@ -129,7 +129,7 @@ class _CartScreenState extends State<CartScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
       itemCount: cartItems.length,
       itemBuilder: (context, index) {
-        final product = cartItems[index];
+        // final product = cartItems[index];
         _offsets.putIfAbsent(index, () => 0.0);
 
         return GestureDetector(
@@ -168,7 +168,7 @@ class _CartScreenState extends State<CartScreen> {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 transform: Matrix4.translationValues(_offsets[index]!, 0, 0),
-                child: CartItemCard(product: product),
+                child: CartItemCard(productItemId: 1),
               ),
             ],
           ),
@@ -240,6 +240,7 @@ class _CartScreenState extends State<CartScreen> {
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
+                                  // ignore: deprecated_member_use
                                   color: Colors.grey.withOpacity(0.2),
                                   spreadRadius: 2,
                                   blurRadius: 8,
@@ -299,6 +300,7 @@ class _CartScreenState extends State<CartScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                   boxShadow: [
                                     BoxShadow(
+                                      // ignore: deprecated_member_use
                                       color: Colors.grey.withOpacity(0.2),
                                       spreadRadius: 2,
                                       blurRadius: 8,
@@ -319,7 +321,7 @@ class _CartScreenState extends State<CartScreen> {
                                     ),
                                     Expanded(
                                       flex: 3,
-                                      child: CartItemCard(product: product),
+                                      child: CartItemCard(productItemId: 1),
                                     ),
                                     Expanded(
                                       flex: 1,
@@ -386,6 +388,7 @@ class _CartScreenState extends State<CartScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
+                          // ignore: deprecated_member_use
                           color: Colors.grey.withOpacity(0.2),
                           spreadRadius: 2,
                           blurRadius: 8,

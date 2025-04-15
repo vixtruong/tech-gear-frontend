@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:techgear/models/product/product.dart';
 
 class CartItemCard extends StatefulWidget {
-  final Product product;
+  final int productItemId;
 
-  const CartItemCard({super.key, required this.product});
+  const CartItemCard({super.key, required this.productItemId});
 
   @override
   State<CartItemCard> createState() => _CartItemCardState();
@@ -50,9 +49,9 @@ class _CartItemCardState extends State<CartItemCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.product.name),
+                Text("Name"),
                 // Text("${widget.product.colors}"),
-                Text("${widget.product.price}"),
+                Text("Price"),
               ],
             ),
           ),

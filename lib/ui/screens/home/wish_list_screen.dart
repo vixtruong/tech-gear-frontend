@@ -138,7 +138,7 @@ class _WishListScreenState extends State<WishListScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
       itemCount: wishListItems.length,
       itemBuilder: (context, index) {
-        final product = wishListItems[index];
+        // final product = wishListItems[index];
         _offsets.putIfAbsent(index, () => ValueNotifier<double>(0.0));
 
         return GestureDetector(
@@ -179,7 +179,7 @@ class _WishListScreenState extends State<WishListScreen> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     transform: Matrix4.translationValues(offset, 0, 0),
-                    child: CartItemCard(product: product),
+                    child: CartItemCard(productItemId: 1),
                   );
                 },
               ),
@@ -273,6 +273,7 @@ class _WishListScreenState extends State<WishListScreen> {
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
+                                  // ignore: deprecated_member_use
                                   color: Colors.grey.withOpacity(0.2),
                                   spreadRadius: 2,
                                   blurRadius: 8,
@@ -322,6 +323,7 @@ class _WishListScreenState extends State<WishListScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                   boxShadow: [
                                     BoxShadow(
+                                      // ignore: deprecated_member_use
                                       color: Colors.grey.withOpacity(0.2),
                                       spreadRadius: 2,
                                       blurRadius: 8,
@@ -342,7 +344,9 @@ class _WishListScreenState extends State<WishListScreen> {
                                     ),
                                     Expanded(
                                       flex: 3,
-                                      child: CartItemCard(product: product),
+                                      child: CartItemCard(
+                                        productItemId: 1,
+                                      ),
                                     ),
                                     Expanded(
                                       flex: 1,
@@ -389,6 +393,7 @@ class _WishListScreenState extends State<WishListScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
+                          // ignore: deprecated_member_use
                           color: Colors.grey.withOpacity(0.2),
                           spreadRadius: 2,
                           blurRadius: 8,

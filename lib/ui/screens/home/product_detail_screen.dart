@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // Added
+import 'package:techgear/models/cart/cart_item.dart';
 import 'package:techgear/models/product/brand.dart';
 import 'package:techgear/models/product/category.dart';
 import 'package:techgear/models/product/group_product_specs.dart';
@@ -9,6 +10,7 @@ import 'package:techgear/models/product/product.dart';
 import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/models/product/product_specification.dart';
 import 'package:techgear/models/product/variant_value.dart';
+import 'package:techgear/providers/cart_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_config_provider.dart';
@@ -39,6 +41,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late ProductConfigProvider _productConfigProvider;
   late VariantOptionProvider _variantOptionProvider;
   late VariantValueProvider _variantValueProvider;
+  late CartProvider _cartProvider;
 
   late CategoryProvider _categoryProvider;
   late BrandProvider _brandProvider;
@@ -78,6 +81,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Provider.of<VariantOptionProvider>(context, listen: false);
     _variantValueProvider =
         Provider.of<VariantValueProvider>(context, listen: false);
+    _cartProvider = Provider.of<CartProvider>(context, listen: false);
 
     _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     _brandProvider = Provider.of<BrandProvider>(context, listen: false);
@@ -234,6 +238,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return list;
   }
 
+  Future<void> _addToCart(String productItemId) async {
+    try {
+      var cartItem = CartItem(productItemId: productItemId, quantity: 1);
+      await _cartProvider.addItem(cartItem);
+
+      var productItem =
+          _productItems.firstWhere((item) => item.id == productItemId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${productItem.sku} added to cart"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to add to cart: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      debugPrint('Error adding to cart: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -303,8 +335,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   Row(
                     children: [
-                      buildButton("Add to Cart", Colors.blue,
-                          (widget.isAdmin || !_isDiscontinued) ? null : () {}),
+                      buildButton(
+                        "Add to Cart",
+                        Colors.blue,
+                        (widget.isAdmin || !_isDiscontinued)
+                            ? null
+                            : () => _addToCart(selectedItem!.id!),
+                      ),
                       SizedBox(width: 8),
                       buildButton("Buy now", Colors.blue,
                           (widget.isAdmin || !_isDiscontinued) ? null : () {}),
@@ -590,7 +627,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20),
         backgroundColor: color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -598,7 +635,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       child: Text(
         text,
-        style: TextStyle(color: Colors.white, fontSize: 14),
+        style: const TextStyle(color: Colors.white, fontSize: 14),
       ),
     );
   }
