@@ -9,17 +9,13 @@ class CartProvider with ChangeNotifier {
 
   int get itemCount => _items.fold(0, (sum, item) => sum + item.quantity);
 
-  double get totalPrice => 0;
+  double get totalPrice =>
+      _items.fold(0, (sum, item) => sum + item.price! * item.quantity);
 
   Future<void> loadCartFromStorage() async {
     final rawList = await CartService.loadCart();
     _items = rawList.map((map) => CartItem.fromMap(map)).toList();
     notifyListeners();
-  }
-
-  Future<void> _saveCart() async {
-    final rawList = _items.map((item) => item.toMap()).toList();
-    await CartService.saveCart(rawList);
   }
 
   Future<void> addItem(CartItem newItem) async {
@@ -34,7 +30,8 @@ class CartProvider with ChangeNotifier {
       _items.add(newItem);
     }
 
-    await _saveCart();
+    // Save only the new/updated item
+    await CartService.saveCart([newItem.toMap()]);
     notifyListeners();
   }
 
@@ -44,14 +41,14 @@ class CartProvider with ChangeNotifier {
 
     if (index >= 0) {
       _items[index] = _items[index].copyWith(quantity: newQuantity);
-      await _saveCart();
+      await CartService.saveCart([_items[index].toMap()]);
       notifyListeners();
     }
   }
 
   Future<void> removeItem(String productItemId) async {
     _items.removeWhere((item) => item.productItemId == productItemId);
-    await _saveCart();
+    await CartService.saveCart(_items.map((item) => item.toMap()).toList());
     notifyListeners();
   }
 

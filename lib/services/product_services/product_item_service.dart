@@ -5,7 +5,7 @@ import 'package:techgear/services/google_services/google_drive_service.dart';
 
 class ProductItemService {
   final Dio _dio = DioClient.instance;
-  final String apiUrl = '/api/productitem';
+  final String apiUrl = '/api/v1/productitems';
 
   Future<List<Map<String, dynamic>>> fetchProductItems() async {
     final response = await _dio.get('$apiUrl/all');

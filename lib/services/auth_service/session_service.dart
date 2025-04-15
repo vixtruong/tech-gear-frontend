@@ -1,10 +1,10 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-class TokenStorageService {
+class SessionService {
   static const _storage = FlutterSecureStorage();
 
-  static Future<void> saveTokens(
+  static Future<void> saveSessions(
       String accessToken, String refreshToken) async {
     await _storage.write(key: 'access_token', value: accessToken);
     await _storage.write(key: 'refresh_token', value: refreshToken);
@@ -23,7 +23,7 @@ class TokenStorageService {
   static Future<String?> getUserId() => _storage.read(key: 'user_id');
   static Future<String?> getRole() => _storage.read(key: 'role');
 
-  static Future<void> clearTokens() async {
+  static Future<void> clearSessions() async {
     await _storage.deleteAll();
   }
 }

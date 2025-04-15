@@ -18,12 +18,16 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late ProductProvider _productProvider;
   late CategoryProvider _categoryProvider;
+  late TabController _tabController;
 
   List<Category> _categories = [];
   List<Product> _products = [];
+  List<Product> _newProducts = [];
+  List<Product> _bestSellerProducts = [];
+  List<Product> _promotionProducts = [];
 
   final TextEditingController _searchController = TextEditingController();
   final int cartItemCount = 3;
@@ -33,6 +37,19 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedCategoryId = '';
   String? _selectedPriceRange;
   String? _selectedSortOption = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this); // 4 tabs
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -46,9 +63,15 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await _categoryProvider.fetchCategories();
       await _productProvider.fetchProducts();
+      await _productProvider.fetchBestSellerProducts();
+      await _productProvider.fetchNewProducts();
+      await _productProvider.fetchPromotionProducts();
       setState(() {
         _categories = _categoryProvider.categories;
         _products = _productProvider.products;
+        _newProducts = _productProvider.newProducts;
+        _bestSellerProducts = _productProvider.bestSellerProducts;
+        _promotionProducts = _productProvider.promotionProducts;
         _isLoading = false;
       });
     } catch (e) {
@@ -85,7 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Thanh kéo để đóng BottomSheet
                       Center(
                         child: Container(
                           width: 40,
@@ -97,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Tiêu đề
                       const Text(
                         "Filter Options",
                         style: TextStyle(
@@ -107,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Sắp xếp
                       const Text(
                         "Sort by",
                         style: TextStyle(
@@ -134,12 +154,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           setModalState(() {
                             _selectedSortOption = value;
                           });
-                          setState(() {}); // Cập nhật màn hình chính
+                          setState(() {});
                         },
                         value: _selectedSortOption,
                       ),
                       const SizedBox(height: 20),
-                      // Danh mục
                       const Text(
                         "Categories",
                         style: TextStyle(
@@ -165,7 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         value: _selectedCategoryId,
                       ),
                       const SizedBox(height: 20),
-                      // Khoảng giá
                       const Text(
                         "Price",
                         style: TextStyle(
@@ -212,12 +230,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const Spacer(),
-                      // Nút áp dụng
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            setState(() {}); // Cập nhật giao diện chính
+                            setState(() {});
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
@@ -278,8 +295,112 @@ class _HomeScreenState extends State<HomeScreen> {
         updateState(() {
           _selectedPriceRange = selected ? value : null;
         });
-        setState(() {}); // Cập nhật màn hình chính
+        setState(() {});
       },
+    );
+  }
+
+  // Hàm lọc và sắp xếp sản phẩm
+  List<Product> _filterAndSortProducts(List<Product> products) {
+    List<Product> filteredProducts = products;
+
+    // Lọc theo giá
+    if (_selectedPriceRange != null) {
+      filteredProducts = filteredProducts.where((product) {
+        final priceInMillion = product.price / 1000000;
+        if (_selectedPriceRange == 'under_2m') return priceInMillion < 2;
+        if (_selectedPriceRange == '2m_5m') {
+          return priceInMillion >= 2 && priceInMillion <= 5;
+        }
+        if (_selectedPriceRange == '5m_10m') {
+          return priceInMillion > 5 && priceInMillion <= 10;
+        }
+        if (_selectedPriceRange == '10m_20m') {
+          return priceInMillion > 10 && priceInMillion <= 20;
+        }
+        if (_selectedPriceRange == '20m_30m') {
+          return priceInMillion > 20 && priceInMillion <= 30;
+        }
+        if (_selectedPriceRange == 'above_30m') return priceInMillion > 30;
+        return true;
+      }).toList();
+    }
+
+    // Sắp xếp
+    if (_selectedSortOption != null) {
+      if (_selectedSortOption == 'price_low_to_high') {
+        filteredProducts.sort((a, b) => a.price.compareTo(b.price));
+      } else if (_selectedSortOption == 'price_high_to_low') {
+        filteredProducts.sort((a, b) => b.price.compareTo(a.price));
+      }
+    }
+
+    return filteredProducts;
+  }
+
+  // Hàm xây dựng danh sách sản phẩm theo danh mục
+  Widget _buildCategoryList(List<Product> products) {
+    final filteredProducts = _filterAndSortProducts(products);
+    List<Category> filteredCategories = _selectedCategoryId == null ||
+            _selectedCategoryId!.isEmpty
+        ? _categories
+        : _categories.where((cate) => cate.id == _selectedCategoryId).toList();
+
+    if (filteredProducts.isEmpty || filteredCategories.isEmpty) {
+      return const Center(child: Text("No products available"));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...filteredCategories.map((category) {
+          final categoryProducts = filteredProducts
+              .where((product) => product.categoryId == category.id)
+              .toList();
+          if (categoryProducts.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  category.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Wrap(
+                spacing: 10,
+                runSpacing: 15,
+                children: List.generate(categoryProducts.length, (index) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final isWeb = screenWidth >= 800;
+                  final itemsPerRow = isWeb ? 4.2 : 2;
+                  final totalSpacing = (itemsPerRow - 1) * 10;
+                  final availableWidth = isWeb
+                      ? (screenWidth >= 1200 ? 1200 : screenWidth - 40)
+                      : screenWidth - 30;
+                  final cardWidth =
+                      (availableWidth - totalSpacing) / itemsPerRow;
+
+                  return SizedBox(
+                    width: cardWidth,
+                    child: ProductCard(
+                      product: categoryProducts[index],
+                      atHome: true,
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 20),
+            ],
+          );
+        }),
+      ],
     );
   }
 
@@ -353,50 +474,9 @@ class _HomeScreenState extends State<HomeScreen> {
             }
 
             _products = productProvider.products;
-
-            // Lọc sản phẩm theo danh mục
-            List<Category> filteredCategories =
-                _selectedCategoryId == null || _selectedCategoryId!.isEmpty
-                    ? _categories
-                    : _categories
-                        .where((cate) => cate.id == _selectedCategoryId)
-                        .toList();
-
-            // Lọc sản phẩm theo giá
-            List<Product> filteredProducts = _products;
-            if (_selectedPriceRange != null) {
-              filteredProducts = filteredProducts.where((product) {
-                final priceInMillion = product.price / 1000000;
-                if (_selectedPriceRange == 'under_2m') {
-                  return priceInMillion < 2;
-                }
-                if (_selectedPriceRange == '2m_5m') {
-                  return priceInMillion >= 2 && priceInMillion <= 5;
-                }
-                if (_selectedPriceRange == '5m_10m') {
-                  return priceInMillion > 5 && priceInMillion <= 10;
-                }
-                if (_selectedPriceRange == '10m_20m') {
-                  return priceInMillion > 10 && priceInMillion <= 20;
-                }
-                if (_selectedPriceRange == '20m_30m') {
-                  return priceInMillion > 20 && priceInMillion <= 30;
-                }
-                if (_selectedPriceRange == 'above_30m') {
-                  return priceInMillion > 30;
-                }
-                return true;
-              }).toList();
-            }
-
-            // Sắp xếp sản phẩm
-            if (_selectedSortOption != null) {
-              if (_selectedSortOption == 'price_low_to_high') {
-                filteredProducts.sort((a, b) => a.price.compareTo(b.price));
-              } else if (_selectedSortOption == 'price_high_to_low') {
-                filteredProducts.sort((a, b) => b.price.compareTo(a.price));
-              }
-            }
+            _newProducts = productProvider.newProducts;
+            _bestSellerProducts = productProvider.bestSellerProducts;
+            _promotionProducts = productProvider.promotionProducts;
 
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +499,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // Sắp xếp
                         const Text(
                           "Sort by",
                           style: TextStyle(
@@ -450,7 +529,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           value: _selectedSortOption,
                         ),
                         const SizedBox(height: 40),
-                        // Danh mục
                         const Text(
                           "Categories",
                           style: TextStyle(
@@ -476,7 +554,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           value: _selectedCategoryId,
                         ),
                         const SizedBox(height: 40),
-                        // Khoảng giá
                         const Text(
                           "Price",
                           style: TextStyle(
@@ -527,85 +604,102 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 // Nội dung chính
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 15.0),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ...filteredCategories.map((category) {
-                                final categoryProducts = filteredProducts
-                                    .where((product) =>
-                                        product.categoryId == category.id)
-                                    .toList();
-                                if (categoryProducts.isEmpty) {
-                                  return const SizedBox.shrink();
-                                }
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 10),
-                                      child: Text(
-                                        category.name,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    Wrap(
-                                      spacing:
-                                          10, // Khoảng cách ngang giữa các ProductCard
-                                      runSpacing:
-                                          15, // Khoảng cách dọc giữa các hàng
-                                      children: List.generate(
-                                          categoryProducts.length, (index) {
-                                        // Tính chiều rộng động dựa trên màn hình
-                                        final screenWidth =
-                                            MediaQuery.of(context).size.width;
-                                        final isWeb = screenWidth >= 800;
-                                        final itemsPerRow = isWeb
-                                            ? 4.2
-                                            : 2; // 4 sản phẩm trên web, 2 trên mobile
-                                        final totalSpacing = (itemsPerRow - 1) *
-                                            10; // Tổng khoảng cách giữa các sản phẩm
-                                        final availableWidth = isWeb
-                                            ? (screenWidth >= 1200
-                                                ? 1200
-                                                : screenWidth -
-                                                    40) // Trừ padding nếu cần
-                                            : screenWidth -
-                                                30; // Trừ padding ngang (15 mỗi bên) trên mobile
-                                        final cardWidth =
-                                            (availableWidth - totalSpacing) /
-                                                itemsPerRow;
-
-                                        return SizedBox(
-                                          width:
-                                              cardWidth, // Chiều rộng động cho ProductCard
-                                          child: ProductCard(
-                                            product: categoryProducts[index],
-                                            atHome: true,
-                                          ),
-                                        );
-                                      }),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    const SizedBox(height: 20),
-                                  ],
-                                );
-                              }),
-                            ],
-                          ),
+                  child: Column(
+                    children: [
+                      // TabBar
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: Colors.black,
+                        unselectedLabelColor: Colors.grey[600],
+                        overlayColor: WidgetStateProperty.all(Colors.grey[200]),
+                        indicatorColor: Colors.black,
+                        indicatorWeight: 2.0, // Độ dày của indicator
+                        indicatorSize:
+                            TabBarIndicatorSize.tab, // Indicator dài bằng tab
+                        labelPadding: const EdgeInsets.symmetric(
+                            horizontal: 20.0), // Khoảng cách giữa các tab
+                        tabs: const [
+                          Tab(text: "All"),
+                          Tab(text: "Promotional"),
+                          Tab(text: "New"),
+                          Tab(text: "Best Seller"),
+                        ],
+                      ),
+                      // TabBarView
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            // Tab All
+                            SingleChildScrollView(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15.0),
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 1200),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0),
+                                    child: _buildCategoryList(_products),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Tab Promotional
+                            SingleChildScrollView(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15.0),
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 1200),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0),
+                                    child:
+                                        _buildCategoryList(_promotionProducts),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Tab New
+                            SingleChildScrollView(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15.0),
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 1200),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0),
+                                    child: _buildCategoryList(_newProducts),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Tab Best Seller
+                            SingleChildScrollView(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 15.0),
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 1200),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 15.0),
+                                    child:
+                                        _buildCategoryList(_bestSellerProducts),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],

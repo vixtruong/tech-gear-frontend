@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:techgear/models/product/product.dart';
+// import 'package:techgear/services/cart_service/cart_service.dart';
 import 'package:techgear/ui/widgets/review/star_rating.dart';
 
 class ProductCard extends StatefulWidget {
@@ -21,6 +22,8 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
+  // late CartService _cartService;
+
   bool isFavorite = false;
 
   @override

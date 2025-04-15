@@ -16,6 +16,7 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
+// Mobile Layout
 class WelcomeMobileLayout extends StatelessWidget {
   const WelcomeMobileLayout({super.key});
 
@@ -134,9 +135,7 @@ class WelcomeMobileLayout extends StatelessWidget {
   }
 }
 
-// --------------------------
-// ✅ Web layout mở rộng
-// --------------------------
+// Web layout mở rộng
 class WelcomeWebLayout extends StatelessWidget {
   const WelcomeWebLayout({super.key});
 

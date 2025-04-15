@@ -1,12 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:techgear/dtos/login_request_dto.dart';
 import 'package:techgear/dtos/register_request_dto.dart';
-import 'package:techgear/services/auth_service/token_service.dart';
+import 'package:techgear/services/auth_service/session_service.dart';
+import 'package:techgear/services/cart_service/cart_service.dart';
 import 'package:techgear/services/dio_client.dart';
 
 class AuthService {
   final Dio _dio = DioClient.instance;
-  final String apiUrl = '/api/auth';
+  final String apiUrl = '/api/v1/auth';
 
   Future<void> login(LoginRequestDto request) async {
     try {
@@ -15,7 +16,7 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = response.data;
 
-        await TokenStorageService.saveTokens(
+        await SessionService.saveSessions(
           data['accessToken'],
           data['refreshToken'],
         );
@@ -46,7 +47,7 @@ class AuthService {
 
   Future<void> logout() async {
     try {
-      final refreshToken = await TokenStorageService.getRefreshToken();
+      final refreshToken = await SessionService.getRefreshToken();
 
       final response = await _dio.post(
         '$apiUrl/logout',
@@ -54,13 +55,21 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        await TokenStorageService.clearTokens();
+        await SessionService.clearSessions();
+        await CartService.clearCart();
       }
     } on DioException catch (e) {
       e.toString();
-      await TokenStorageService.clearTokens();
+      await SessionService.clearSessions();
     } catch (e) {
-      await TokenStorageService.clearTokens();
+      await SessionService.clearSessions();
     }
+  }
+
+  Future<bool> isCustomerLogin() async {
+    final userId = await SessionService.getUserId();
+    final userRole = await SessionService.getRole();
+
+    return userId != null && userRole == "Customer";
   }
 }

@@ -4,7 +4,7 @@ import 'package:techgear/models/product/product_config.dart';
 
 class ProductConfigService {
   final Dio _dio = DioClient.instance;
-  final String apiUrl = '/api/productconfig';
+  final String apiUrl = '/api/v1/productconfigs';
 
   /// Lấy tất cả cấu hình
   Future<List<Map<String, dynamic>>> fetchProductConfigs() async {

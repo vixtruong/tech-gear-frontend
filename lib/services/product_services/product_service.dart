@@ -5,11 +5,29 @@ import 'package:techgear/services/google_services/google_drive_service.dart';
 
 class ProductService {
   final Dio _dio = DioClient.instance;
-  final String apiUrl = '/api/product';
+  final String apiUrl = '/api/v1/products';
 
   /// Lấy tất cả sản phẩm
   Future<List<Map<String, dynamic>>> fetchProducts() async {
     final response = await _dio.get('$apiUrl/all');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchNewProducts() async {
+    final response = await _dio.get('$apiUrl/new');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchBestSellerProducts() async {
+    final response = await _dio.get('$apiUrl/best-sellers');
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPromotionProducts() async {
+    final response = await _dio.get('$apiUrl/promotions');
     final List data = response.data;
     return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }

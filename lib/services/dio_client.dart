@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:techgear/services/auth_service/token_service.dart';
+import 'package:techgear/services/auth_service/session_service.dart';
 import '../environment.dart';
 
 class DioClient {
@@ -11,7 +11,7 @@ class DioClient {
   ))
     ..interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final accessToken = await TokenStorageService.getAccessToken();
+        final accessToken = await SessionService.getAccessToken();
         if (accessToken != null) {
           options.headers['Authorization'] = 'Bearer $accessToken';
         }
@@ -22,7 +22,7 @@ class DioClient {
           final refreshed = await _refreshToken();
           if (refreshed) {
             final retryRequest = error.requestOptions;
-            final newAccess = await TokenStorageService.getAccessToken();
+            final newAccess = await SessionService.getAccessToken();
             retryRequest.headers['Authorization'] = 'Bearer $newAccess';
             final cloned = await _dio.fetch(retryRequest);
             return handler.resolve(cloned);
@@ -35,20 +35,20 @@ class DioClient {
   static Dio get instance => _dio;
 
   static Future<bool> _refreshToken() async {
-    final refresh = await TokenStorageService.getRefreshToken();
+    final refresh = await SessionService.getRefreshToken();
     if (refresh == null) return false;
 
     try {
-      final response = await _dio.post('/auth/refresh', data: {
+      final response = await _dio.post('/api/auth/refresh', data: {
         'refreshToken': refresh,
       });
 
       final data = response.data;
-      await TokenStorageService.saveTokens(
+      await SessionService.saveSessions(
           data['accessToken'], data['refreshToken']);
       return true;
     } catch (_) {
-      await TokenStorageService.clearTokens();
+      await SessionService.clearSessions();
       return false;
     }
   }

@@ -4,7 +4,7 @@ import 'package:techgear/models/product/variant_option.dart';
 
 class VariantOptionService {
   final Dio _dio = DioClient.instance;
-  final String apiUrl = '/api/variation';
+  final String apiUrl = '/api/v1/variations';
 
   /// Lấy tất cả variant options
   Future<List<Map<String, dynamic>>> fetchVariantOptions() async {

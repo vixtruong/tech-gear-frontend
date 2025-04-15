@@ -3,7 +3,7 @@ import 'package:techgear/services/dio_client.dart';
 
 class BrandService {
   final Dio _dio = DioClient.instance;
-  final String apiUrl = '/api/brand';
+  final String apiUrl = '/api/v1/brands';
 
   Future<List<Map<String, dynamic>>> fetchBrands() async {
     final response = await _dio.get('$apiUrl/all');

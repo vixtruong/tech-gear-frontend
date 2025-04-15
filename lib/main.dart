@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/core/routes.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
+import 'package:techgear/providers/auth_providers/auth_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_config_provider.dart';
@@ -18,6 +19,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (context) => NavigationProvider()),
         ChangeNotifierProvider(create: (context) => ProductProvider()),
         ChangeNotifierProvider(create: (context) => BrandProvider()),
         ChangeNotifierProvider(create: (context) => CategoryProvider()),
@@ -25,7 +27,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => VariantOptionProvider()),
         ChangeNotifierProvider(create: (context) => VariantValueProvider()),
         ChangeNotifierProvider(create: (context) => ProductConfigProvider()),
-        ChangeNotifierProvider(create: (context) => NavigationProvider()),
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
       ],
       child: const App(),
     ),

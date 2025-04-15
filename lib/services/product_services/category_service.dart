@@ -3,7 +3,7 @@ import 'package:techgear/services/dio_client.dart';
 
 class CategoryService {
   final Dio _dio = DioClient.instance;
-  final String apiUrl = '/api/category';
+  final String apiUrl = '/api/v1/categories';
 
   Future<List<Map<String, dynamic>>> fetchCategories() async {
     final response = await _dio.get('$apiUrl/all');
