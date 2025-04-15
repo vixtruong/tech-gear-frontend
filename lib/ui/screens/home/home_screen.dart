@@ -33,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<Product> _promotionProducts = [];
 
   final TextEditingController _searchController = TextEditingController();
-  int? _cartItemCount = 0;
   bool _isLoading = true;
 
   // Biến để lưu trạng thái bộ lọc
@@ -72,16 +71,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await _productProvider.fetchPromotionProducts();
       await _cartProvider.loadCartFromStorage();
 
-      var numberItemCart = _cartProvider.itemCount;
       setState(() {
-        _cartItemCount = numberItemCart;
         _categories = _categoryProvider.categories;
         _products = _productProvider.products;
         _newProducts = _productProvider.newProducts;
         _bestSellerProducts = _productProvider.bestSellerProducts;
         _promotionProducts = _productProvider.promotionProducts;
 
-        _cartItemCount = numberItemCart;
         _isLoading = false;
       });
     } catch (e) {
@@ -438,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             });
                           },
                           child: Text(
-                            isExpanded ? "Thu gọn" : "Xem thêm",
+                            isExpanded ? "Collapse" : "See more",
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.blue[600],
@@ -463,305 +459,298 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final isWeb = MediaQuery.of(context).size.width >= 800;
 
     return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: !isWeb
-            ? AppBar(
-                surfaceTintColor: Colors.white,
-                backgroundColor: Colors.white,
-                shadowColor: Colors.white,
-                leadingWidth: double.infinity,
-                leading: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 15.0, vertical: 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: CustomTextField(
-                          controller: _searchController,
-                          hint: "Search...",
-                          isSearch: true,
-                          inputType: TextInputType.text,
-                        ),
+        child: Scaffold(
+      backgroundColor: Colors.white,
+      appBar: !isWeb
+          ? AppBar(
+              surfaceTintColor: Colors.white,
+              backgroundColor: Colors.white,
+              shadowColor: Colors.white,
+              leadingWidth: double.infinity,
+              leading: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15.0, vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: CustomTextField(
+                        controller: _searchController,
+                        hint: "Search...",
+                        isSearch: true,
+                        inputType: TextInputType.text,
                       ),
-                      const SizedBox(width: 10),
-                      _iconBtn(
-                        icon: const Icon(Icons.filter_list),
-                        onPressed: () => _showFilterBottomSheet(context),
-                      ),
-                      const SizedBox(width: 10),
-                      _iconBtn(
-                        icon: const Icon(Icons.favorite_border),
-                        onPressed: () => _navigate(context, '/wish-list'),
-                      ),
-                      const SizedBox(width: 10),
-                      _iconBtn(
-                        icon: badges.Badge(
-                          badgeStyle: const badges.BadgeStyle(
-                            badgeColor: Colors.red,
-                            padding: EdgeInsets.all(5),
-                          ),
-                          badgeContent: Text(
-                            '$_cartItemCount',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            ),
-                          ),
-                          child: const Icon(Icons.shopping_cart_outlined),
-                        ),
-                        onPressed: () => _navigate(context, '/cart'),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : null,
-        body: Consumer<ProductProvider>(
-          builder: (context, productProvider, child) {
-            if (_isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                ),
-              );
-            }
-
-            _products = productProvider.products;
-            _newProducts = productProvider.newProducts;
-            _bestSellerProducts = productProvider.bestSellerProducts;
-            _promotionProducts = productProvider.promotionProducts;
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Sidebar cho Web
-                if (isWeb)
-                  Container(
-                    width: 300,
-                    padding: const EdgeInsets.all(20),
-                    color: Colors.grey[50],
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Filter Options",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          "Sort by",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        CustomDropdown(
-                          label: "Sort",
-                          items: [
-                            {'id': '', 'name': 'Không sắp xếp'},
-                            {
-                              'id': 'price_low_to_high',
-                              'name': 'Giá: Thấp đến Cao'
-                            },
-                            {
-                              'id': 'price_high_to_low',
-                              'name': 'Giá: Cao đến Thấp'
-                            },
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedSortOption = value;
-                            });
-                          },
-                          value: _selectedSortOption,
-                        ),
-                        const SizedBox(height: 40),
-                        const Text(
-                          "Categories",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        CustomDropdown(
-                          label: "Categories",
-                          items: [
-                            {'id': '', 'name': 'Tất cả danh mục'},
-                            ..._categories.map(
-                              (cate) => {'id': cate.id, 'name': cate.name},
-                            ),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedCategoryId = value;
-                            });
-                          },
-                          value: _selectedCategoryId,
-                        ),
-                        const SizedBox(height: 40),
-                        const Text(
-                          "Price",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _buildPriceFilterChip(
-                              label: "Dưới 2 triệu",
-                              value: 'under_2m',
-                              updateState: setState,
-                            ),
-                            _buildPriceFilterChip(
-                              label: "2 - 5 triệu",
-                              value: '2m_5m',
-                              updateState: setState,
-                            ),
-                            _buildPriceFilterChip(
-                              label: "5 - 10 triệu",
-                              value: '5m_10m',
-                              updateState: setState,
-                            ),
-                            _buildPriceFilterChip(
-                              label: "10 - 20 triệu",
-                              value: '10m_20m',
-                              updateState: setState,
-                            ),
-                            _buildPriceFilterChip(
-                              label: "20 - 30 triệu",
-                              value: '20m_30m',
-                              updateState: setState,
-                            ),
-                            _buildPriceFilterChip(
-                              label: "Trên 30 triệu",
-                              value: 'above_30m',
-                              updateState: setState,
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
-                  ),
-                // Nội dung chính
-                Expanded(
+                    const SizedBox(width: 10),
+                    _iconBtn(
+                      icon: const Icon(Icons.filter_list),
+                      onPressed: () => _showFilterBottomSheet(context),
+                    ),
+                    const SizedBox(width: 10),
+                    _iconBtn(
+                      icon: const Icon(Icons.favorite_border),
+                      onPressed: () => _navigate(context, '/wish-list'),
+                    ),
+                    const SizedBox(width: 10),
+                    Consumer<CartProvider>(
+                      builder: (context, cartProvider, child) {
+                        return _iconBtn(
+                          icon: badges.Badge(
+                            badgeStyle: const badges.BadgeStyle(
+                              badgeColor: Colors.red,
+                              padding: EdgeInsets.all(5),
+                            ),
+                            badgeContent: Text(
+                              '${cartProvider.itemCount}', // Cập nhật trực tiếp từ CartProvider
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                              ),
+                            ),
+                            child: const Icon(Icons.shopping_cart_outlined),
+                          ),
+                          onPressed: () => _navigate(context, '/cart'),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
+      body: Consumer<ProductProvider>(
+        builder: (context, productProvider, child) {
+          if (_isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+            );
+          }
+
+          _products = productProvider.products;
+          _newProducts = productProvider.newProducts;
+          _bestSellerProducts = productProvider.bestSellerProducts;
+          _promotionProducts = productProvider.promotionProducts;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Sidebar cho Web
+              if (isWeb)
+                Container(
+                  width: 300,
+                  padding: const EdgeInsets.all(20),
+                  color: Colors.grey[50],
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // TabBar
-                      TabBar(
-                        controller: _tabController,
-                        labelColor: Colors.blue,
-                        unselectedLabelColor: Colors.grey[600],
-                        overlayColor: WidgetStateProperty.all(Colors.grey[200]),
-                        indicatorColor: Colors.blue,
-                        indicatorWeight: 2.0,
-                        indicatorSize:
-                            TabBarIndicatorSize.tab, // Indicator dài bằng tab
-                        labelPadding: const EdgeInsets.symmetric(
-                            horizontal: 20.0), // Khoảng cách giữa các tab
-                        tabs: const [
-                          Tab(text: "All"),
-                          Tab(text: "Promotional"),
-                          Tab(text: "New"),
-                          Tab(text: "Best Seller"),
+                      const Text(
+                        "Filter Options",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Sort by",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      CustomDropdown(
+                        label: "Sort",
+                        items: [
+                          {'id': '', 'name': 'Không sắp xếp'},
+                          {
+                            'id': 'price_low_to_high',
+                            'name': 'Giá: Thấp đến Cao'
+                          },
+                          {
+                            'id': 'price_high_to_low',
+                            'name': 'Giá: Cao đến Thấp'
+                          },
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedSortOption = value;
+                          });
+                        },
+                        value: _selectedSortOption,
+                      ),
+                      const SizedBox(height: 40),
+                      const Text(
+                        "Categories",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      CustomDropdown(
+                        label: "Categories",
+                        items: [
+                          {'id': '', 'name': 'Tất cả danh mục'},
+                          ..._categories.map(
+                            (cate) => {'id': cate.id, 'name': cate.name},
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCategoryId = value;
+                          });
+                        },
+                        value: _selectedCategoryId,
+                      ),
+                      const SizedBox(height: 40),
+                      const Text(
+                        "Price",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildPriceFilterChip(
+                            label: "Dưới 2 triệu",
+                            value: 'under_2m',
+                            updateState: setState,
+                          ),
+                          _buildPriceFilterChip(
+                            label: "2 - 5 triệu",
+                            value: '2m_5m',
+                            updateState: setState,
+                          ),
+                          _buildPriceFilterChip(
+                            label: "5 - 10 triệu",
+                            value: '5m_10m',
+                            updateState: setState,
+                          ),
+                          _buildPriceFilterChip(
+                            label: "10 - 20 triệu",
+                            value: '10m_20m',
+                            updateState: setState,
+                          ),
+                          _buildPriceFilterChip(
+                            label: "20 - 30 triệu",
+                            value: '20m_30m',
+                            updateState: setState,
+                          ),
+                          _buildPriceFilterChip(
+                            label: "Trên 30 triệu",
+                            value: 'above_30m',
+                            updateState: setState,
+                          ),
                         ],
                       ),
-                      // TabBarView
-                      Expanded(
-                        child: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            // Tab All
-                            SingleChildScrollView(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 15.0),
-                              child: Center(
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 1200),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15.0),
-                                    child: _buildCategoryList(_products),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Tab Promotional
-                            SingleChildScrollView(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 15.0),
-                              child: Center(
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 1200),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15.0),
-                                    child:
-                                        _buildCategoryList(_promotionProducts),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Tab New
-                            SingleChildScrollView(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 15.0),
-                              child: Center(
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 1200),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15.0),
-                                    child: _buildCategoryList(_newProducts),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Tab Best Seller
-                            SingleChildScrollView(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 15.0),
-                              child: Center(
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 1200),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15.0),
-                                    child:
-                                        _buildCategoryList(_bestSellerProducts),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
-              ],
-            );
-          },
-        ),
+              // Nội dung chính
+              Expanded(
+                child: Column(
+                  children: [
+                    // TabBar
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: Colors.blue,
+                      unselectedLabelColor: Colors.grey[600],
+                      overlayColor: WidgetStateProperty.all(Colors.grey[200]),
+                      indicatorColor: Colors.blue,
+                      indicatorWeight: 2.0,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      labelPadding:
+                          const EdgeInsets.symmetric(horizontal: 20.0),
+                      tabs: const [
+                        Tab(text: "All"),
+                        Tab(text: "Promotional"),
+                        Tab(text: "New"),
+                        Tab(text: "Best Seller"),
+                      ],
+                    ),
+                    // TabBarView
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(vertical: 15.0),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 1200),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0),
+                                  child: _buildCategoryList(_products),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(vertical: 15.0),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 1200),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0),
+                                  child: _buildCategoryList(_promotionProducts),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(vertical: 15.0),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 1200),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0),
+                                  child: _buildCategoryList(_newProducts),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(vertical: 15.0),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 1200),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 15.0),
+                                  child:
+                                      _buildCategoryList(_bestSellerProducts),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
-    );
+    ));
   }
 
   Widget _iconBtn({required Widget icon, required VoidCallback onPressed}) {

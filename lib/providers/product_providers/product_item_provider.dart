@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:techgear/dtos/product_item_info_dto.dart';
 import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/services/product_services/product_item_service.dart';
 
@@ -29,6 +30,21 @@ class ProductItemProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       e.toString();
+    }
+  }
+
+  Future<List<ProductItemInfoDto>?> fetchProductItemsByIds(
+      List<int> productItemIds) async {
+    try {
+      List<Map<String, dynamic>> fetchedData =
+          await _service.fetchProductItemsInfoByIds(productItemIds);
+      var result =
+          fetchedData.map((data) => ProductItemInfoDto.fromMap(data)).toList();
+
+      return result;
+    } catch (e) {
+      e.toString();
+      return null;
     }
   }
 

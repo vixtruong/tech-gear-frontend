@@ -20,6 +20,13 @@ class ProductItemService {
     return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  Future<List<Map<String, dynamic>>> fetchProductItemsInfoByIds(
+      List<int> productItemIds) async {
+    final response = await _dio.post('$apiUrl/by-ids/', data: productItemIds);
+    final List data = response.data;
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
   Future<Map<String, dynamic>?> fetchProductItemById(
       String productItemId) async {
     try {

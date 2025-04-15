@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:techgear/models/product/product.dart';
-import 'package:techgear/ui/widgets/cart/cart_item_card.dart';
 import 'package:techgear/ui/widgets/common/custom_dropdown.dart';
 
 class WishListScreen extends StatefulWidget {
@@ -179,7 +178,7 @@ class _WishListScreenState extends State<WishListScreen> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     transform: Matrix4.translationValues(offset, 0, 0),
-                    child: CartItemCard(productItemId: 1),
+                    // child: CartItemCard(productItemId: 1),
                   );
                 },
               ),
@@ -342,12 +341,12 @@ class _WishListScreenState extends State<WishListScreen> {
                                         });
                                       },
                                     ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: CartItemCard(
-                                        productItemId: 1,
-                                      ),
-                                    ),
+                                    // Expanded(
+                                    //   flex: 3,
+                                    //   // child: CartItemCard(
+                                    //   //   productItemId: 1,
+                                    //   // ),
+                                    // ),
                                     Expanded(
                                       flex: 1,
                                       child: Text(

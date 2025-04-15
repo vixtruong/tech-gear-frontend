@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -275,24 +276,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leadingWidth: double.infinity,
+        toolbarHeight: 50,
         leading: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              buildCircleButton(
-                icon: Icons.arrow_back_outlined,
-                onTaped: () {
-                  context.pop();
-                },
-              ),
-              Spacer(),
-              if (!widget.isAdmin)
+              if (!kIsWeb)
                 buildCircleButton(
-                  icon: Icons.add_shopping_cart_outlined,
-                  onTaped: () {},
+                  icon: Icons.arrow_back_outlined,
+                  onTaped: () {
+                    context.pop();
+                  },
                 ),
-              if (!widget.isAdmin) SizedBox(width: 10),
+              Spacer(),
               if (!widget.isAdmin)
                 buildCircleButton(
                   icon: Icons.favorite_outline,
@@ -610,15 +607,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     required IconData icon,
     required VoidCallback onTaped,
   }) {
-    return GestureDetector(
-      onTap: onTaped,
-      child: Container(
-        padding: EdgeInsets.all(12.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Colors.black.withAlpha((0.3 * 255).toInt()),
-        ),
-        child: Icon(icon, color: Colors.white),
+    return Container(
+      padding: EdgeInsets.all(2.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.black.withAlpha((0.3 * 255).toInt()),
+      ),
+      child: IconButton(
+        icon: Icon(icon),
+        color: Colors.white,
+        onPressed: onTaped,
       ),
     );
   }
