@@ -1,6 +1,7 @@
 // lib/core/routes.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:techgear/models/cart/cart_item.dart';
 import 'package:techgear/ui/screens/dashboard/add_brand_screen.dart';
 import 'package:techgear/ui/screens/dashboard/add_category_screen.dart';
 import 'package:techgear/ui/screens/dashboard/add_product_screen.dart';
@@ -12,6 +13,7 @@ import 'package:techgear/ui/screens/dashboard/manage_product_variants_screen.dar
 import 'package:techgear/ui/screens/home/activity_screen.dart';
 import 'package:techgear/ui/screens/home/cart_screen.dart';
 import 'package:techgear/ui/screens/home/chat_screen.dart';
+import 'package:techgear/ui/screens/home/checkout_screen.dart';
 import 'package:techgear/ui/screens/home/home_screen.dart';
 import 'package:techgear/ui/screens/home/product_detail_web_screen.dart';
 import 'package:techgear/ui/layouts/user_web_layout.dart';
@@ -137,6 +139,19 @@ final GoRouter router = GoRouter(
         return isWeb
             ? const UserWebLayout(child: CartScreen())
             : const CartScreen();
+      },
+    ),
+
+    GoRoute(
+      path: '/checkout',
+      builder: (context, state) {
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        final extra = state.extra;
+        final cartItems = (extra is List<CartItem>) ? extra : <CartItem>[];
+
+        return isWeb
+            ? UserWebLayout(child: CheckoutScreen(cartItems: cartItems))
+            : CheckoutScreen(cartItems: cartItems);
       },
     ),
 

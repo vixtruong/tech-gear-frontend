@@ -38,6 +38,21 @@ class ProductItemService {
     }
   }
 
+  Future<List<int>> getPrice(List<int> productItemIds) async {
+    try {
+      final response = await _dio.post('$apiUrl/price', data: productItemIds);
+      if (response.data is List) {
+        final List<dynamic> rawData = response.data;
+        final List<int> prices = rawData.map((e) => e as int).toList();
+        return prices;
+      } else {
+        return List.filled(productItemIds.length, 0);
+      }
+    } catch (e) {
+      return List.filled(productItemIds.length, 0);
+    }
+  }
+
   Future<Map<String, dynamic>?> addProductItem(ProductItem productItem) async {
     try {
       final driveService = GoogleDriveService();

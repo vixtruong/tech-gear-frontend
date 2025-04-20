@@ -401,167 +401,233 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ),
                 DraggableScrollableSheet(
-                  initialChildSize: 0.55,
-                  minChildSize: 0.5,
-                  maxChildSize: 0.9,
+                  initialChildSize: 0.55, // Kích thước ban đầu
+                  minChildSize: 0.5, // Kích thước tối thiểu
+                  maxChildSize: 0.9, // Kích thước tối đa
+                  snap:
+                      true, // Bật snap để sheet tự động di chuyển đến các điểm cố định
+                  snapSizes: const [0.5, 0.9], // Các điểm snap
                   builder: (context, scrollController) {
                     _scrollController = scrollController;
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(35),
-                          topRight: Radius.circular(35),
-                        ),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 1.5,
-                        ),
+                    return ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(35),
+                        topRight: Radius.circular(35),
                       ),
-                      padding: const EdgeInsets.all(20),
-                      child: SingleChildScrollView(
-                        controller: scrollController,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(35),
+                            topRight: Radius.circular(35),
+                          ),
+                          border: Border.all(
+                            color: Colors.grey
+                                // ignore: deprecated_member_use
+                                .withOpacity(0.2), // Viền nhẹ để làm nổi bật
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  // ignore: deprecated_member_use
+                                  Colors.grey.withOpacity(0.15), // Bóng mờ nhẹ
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                              offset:
+                                  const Offset(0, -3), // Bóng hướng lên trên
+                            ),
+                          ],
+                        ),
+                        child: ListView(
+                          controller: scrollController,
+                          physics: const ClampingScrollPhysics(),
+                          padding: EdgeInsets.symmetric(
+                              vertical:
+                                  10), // Loại bỏ padding mặc định của ListView
                           children: [
-                            Row(
-                              children: [
-                                buildTag(brand?.name ?? ""),
-                                SizedBox(width: 5),
-                                buildTag(category?.name ?? ""),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-                            Text(
-                              product?.name ?? "",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              product?.description ?? "",
-                              style: TextStyle(
-                                  color: Colors.grey[600], fontSize: 14),
-                            ),
-                            const SizedBox(height: 15),
-                            if (colors.isNotEmpty && specs.isNotEmpty) ...[
-                              Text(
-                                "VARIANTS",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              Row(
-                                spacing: 5,
-                                children: [
-                                  for (var specs in groupedList)
-                                    SpecsVariantBox(
-                                      specs: specs,
-                                      isSelect: selectedSpecs == specs,
-                                      onTap: () {
-                                        setState(() {
-                                          if (selectedSpecs == specs) return;
-                                          selectedSpecs = specs;
-                                          colorSpecsList =
-                                              getColorsForSelectedSpecs();
-                                          if (colorSpecsList.isNotEmpty) {
-                                            var firstEntry = colorSpecsList
-                                                .first.entries.first;
-                                            selectedItem = firstEntry.key;
-                                          } else {
-                                            selectedItem = null;
-                                          }
-                                        });
-                                      },
-                                    ),
-                                ],
-                              ),
-                              if (selectedSpecs != null) ...[
-                                const SizedBox(height: 15),
-                                Text(
-                                  "COLORS",
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
+                            // Drag handle
+                            Center(
+                              child: Container(
+                                margin:
+                                    const EdgeInsets.only(top: 8, bottom: 8),
+                                width: 40,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                const SizedBox(height: 5),
-                                Row(
-                                  spacing: 5,
-                                  children: [
-                                    for (var colorSpec in colorSpecsList)
-                                      for (var entry in colorSpec.entries)
-                                        for (var color in entry.value)
-                                          ColorVariantBox(
-                                            color: color,
-                                            selectedProductItem: entry.key,
-                                            isSelected:
-                                                selectedItem == entry.key,
+                              ),
+                            ),
+                            // Nội dung chính
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      buildTag(brand?.name ?? ""),
+                                      const SizedBox(width: 5),
+                                      buildTag(category?.name ?? ""),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 15),
+                                  Text(
+                                    product?.name ?? "",
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    product?.description ?? "",
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 15),
+                                  if (colors.isNotEmpty &&
+                                      specs.isNotEmpty) ...[
+                                    const Text(
+                                      "VARIANTS",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Wrap(
+                                      spacing: 5,
+                                      children: [
+                                        for (var specs in groupedList)
+                                          SpecsVariantBox(
+                                            specs: specs,
+                                            isSelect: selectedSpecs == specs,
                                             onTap: () {
                                               setState(() {
-                                                selectedItem = entry.key;
+                                                if (selectedSpecs != specs)
+                                                  return;
+                                                selectedSpecs = specs;
+                                                colorSpecsList =
+                                                    getColorsForSelectedSpecs();
+                                                if (colorSpecsList.isNotEmpty) {
+                                                  var firstEntry =
+                                                      colorSpecsList
+                                                          .first.entries.first;
+                                                  selectedItem = firstEntry.key;
+                                                } else {
+                                                  selectedItem = null;
+                                                }
                                               });
                                             },
                                           ),
+                                      ],
+                                    ),
+                                    if (selectedSpecs != null) ...[
+                                      const SizedBox(height: 15),
+                                      const Text(
+                                        "COLORS",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Wrap(
+                                        spacing: 5,
+                                        children: [
+                                          for (var colorSpec in colorSpecsList)
+                                            for (var entry in colorSpec.entries)
+                                              for (var color in entry.value)
+                                                ColorVariantBox(
+                                                  color: color,
+                                                  selectedProductItem:
+                                                      entry.key,
+                                                  isSelected:
+                                                      selectedItem == entry.key,
+                                                  onTap: () {
+                                                    setState(() {
+                                                      selectedItem = entry.key;
+                                                    });
+                                                  },
+                                                ),
+                                        ],
+                                      ),
+                                    ],
+                                  ] else if (colors.isEmpty &&
+                                      specs.isNotEmpty) ...[
+                                    const Text(
+                                      "VARIANTS",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Wrap(
+                                      spacing: 5,
+                                      children: [
+                                        for (var spec in specs)
+                                          for (var entry in spec.entries)
+                                            for (var value in entry.value)
+                                              ColorVariantBox(
+                                                color: value,
+                                                selectedProductItem: entry.key,
+                                                isSelected:
+                                                    selectedItem == entry.key,
+                                                onTap: () {
+                                                  setState(() {
+                                                    selectedItem = entry.key;
+                                                  });
+                                                },
+                                              ),
+                                      ],
+                                    ),
+                                  ] else if (colors.isNotEmpty &&
+                                      specs.isEmpty) ...[
+                                    const Text(
+                                      "VARIANTS",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Wrap(
+                                      spacing: 5,
+                                      children: [
+                                        for (var spec in colors)
+                                          for (var entry in spec.entries)
+                                            for (var value in entry.value)
+                                              ColorVariantBox(
+                                                color: value,
+                                                selectedProductItem: entry.key,
+                                                isSelected:
+                                                    selectedItem == entry.key,
+                                                onTap: () {
+                                                  setState(() {
+                                                    selectedItem = entry.key;
+                                                  });
+                                                },
+                                              ),
+                                      ],
+                                    ),
+                                  ] else ...[
+                                    const Text(
+                                      "This product is discontinued.",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red,
+                                      ),
+                                    ),
                                   ],
-                                ),
-                              ],
-                            ] else if (colors.isEmpty && specs.isNotEmpty) ...[
-                              Text(
-                                "VARIANTS",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              Row(
-                                spacing: 5,
-                                children: [
-                                  for (var spec in specs)
-                                    for (var entry in spec.entries)
-                                      for (var value in entry.value)
-                                        ColorVariantBox(
-                                          color: value,
-                                          selectedProductItem: entry.key,
-                                          isSelected: selectedItem == entry.key,
-                                          onTap: () {
-                                            setState(() {
-                                              selectedItem = entry.key;
-                                            });
-                                          },
-                                        ),
+                                  const SizedBox(
+                                      height: 20), // Khoảng cách cuối cùng
                                 ],
                               ),
-                            ] else if (colors.isNotEmpty && specs.isEmpty) ...[
-                              Text(
-                                "VARIANTS",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              Row(
-                                spacing: 5,
-                                children: [
-                                  for (var spec in colors)
-                                    for (var entry in spec.entries)
-                                      for (var value in entry.value)
-                                        ColorVariantBox(
-                                          color: value,
-                                          selectedProductItem: entry.key,
-                                          isSelected: selectedItem == entry.key,
-                                          onTap: () {
-                                            setState(() {
-                                              selectedItem = entry.key;
-                                            });
-                                          },
-                                        ),
-                                ],
-                              ),
-                            ] else ...[
-                              Text(
-                                "This product is discontinued.",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ],
+                            ),
                           ],
                         ),
                       ),

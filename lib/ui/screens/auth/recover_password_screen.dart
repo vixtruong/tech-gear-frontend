@@ -23,7 +23,7 @@ class _RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
           child: Padding(
             padding: EdgeInsets.symmetric(
               vertical: 30,
-              horizontal: wide ? 100 : 34,
+              horizontal: wide ? 100 : 10,
             ),
             child: Container(
               constraints: const BoxConstraints(maxWidth: 600),

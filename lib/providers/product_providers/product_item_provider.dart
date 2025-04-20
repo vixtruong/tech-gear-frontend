@@ -48,6 +48,21 @@ class ProductItemProvider with ChangeNotifier {
     }
   }
 
+  Future<List<int>> getPrice(List<int> productItemIds) async {
+    try {
+      if (productItemIds.isEmpty) {
+        return []; // Return empty list for empty input
+      }
+
+      List<int> priceData = await _service.getPrice(productItemIds);
+
+      return priceData;
+    } catch (e) {
+      e.toString();
+      return List.empty();
+    }
+  }
+
   Future<ProductItem?> addProductItem(ProductItem productItem) async {
     try {
       final result = await _service.addProductItem(productItem);

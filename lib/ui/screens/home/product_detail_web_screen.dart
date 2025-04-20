@@ -220,9 +220,9 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
     return list;
   }
 
-  Future<void> _addToCart(String productItemId) async {
+  Future<void> _addToCart(String productItemId, int count) async {
     try {
-      var cartItem = CartItem(productItemId: productItemId, quantity: 1);
+      var cartItem = CartItem(productItemId: productItemId, quantity: count);
       await _cartProvider.addItem(cartItem);
 
       var productItem =
@@ -612,7 +612,8 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
                                     child: buildButton(
                                       "Add to Cart",
                                       Colors.blue,
-                                      () => _addToCart(selectedItem!.id!),
+                                      () =>
+                                          _addToCart(selectedItem!.id!, count),
                                     ),
                                   ),
                                   SizedBox(width: 16),

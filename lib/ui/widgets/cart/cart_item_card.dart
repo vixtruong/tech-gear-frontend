@@ -7,6 +7,7 @@ import 'package:techgear/providers/product_providers/product_item_provider.dart'
 class CartItemCard extends StatefulWidget {
   final int productItemId;
   final int quantity;
+  final bool? isCheckout;
   final VoidCallback? onIncrease;
   final VoidCallback? onDecrease;
 
@@ -14,6 +15,7 @@ class CartItemCard extends StatefulWidget {
     super.key,
     required this.productItemId,
     required this.quantity,
+    this.isCheckout = false,
     this.onIncrease,
     this.onDecrease,
   });
@@ -64,7 +66,6 @@ class _CartItemCardState extends State<CartItemCard> {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : Container(
-            padding: const EdgeInsets.all(12.0),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -98,28 +99,29 @@ class _CartItemCardState extends State<CartItemCard> {
                       Text(
                         _productInfo?.productName ?? 'Unknown Product',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'SKU: ${_productInfo?.sku ?? 'N/A'}',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: Colors.grey[600],
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             '${vndFormat.format(_productInfo?.price ?? 0)}đ',
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: Colors.orange,
                             ),
@@ -127,19 +129,42 @@ class _CartItemCardState extends State<CartItemCard> {
                           if (!isWeb) // Chỉ hiển thị trên mobile
                             Row(
                               children: [
-                                IconButton(
-                                  icon: const Icon(Icons.remove, size: 20),
-                                  onPressed: widget.onDecrease,
-                                ),
+                                if (widget.isCheckout == false)
+                                  IconButton(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 30,
+                                      minHeight: 30,
+                                      maxWidth: 30,
+                                      maxHeight: 30,
+                                    ),
+                                    icon: const Icon(Icons.remove, size: 16),
+                                    onPressed: widget.onDecrease,
+                                  ),
                                 Text(
-                                  '${widget.quantity}',
-                                  style: const TextStyle(fontSize: 16),
+                                  (widget.isCheckout == true)
+                                      ? 'x${widget.quantity}'
+                                      : '${widget.quantity}',
+                                  style: const TextStyle(fontSize: 14),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.add, size: 20),
-                                  onPressed: widget.onIncrease,
-                                ),
+                                if (widget.isCheckout == false)
+                                  IconButton(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 30,
+                                      minHeight: 30,
+                                      maxWidth: 30,
+                                      maxHeight: 30,
+                                    ),
+                                    icon: const Icon(Icons.add, size: 16),
+                                    onPressed: widget.onIncrease,
+                                  ),
                               ],
+                            ),
+                          if (isWeb)
+                            Text(
+                              (widget.isCheckout == true)
+                                  ? 'x${widget.quantity}'
+                                  : '${widget.quantity}',
+                              style: const TextStyle(fontSize: 14),
                             ),
                         ],
                       ),

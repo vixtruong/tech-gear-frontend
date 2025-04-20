@@ -249,6 +249,23 @@ class _CartScreenState extends State<CartScreen> {
     return _selectedItems.values.where((isSelected) => isSelected).length;
   }
 
+  List<CartItem> getSelectedCheckoutItems() {
+    final List<CartItem> selected = [];
+    for (int i = 0; i < _cartItems.length; i++) {
+      if (_selectedItems[i] ?? false) {
+        final id = int.tryParse(_cartItems[i].productItemId);
+        if (id != null) {
+          selected.add(CartItem(
+            productItemId: id.toString(),
+            quantity: _cartItems[i].quantity,
+            price: _cartItems[i].price,
+          ));
+        }
+      }
+    }
+    return selected;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isWeb = MediaQuery.of(context).size.width >= 800;
@@ -327,94 +344,98 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildMobileBody(BuildContext context) {
-    return ListView.builder(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15.0),
-      itemCount: _cartItems.length,
-      itemBuilder: (context, index) {
-        final cartItem = _cartItems[index];
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onHorizontalDragUpdate: (details) {
-            final notifier = _offsets[index]!;
-            notifier.value =
-                (notifier.value + details.primaryDelta!).clamp(-80.0, 0.0);
-          },
-          onHorizontalDragEnd: (details) {
-            final notifier = _offsets[index]!;
-            notifier.value = (notifier.value < -40) ? -80.0 : 0.0;
-          },
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () => _removeItem(index),
-                    child: Container(
-                      width: 80,
-                      height: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 15),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: List.generate(_cartItems.length, (index) {
+          final cartItem = _cartItems[index];
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragUpdate: (details) {
+              final notifier = _offsets[index]!;
+              notifier.value =
+                  (notifier.value + details.primaryDelta!).clamp(-80.0, 0.0);
+            },
+            onHorizontalDragEnd: (details) {
+              final notifier = _offsets[index]!;
+              notifier.value = (notifier.value < -40) ? -80.0 : 0.0;
+            },
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () => _removeItem(index),
+                      child: Container(
+                        width: 80,
+                        height: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.delete,
+                            color: Colors.white, size: 30),
                       ),
-                      child: const Icon(Icons.delete,
-                          color: Colors.white, size: 30),
                     ),
                   ),
                 ),
-              ),
-              ValueListenableBuilder<double>(
-                valueListenable: _offsets[index]!,
-                builder: (context, offset, child) {
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    transform: Matrix4.translationValues(offset, 0, 0),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 15),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 2,
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Checkbox(
-                            activeColor: Colors.orange,
-                            value: _selectedItems[index] ?? false,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedItems[index] = value!;
-                                _isSelectAll = _selectedItems.values
-                                    .every((selected) => selected);
-                              });
-                            },
-                          ),
-                          Expanded(
-                            child: CartItemCard(
-                              productItemId: int.parse(cartItem.productItemId),
-                              quantity: cartItem.quantity,
-                              onIncrease: () => _updateQuantity(index, true),
-                              onDecrease: () => _updateQuantity(index, false),
+                ValueListenableBuilder<double>(
+                  valueListenable: _offsets[index]!,
+                  builder: (context, offset, child) {
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      transform: Matrix4.translationValues(offset, 0, 0),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 15),
+                        padding:
+                            const EdgeInsets.only(top: 10, right: 10, left: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.2),
+                              spreadRadius: 2,
+                              blurRadius: 8,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Checkbox(
+                              activeColor: Colors.orange,
+                              value: _selectedItems[index] ?? false,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedItems[index] = value!;
+                                  _isSelectAll = _selectedItems.values
+                                      .every((selected) => selected);
+                                });
+                              },
+                            ),
+                            Expanded(
+                              child: CartItemCard(
+                                productItemId:
+                                    int.parse(cartItem.productItemId),
+                                quantity: cartItem.quantity,
+                                onIncrease: () => _updateQuantity(index, true),
+                                onDecrease: () => _updateQuantity(index, false),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 
@@ -437,7 +458,7 @@ class _CartScreenState extends State<CartScreen> {
                             Text(
                               "Your cart is empty",
                               style: TextStyle(
-                                fontSize: 24,
+                                fontSize: 20,
                                 color: Colors.grey[600],
                                 fontWeight: FontWeight.w600,
                               ),
@@ -457,7 +478,7 @@ class _CartScreenState extends State<CartScreen> {
                                 "Shop Now",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -475,6 +496,7 @@ class _CartScreenState extends State<CartScreen> {
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
+                                  // ignore: deprecated_member_use
                                   color: Colors.grey.withOpacity(0.2),
                                   spreadRadius: 2,
                                   blurRadius: 8,
@@ -490,7 +512,7 @@ class _CartScreenState extends State<CartScreen> {
                                     "Product",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                        fontSize: 14),
                                   ),
                                 ),
                                 Expanded(
@@ -499,7 +521,7 @@ class _CartScreenState extends State<CartScreen> {
                                     "Quantity",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                        fontSize: 14),
                                   ),
                                 ),
                                 Expanded(
@@ -508,7 +530,7 @@ class _CartScreenState extends State<CartScreen> {
                                     "Price",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                        fontSize: 14),
                                   ),
                                 ),
                                 SizedBox(width: 85),
@@ -516,100 +538,104 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          ...List.generate(_cartItems.length, (index) {
-                            final product = _productItemInfos[index];
-                            final cartItem = _cartItems[index];
-                            return MouseRegion(
-                              onEnter: (_) {},
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.2),
-                                      spreadRadius: 2,
-                                      blurRadius: 8,
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      activeColor: Colors.orange,
-                                      value: _selectedItems[index] ?? false,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _selectedItems[index] = value!;
-                                          _isSelectAll = _selectedItems.values
-                                              .every((selected) => selected);
-                                        });
-                                      },
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: CartItemCard(
-                                          productItemId:
-                                              int.parse(cartItem.productItemId),
-                                          quantity: cartItem.quantity),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.remove,
-                                                size: 20),
-                                            onPressed: () =>
-                                                _updateQuantity(index, false),
-                                          ),
-                                          Text("${cartItem.quantity}"),
-                                          IconButton(
-                                            icon:
-                                                const Icon(Icons.add, size: 20),
-                                            onPressed: () =>
-                                                _updateQuantity(index, true),
-                                          ),
-                                        ],
+                          ...List.generate(
+                            _cartItems.length,
+                            (index) {
+                              final product = _productItemInfos[index];
+                              final cartItem = _cartItems[index];
+                              return MouseRegion(
+                                onEnter: (_) {},
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        // ignore: deprecated_member_use
+                                        color: Colors.grey.withOpacity(0.2),
+                                        spreadRadius: 2,
+                                        blurRadius: 8,
                                       ),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: Text(
-                                        "${vndFormat.format(product.price * cartItem.quantity)}đ",
-                                        style: const TextStyle(fontSize: 16),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Checkbox(
+                                        activeColor: Colors.orange,
+                                        value: _selectedItems[index] ?? false,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedItems[index] = value!;
+                                            _isSelectAll = _selectedItems.values
+                                                .every((selected) => selected);
+                                          });
+                                        },
                                       ),
-                                    ),
-                                    MouseRegion(
-                                      cursor: SystemMouseCursors.click,
-                                      child: GestureDetector(
-                                        onTap: () => _removeItem(index),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.delete,
-                                            color: Colors.white,
-                                            size: 20,
+                                      Expanded(
+                                        flex: 3,
+                                        child: CartItemCard(
+                                            productItemId: int.parse(
+                                                cartItem.productItemId),
+                                            quantity: cartItem.quantity),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.remove,
+                                                  size: 20),
+                                              onPressed: () =>
+                                                  _updateQuantity(index, false),
+                                            ),
+                                            Text("${cartItem.quantity}"),
+                                            IconButton(
+                                              icon: const Icon(Icons.add,
+                                                  size: 20),
+                                              onPressed: () =>
+                                                  _updateQuantity(index, true),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text(
+                                          "${vndFormat.format(product.price * cartItem.quantity)}đ",
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ),
+                                      MouseRegion(
+                                        cursor: SystemMouseCursors.click,
+                                        child: GestureDetector(
+                                          onTap: () => _removeItem(index),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.delete,
+                                              color: Colors.white,
+                                              size: 20,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(
-                                      width: 30,
-                                    )
-                                  ],
+                                      SizedBox(
+                                        width: 30,
+                                      )
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          }),
+                              );
+                            },
+                          ),
                         ],
                       ),
               ),
@@ -624,6 +650,7 @@ class _CartScreenState extends State<CartScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
+                          // ignore: deprecated_member_use
                           color: Colors.grey.withOpacity(0.2),
                           spreadRadius: 2,
                           blurRadius: 8,
@@ -637,24 +664,16 @@ class _CartScreenState extends State<CartScreen> {
                         const Text(
                           "Order Summary",
                           style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text("Subtotal",
-                                style: TextStyle(fontSize: 16)),
+                                style: TextStyle(fontSize: 14)),
                             Text(vndFormat.format(getTotalPrice()),
-                                style: const TextStyle(fontSize: 16)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Shipping", style: TextStyle(fontSize: 16)),
-                            Text("TBD", style: TextStyle(fontSize: 16)),
+                                style: const TextStyle(fontSize: 14)),
                           ],
                         ),
                         const Divider(height: 32),
@@ -664,12 +683,12 @@ class _CartScreenState extends State<CartScreen> {
                             const Text(
                               "Total",
                               style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                             Text(
                               vndFormat.format(getTotalPrice()),
                               style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -679,7 +698,11 @@ class _CartScreenState extends State<CartScreen> {
                           child: ElevatedButton(
                             onPressed: getSelectedItemCount() == 0
                                 ? null
-                                : () => context.go('/checkout'),
+                                : () {
+                                    List<CartItem> cartItems =
+                                        getSelectedCheckoutItems();
+                                    context.go('/checkout', extra: cartItems);
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orange,
                               padding: const EdgeInsets.symmetric(
@@ -729,14 +752,14 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 Text(
                   "Total Price",
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
                 Text(
                   '${vndFormat.format(getTotalPrice())}đ',
                   style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.w600,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
               ],
@@ -744,7 +767,8 @@ class _CartScreenState extends State<CartScreen> {
             ElevatedButton(
               onPressed: getSelectedItemCount() == 0
                   ? null
-                  : () => context.go('/checkout'),
+                  : () => context.push('/checkout',
+                      extra: getSelectedCheckoutItems()),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 shape: RoundedRectangleBorder(

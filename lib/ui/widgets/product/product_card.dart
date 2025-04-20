@@ -94,22 +94,27 @@ class _ProductCardState extends State<ProductCard> {
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(12)),
                   child: AspectRatio(
-                    aspectRatio: 1,
-                    child: CachedNetworkImage(
-                      imageUrl: widget.product.imgUrl,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Center(
+                      aspectRatio: 1,
+                      child: CachedNetworkImage(
+                        imageUrl: widget.product.imgUrl,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
                           child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.blue),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(
+                          Icons.broken_image,
+                          size: double.infinity,
+                          color: Colors.grey,
+                        ),
+                        memCacheWidth: 300, // Giới hạn chiều rộng bộ đệm
+                        memCacheHeight: 300, // Giới hạn chiều cao bộ đệm
+                        fadeInDuration: const Duration(
+                            milliseconds: 200), // Giảm thời gian hiệu ứng
                       )),
-                      errorWidget: (context, url, error) => Icon(
-                        Icons.broken_image,
-                        size: 80,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
                 ),
                 _buttonFavorite(widget.atHome),
                 // _buttonAddToCart(
