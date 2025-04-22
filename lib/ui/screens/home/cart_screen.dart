@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/dtos/product_item_info_dto.dart';
 import 'package:techgear/models/cart/cart_item.dart';
-import 'package:techgear/providers/cart_providers/cart_provider.dart';
+import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/product_item_provider.dart';
 import 'package:techgear/ui/widgets/cart/cart_item_card.dart';
 
@@ -97,6 +97,7 @@ class _CartScreenState extends State<CartScreen> {
               sku: '',
               imgUrl: '',
               price: 0.0,
+              discount: 0,
             ),
           );
           if (productInfo.productItemId != -1) {
@@ -396,6 +397,7 @@ class _CartScreenState extends State<CartScreen> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
+                              // ignore: deprecated_member_use
                               color: Colors.grey.withOpacity(0.2),
                               spreadRadius: 2,
                               blurRadius: 8,

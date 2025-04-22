@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:techgear/models/product/category.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/ui/widgets/common/custom_text_field.dart';
@@ -15,7 +16,13 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
   final TextEditingController _categoryController = TextEditingController();
 
-  final CategoryProvider _categoryProvider = CategoryProvider();
+  late CategoryProvider _categoryProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+  }
 
   @override
   void initState() {

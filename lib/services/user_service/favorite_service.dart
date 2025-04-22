@@ -1,19 +1,22 @@
-import 'package:dio/dio.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 
 class FavoriteService {
-  final Dio _dio = DioClient.instance;
   final String apiUrl = 'api/v1/favorites';
+  final DioClient _dioClient;
+
+  FavoriteService(SessionProvider sessionProvider)
+      : _dioClient = DioClient(sessionProvider);
 
   Future<List<Map<String, dynamic>>> fetchProductFavorite(String userId) async {
-    final response = await _dio.get('$apiUrl/user/$userId');
+    final response = await _dioClient.instance.get('$apiUrl/user/$userId');
     final List data = response.data;
     return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<bool> addFavorite(String userId, String productId) async {
     try {
-      final response = await _dio.post(
+      final response = await _dioClient.instance.post(
         '$apiUrl/add',
         data: {
           'userId': int.parse(userId),
@@ -35,7 +38,7 @@ class FavoriteService {
 
   Future<bool> removeFavorite(String userId, String productId) async {
     try {
-      final response = await _dio.delete(
+      final response = await _dioClient.instance.delete(
         '$apiUrl/delete',
         data: {
           'userId': int.parse(userId),

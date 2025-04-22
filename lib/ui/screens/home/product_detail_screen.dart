@@ -11,7 +11,7 @@ import 'package:techgear/models/product/product.dart';
 import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/models/product/product_specification.dart';
 import 'package:techgear/models/product/variant_value.dart';
-import 'package:techgear/providers/cart_providers/cart_provider.dart';
+import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_config_provider.dart';
@@ -508,8 +508,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                             isSelect: selectedSpecs == specs,
                                             onTap: () {
                                               setState(() {
-                                                if (selectedSpecs != specs)
+                                                if (selectedSpecs != specs) {
                                                   return;
+                                                }
                                                 selectedSpecs = specs;
                                                 colorSpecsList =
                                                     getColorsForSelectedSpecs();

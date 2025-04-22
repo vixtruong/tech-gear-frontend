@@ -1,13 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:techgear/dtos/order_dto.dart';
+import 'package:techgear/dtos/order_item_dto.dart';
+import 'package:techgear/dtos/register_request_dto.dart';
 import 'package:techgear/models/cart/cart_item.dart';
+import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/auth_provider.dart';
-import 'package:techgear/providers/cart_providers/cart_provider.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
+import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:badges/badges.dart' as badges;
+import 'package:techgear/providers/order_providers/order_provider.dart';
 import 'package:techgear/providers/product_providers/product_item_provider.dart';
+import 'package:techgear/providers/user_provider/user_provider.dart';
 import 'package:techgear/ui/widgets/cart/cart_item_card.dart';
 import 'package:techgear/ui/widgets/common/custom_button.dart';
 import 'package:techgear/ui/widgets/common/custom_text_field.dart';
@@ -15,17 +23,26 @@ import 'package:techgear/ui/widgets/common/custom_text_field.dart';
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
 
-  const CheckoutScreen({super.key, required this.cartItems});
+  const CheckoutScreen({
+    super.key,
+    required this.cartItems,
+  });
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  late ProductItemProvider _productItemProvider;
+  late NavigationProvider _navigationProvider;
   late AuthProvider _authProvider;
+  late SessionProvider _sessionProvider;
+  late ProductItemProvider _productItemProvider;
+  late UserProvider _userProvider;
+  late OrderProvider _orderProvider;
 
+  String? checkUserId;
   bool? isLogin;
+  int? userPoint;
 
   int currentStep = 0;
   int? selectedPaymentMethod;
@@ -53,19 +70,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final vndFormat = NumberFormat.decimalPattern('vi_VN');
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _productItemProvider =
-        Provider.of<ProductItemProvider>(context, listen: false);
-    _authProvider = Provider.of<AuthProvider>(context, listen: false);
-    _loadInfomation();
+  void initState() {
+    super.initState();
   }
 
-  Future<void> _loadInfomation() async {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _navigationProvider =
+        Provider.of<NavigationProvider>(context, listen: false);
+    _authProvider = Provider.of<AuthProvider>(context, listen: false);
+    _sessionProvider = Provider.of<SessionProvider>(context, listen: false);
+    _userProvider = Provider.of<UserProvider>(context, listen: false);
+    _orderProvider = Provider.of<OrderProvider>(context, listen: false);
+    _productItemProvider =
+        Provider.of<ProductItemProvider>(context, listen: false);
+    _loadInformation();
+  }
+
+  Future<void> _loadInformation() async {
+    await _sessionProvider.loadSession();
+
+    checkUserId = _sessionProvider.userId;
+
     final productItemIds =
         widget.cartItems.map((item) => int.parse(item.productItemId)).toList();
     final fetchIsLogin = await _authProvider.isCustomerLogin();
     final fetchPrices = await _productItemProvider.getPrice(productItemIds);
+
+    if (checkUserId != null) {
+      _userProvider.setUserId(int.parse(checkUserId!));
+      await _userProvider.fetchLoyaltyPoints();
+      userPoint = _userProvider.loyaltyPoints;
+    }
 
     setState(() {
       prices = fetchPrices;
@@ -73,7 +110,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  void _handleConfirm() {
+  Future<void> _handleConfirm() async {
     if (currentStep < steps.length - 1) {
       if (currentStep == 0) {
         if (!_key.currentState!.validate()) return;
@@ -90,7 +127,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             checkEmail.isEmpty ||
             checkPhoneNumber.isEmpty ||
             checkAddress.isEmpty ||
-            !emailRegex.hasMatch(checkEmail)) {
+            !emailRegex.hasMatch(checkEmail) ||
+            !RegExp(r'^\d{10}$').hasMatch(checkPhoneNumber)) {
           return;
         }
 
@@ -118,7 +156,74 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         currentStep++;
       });
     } else {
-      // TODO: Handle final confirmation
+      if (isLogin == false) {
+        try {
+          final registerRequest = RegisterRequestDto(
+            email: email,
+            fullName: fullName,
+            phoneNumber: phoneNumber,
+            password: phoneNumber,
+            role: "Customer",
+            address: address,
+          );
+
+          final data = await _authProvider.register(registerRequest);
+          final userId = data!['userId'];
+          final userAddressId = data['userAddressId'];
+
+          final List<OrderItemDto> orderItems = List.generate(
+            widget.cartItems.length,
+            (index) => OrderItemDto(
+              productItemId: int.parse(widget.cartItems[index].productItemId),
+              quantity: widget.cartItems[index].quantity,
+              price: prices[index],
+            ),
+          );
+
+          final orderDto = OrderDto(
+            userId: userId,
+            userAddressId: userAddressId,
+            totalAmount: getProductTotalPrice(),
+            paymentMethod: selectedPaymentMethod == 1 ? 'COD' : 'Momo',
+            createdAt: DateTime.now().toUtc(),
+            orderItems: orderItems,
+            isUsePoint: userPoint == 0 ? false : isUsePoint,
+          );
+
+          await _orderProvider.createOrder(orderDto);
+
+          var loginResponse = await _authProvider.login(email, phoneNumber);
+          if (loginResponse == null) {
+            return;
+          }
+          await _sessionProvider.saveSession(
+              loginResponse['accessToken'], loginResponse['refreshToken']);
+          await _sessionProvider.loadSession();
+
+          // Điều hướng đến '/activity' và đồng bộ NavigationProvider
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            _navigationProvider.setSelectedIndex(1);
+            context.go('/activity?fromCheckout=true');
+          });
+
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Order successfully."),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } catch (e) {
+          if (!mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Order fail!: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
     }
   }
 
@@ -134,13 +239,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ? prices[i]
           : 0; // Fallback to 0 if price is missing
 
-      if (price == 0) {
+      if (price == 0 || item.quantity == 0) {
         continue;
       }
-      if (item.quantity == 0) {
-        continue;
-      }
-
       total += price * item.quantity;
     }
 
@@ -148,9 +249,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _phoneNumberController.dispose();
+    _addressController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final itemCount = widget.cartItems.length;
-    // final isWeb = MediaQuery.of(context).size.width >= 800;
+    final isWeb = MediaQuery.of(context).size.width >= 800;
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -204,58 +315,62 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 return const Center(child: CircularProgressIndicator());
               },
             )
-          : Container(
-              color: Colors.white,
-              child: Column(
-                children: [
-                  _buildStepper(),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildStepContent(),
-                          SizedBox(height: 20),
-                        ],
+          : Center(
+              child: Container(
+                color: Colors.white,
+                width: isWeb
+                    ? MediaQuery.of(context).size.width * 0.5
+                    : double.infinity,
+                child: Column(
+                  children: [
+                    _buildStepper(),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildStepContent(),
+                            SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  // Trong hàm build của _CheckoutScreenState
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (currentStep > 0)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (currentStep > 0)
+                            Expanded(
+                              child: CustomButton(
+                                text: "Back",
+                                onPressed: () {
+                                  setState(() {
+                                    currentStep--;
+                                  });
+                                },
+                                color: Colors.grey,
+                                borderRadius: 20,
+                              ),
+                            ),
+                          if (currentStep > 0) const SizedBox(width: 10),
                           Expanded(
                             child: CustomButton(
-                              text: "Back",
-                              onPressed: () {
-                                setState(() {
-                                  currentStep--;
-                                });
-                              },
-                              color: Colors.grey,
+                              text: currentStep == steps.length - 1
+                                  ? "Confirm"
+                                  : "Next",
+                              onPressed: () => _handleConfirm(),
+                              color: Colors.black,
                               borderRadius: 20,
                             ),
                           ),
-                        if (currentStep > 0) const SizedBox(width: 10),
-                        Expanded(
-                          child: CustomButton(
-                            text: currentStep == steps.length - 1
-                                ? "Confirm"
-                                : "Next",
-                            onPressed: () => _handleConfirm(),
-                            color: Colors.black,
-                            borderRadius: 20,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
     );
@@ -268,57 +383,63 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Row(
         mainAxisAlignment:
             MainAxisAlignment.spaceEvenly, // Phân bố đều các bước
-        children: List.generate(steps.length * 2 - 1, (index) {
-          if (index.isEven) {
-            // Hiển thị bước (Shipping, Payment, Review)
-            final stepIndex = index ~/ 2;
-            final isActive = stepIndex == currentStep;
-            final isCompleted = stepIndex < currentStep;
-            return SizedBox(
-              width: 80, // Kích thước cố định cho mỗi bước
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: isActive || isCompleted
-                        ? Colors.black
-                        : Colors.grey[300],
-                    child: Icon(
-                      steps[stepIndex]['icon'] as IconData,
-                      color:
-                          isActive || isCompleted ? Colors.white : Colors.grey,
-                      size: 20,
+        children: List.generate(
+          steps.length * 2 - 1,
+          (index) {
+            if (index.isEven) {
+              // Hiển thị bước (Shipping, Payment, Review)
+              final stepIndex = index ~/ 2;
+              final isActive = stepIndex == currentStep;
+              final isCompleted = stepIndex < currentStep;
+              return SizedBox(
+                width: 80, // Kích thước cố định cho mỗi bước
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: isActive || isCompleted
+                          ? Colors.black
+                          : Colors.grey[300],
+                      child: Icon(
+                        steps[stepIndex]['icon'] as IconData,
+                        color: isActive || isCompleted
+                            ? Colors.white
+                            : Colors.grey,
+                        size: 20,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    steps[stepIndex]['label'] as String,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color:
-                          isActive || isCompleted ? Colors.black : Colors.grey,
-                      fontWeight:
-                          isActive ? FontWeight.bold : FontWeight.normal,
+                    const SizedBox(height: 8),
+                    Text(
+                      steps[stepIndex]['label'] as String,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isActive || isCompleted
+                            ? Colors.black
+                            : Colors.grey,
+                        fontWeight:
+                            isActive ? FontWeight.bold : FontWeight.normal,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            // Hiển thị Divider giữa các bước
-            final dividerIndex = index ~/ 2;
-            return SizedBox(
-              width: 60, // Kích thước cố định cho Divider
-              child: Divider(
-                color: dividerIndex < currentStep ? Colors.black : Colors.grey,
-                thickness: 2,
-                height: 20,
-              ),
-            );
-          }
-        }),
+                  ],
+                ),
+              );
+            } else {
+              // Hiển thị Divider giữa các bước
+              final dividerIndex = index ~/ 2;
+              return SizedBox(
+                width: 60, // Kích thước cố định cho Divider
+                child: Divider(
+                  color:
+                      dividerIndex < currentStep ? Colors.black : Colors.grey,
+                  thickness: 2,
+                  height: 20,
+                ),
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -423,6 +544,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "Please enter phone number";
+                      }
+                      if (!RegExp(r'^\d{10}$').hasMatch(value)) {
+                        return "Phone number must be exactly 10 digits and contain only numbers";
                       }
                       return null;
                     },
@@ -710,7 +834,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     color: Colors.amber,
                                   ),
                                   Text(
-                                    "Points (1000)",
+                                    "Points ($userPoint)",
                                     style: TextStyle(fontSize: 14),
                                   ),
                                 ],
@@ -922,9 +1046,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       _noteController.clear();
                       Navigator.pop(context);
                       setState(() {
-                        setState(() {
-                          note = "Text note...";
-                        });
+                        note = "Text note...";
                       });
                     },
                     child: const Text(

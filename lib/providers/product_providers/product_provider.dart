@@ -1,10 +1,16 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 
 import '../../models/product/product.dart';
 import '../../services/product_services/product_service.dart';
 
 class ProductProvider with ChangeNotifier {
-  final ProductService _service = ProductService();
+  final ProductService _service;
+  // ignore: unused_field
+  final SessionProvider _sessionProvider;
+
+  ProductProvider(this._sessionProvider)
+      : _service = ProductService(_sessionProvider);
   List<Product> _products = [];
   List<Product> _newProducts = [];
   List<Product> _bestSellerProducts = [];

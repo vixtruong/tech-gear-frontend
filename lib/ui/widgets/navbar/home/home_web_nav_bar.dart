@@ -1,10 +1,11 @@
 // lib/ui/widgets/web_nav_bar.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:badges/badges.dart' as badges;
-import 'package:techgear/providers/cart_providers/cart_provider.dart';
+import 'package:techgear/providers/order_providers/cart_provider.dart';
 
 class HomeWebNavBar extends StatefulWidget {
   const HomeWebNavBar({super.key});
@@ -15,40 +16,61 @@ class HomeWebNavBar extends StatefulWidget {
 
 class _HomeWebNavBarState extends State<HomeWebNavBar> {
   late CartProvider _cartProvider;
-
   int cartItemCount = 0;
+  String? _lastSyncedRoute; // Track the last synced route
+
+  @override
+  void initState() {
+    super.initState();
+    // Defer syncWithRoute until after the first frame
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      final currentRoute = GoRouter.of(context)
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .toString();
+      Provider.of<NavigationProvider>(context, listen: false)
+          .syncWithRoute(currentRoute);
+    });
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _cartProvider = Provider.of<CartProvider>(context, listen: false);
-
     _loadInformations();
+    _syncRoute();
   }
 
   Future<void> _loadInformations() async {
     try {
       await _cartProvider.loadCartFromStorage();
-
       var cartCount = _cartProvider.itemCount;
       setState(() {
         cartItemCount = cartCount;
       });
     } catch (e) {
-      e.toString();
+      print(e.toString());
     }
+  }
+
+  void _syncRoute() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      final currentRoute = GoRouter.of(context)
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .toString();
+      if (_lastSyncedRoute != currentRoute) {
+        Provider.of<NavigationProvider>(context, listen: false)
+            .syncWithRoute(currentRoute);
+        _lastSyncedRoute = currentRoute;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get the current route and sync the selectedIndex
-    final currentRoute =
-        GoRouter.of(context).routerDelegate.currentConfiguration.uri.toString();
-    final navigationProvider =
-        Provider.of<NavigationProvider>(context, listen: false);
-    navigationProvider.syncWithRoute(currentRoute);
-
-    // Use the selectedIndex from NavigationProvider
     final selectedIndex =
         Provider.of<NavigationProvider>(context).selectedIndex;
 
@@ -206,8 +228,10 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
           mainAxisSize: MainAxisSize.min,
           children: [
             badges.Badge(
-              badgeContent: Text('$cartItemCount',
-                  style: TextStyle(color: Colors.white, fontSize: 10)),
+              badgeContent: Text(
+                '${context.watch<CartProvider>().itemCount}',
+                style: const TextStyle(color: Colors.white, fontSize: 10),
+              ),
               child: Icon(
                 isSelected ? _getFilledIcon(icon) : icon,
                 color: isSelected ? Colors.black : Colors.black54,

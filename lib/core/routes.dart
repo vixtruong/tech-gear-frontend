@@ -1,7 +1,8 @@
-// lib/core/routes.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:techgear/models/cart/cart_item.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/ui/screens/dashboard/add_brand_screen.dart';
 import 'package:techgear/ui/screens/dashboard/add_category_screen.dart';
 import 'package:techgear/ui/screens/dashboard/add_product_screen.dart';
@@ -28,6 +29,26 @@ import 'package:techgear/ui/widgets/navbar/home/home_bottom_nav_bar.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/welcome',
+  redirect: (BuildContext context, GoRouterState state) async {
+    final sessionProvider =
+        Provider.of<SessionProvider>(context, listen: false);
+    await sessionProvider.loadSession();
+
+    final isLoggedIn = sessionProvider.isLoggedIn;
+    final role = sessionProvider.role;
+
+    // Nếu đã đăng nhập và cố truy cập các màn hình auth
+    if (isLoggedIn && role == 'Customer') {
+      if (state.uri.toString().startsWith('/welcome') ||
+          state.uri.toString().startsWith('/login') ||
+          state.uri.toString().startsWith('/register') ||
+          state.uri.toString().startsWith('/recover-password')) {
+        return '/home';
+      }
+    }
+
+    return null;
+  },
   routes: [
     // Auth screens (no navbar needed)
     GoRoute(

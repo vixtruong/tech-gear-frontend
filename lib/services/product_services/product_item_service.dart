@@ -1,28 +1,32 @@
 import 'package:dio/dio.dart';
 import 'package:techgear/models/product/product_item.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 import 'package:techgear/services/google_services/google_drive_service.dart';
 
 class ProductItemService {
-  final Dio _dio = DioClient.instance;
   final String apiUrl = '/api/v1/productitems';
-
+  final DioClient _dioClient;
+  ProductItemService(SessionProvider sessionProvider)
+      : _dioClient = DioClient(sessionProvider);
   Future<List<Map<String, dynamic>>> fetchProductItems() async {
-    final response = await _dio.get('$apiUrl/all');
+    final response = await _dioClient.instance.get('$apiUrl/all');
     final List data = response.data;
     return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<List<Map<String, dynamic>>> fetchProductItemsByProductId(
       String productId) async {
-    final response = await _dio.get('$apiUrl/by-productId/$productId');
+    final response =
+        await _dioClient.instance.get('$apiUrl/by-productId/$productId');
     final List data = response.data;
     return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
   Future<List<Map<String, dynamic>>> fetchProductItemsInfoByIds(
       List<int> productItemIds) async {
-    final response = await _dio.post('$apiUrl/by-ids/', data: productItemIds);
+    final response =
+        await _dioClient.instance.post('$apiUrl/by-ids/', data: productItemIds);
     final List data = response.data;
     return data.map((e) => Map<String, dynamic>.from(e)).toList();
   }
@@ -30,7 +34,7 @@ class ProductItemService {
   Future<Map<String, dynamic>?> fetchProductItemById(
       String productItemId) async {
     try {
-      final response = await _dio.get('$apiUrl/$productItemId');
+      final response = await _dioClient.instance.get('$apiUrl/$productItemId');
       return Map<String, dynamic>.from(response.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
@@ -40,7 +44,8 @@ class ProductItemService {
 
   Future<List<int>> getPrice(List<int> productItemIds) async {
     try {
-      final response = await _dio.post('$apiUrl/price', data: productItemIds);
+      final response =
+          await _dioClient.instance.post('$apiUrl/price', data: productItemIds);
       if (response.data is List) {
         final List<dynamic> rawData = response.data;
         final List<int> prices = rawData.map((e) => e as int).toList();
@@ -72,7 +77,8 @@ class ProductItemService {
         'createAt': DateTime.now().toIso8601String(),
       };
 
-      final response = await _dio.post('$apiUrl/add', data: body);
+      final response =
+          await _dioClient.instance.post('$apiUrl/add', data: body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return Map<String, dynamic>.from(response.data);

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/product/brand.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/product_services/brand_service.dart';
 
 class BrandProvider with ChangeNotifier {
-  final BrandService _service = BrandService();
+  final BrandService _service;
+  // ignore: unused_field
+  final SessionProvider _sessionProvider;
 
+  BrandProvider(this._sessionProvider)
+      : _service = BrandService(_sessionProvider);
   List<Brand> _brands = [];
 
   List<Brand> get brands => _brands;

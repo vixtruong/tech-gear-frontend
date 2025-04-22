@@ -1,12 +1,14 @@
 import 'package:dio/dio.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 
 class BrandService {
-  final Dio _dio = DioClient.instance;
   final String apiUrl = '/api/v1/brands';
-
+  final DioClient _dioClient;
+  BrandService(SessionProvider sessionProvider)
+      : _dioClient = DioClient(sessionProvider);
   Future<List<Map<String, dynamic>>> fetchBrands() async {
-    final response = await _dio.get('$apiUrl/all');
+    final response = await _dioClient.instance.get('$apiUrl/all');
     final List data = response.data;
 
     return data.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -14,7 +16,7 @@ class BrandService {
 
   Future<Map<String, dynamic>?> fetchBrandById(String brandId) async {
     try {
-      final response = await _dio.get('$apiUrl/$brandId');
+      final response = await _dioClient.instance.get('$apiUrl/$brandId');
       return Map<String, dynamic>.from(response.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
@@ -24,7 +26,8 @@ class BrandService {
 
   Future<Map<String, dynamic>?> fetchBrandByName(String brandName) async {
     try {
-      final response = await _dio.get('$apiUrl/by-name/$brandName');
+      final response =
+          await _dioClient.instance.get('$apiUrl/by-name/$brandName');
       return Map<String, dynamic>.from(response.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
@@ -33,7 +36,7 @@ class BrandService {
   }
 
   Future<void> addBrand(String brandName) async {
-    final response = await _dio.post(
+    final response = await _dioClient.instance.post(
       '$apiUrl/add',
       data: brandName,
     );

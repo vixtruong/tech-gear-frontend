@@ -4,6 +4,7 @@ class ProductItemInfoDto {
   String sku;
   String imgUrl;
   double price;
+  int discount;
 
   ProductItemInfoDto({
     required this.productItemId,
@@ -11,6 +12,7 @@ class ProductItemInfoDto {
     required this.sku,
     required this.imgUrl,
     required this.price,
+    required this.discount,
   });
 
   factory ProductItemInfoDto.fromMap(Map<String, dynamic> data) {
@@ -23,6 +25,7 @@ class ProductItemInfoDto {
           ? data['price'] as double
           : double.tryParse(data['price']?.toString() ?? '0.0') ??
               0.0, // Đã an toàn
+      discount: data['discount'] as int,
     );
   }
 }

@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/dtos/product_item_info_dto.dart';
 import 'package:techgear/models/product/product_item.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/product_services/product_item_service.dart';
 
 class ProductItemProvider with ChangeNotifier {
-  final ProductItemService _service = ProductItemService();
+  final ProductItemService _service;
+  // ignore: unused_field
+  final SessionProvider _sessionProvider;
+
+  ProductItemProvider(this._sessionProvider)
+      : _service = ProductItemService(_sessionProvider);
   List<ProductItem> _productItems = [];
 
   List<ProductItem> get productItems => _productItems;

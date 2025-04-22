@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/product/product_config.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/product_services/product_config_service.dart';
 
 class ProductConfigProvider with ChangeNotifier {
-  final ProductConfigService _service = ProductConfigService();
+  final ProductConfigService _service;
+  // ignore: unused_field
+  final SessionProvider _sessionProvider;
+
+  ProductConfigProvider(this._sessionProvider)
+      : _service = ProductConfigService(_sessionProvider);
 
   List<ProductConfig> _productConfigs = [];
 

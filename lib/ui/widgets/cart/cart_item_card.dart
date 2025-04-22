@@ -159,11 +159,9 @@ class _CartItemCardState extends State<CartItemCard> {
                                   ),
                               ],
                             ),
-                          if (isWeb)
+                          if (isWeb && widget.isCheckout == true)
                             Text(
-                              (widget.isCheckout == true)
-                                  ? 'x${widget.quantity}'
-                                  : '${widget.quantity}',
+                              'x${widget.quantity}',
                               style: const TextStyle(fontSize: 14),
                             ),
                         ],

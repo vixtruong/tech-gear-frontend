@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/product/product.dart';
 import 'package:techgear/models/product/category.dart';
-import 'package:techgear/providers/cart_providers/cart_provider.dart';
+import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/ui/widgets/common/custom_dropdown.dart';
@@ -495,20 +495,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       builder: (context, cartProvider, child) {
                         return _iconBtn(
                           icon: badges.Badge(
-                            badgeStyle: const badges.BadgeStyle(
-                              badgeColor: Colors.red,
-                              padding: EdgeInsets.all(5),
-                            ),
                             badgeContent: Text(
-                              '${cartProvider.itemCount}', // Cập nhật trực tiếp từ CartProvider
+                              '${context.watch<CartProvider>().itemCount}',
                               style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                              ),
+                                  color: Colors.white, fontSize: 10),
                             ),
                             child: const Icon(Icons.shopping_cart_outlined),
                           ),
-                          onPressed: () => _navigate(context, '/cart'),
+                          onPressed: () => kIsWeb
+                              ? context.go('/cart')
+                              : context.push('/cart'),
                         );
                       },
                     ),

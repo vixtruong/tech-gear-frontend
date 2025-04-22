@@ -1,34 +1,50 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:techgear/dtos/login_request_dto.dart';
 import 'package:techgear/dtos/register_request_dto.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/auth_service/auth_service.dart';
+import 'package:techgear/services/order_service/cart_service.dart';
 
 class AuthProvider with ChangeNotifier {
-  final AuthService _authService = AuthService();
-
+  final AuthService _authService;
   bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  String? _errorMessage;
 
-  Future<void> login(String email, String password) async {
+  AuthProvider(SessionProvider sessionProvider, CartService cartService)
+      : _authService = AuthService(sessionProvider, cartService);
+
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  Future<Map<String, dynamic>?> login(String email, String password) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      await _authService.login(
+      final response = await _authService.login(
         LoginRequestDto(email: email, password: password),
       );
+      return response;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      return null;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> register(RegisterRequestDto request) async {
+  Future<Map<String, dynamic>?> register(RegisterRequestDto request) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      await _authService.register(request);
+      return await _authService.register(request);
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      return null;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -36,7 +52,12 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _authService.logout();
+    _errorMessage = null;
+    try {
+      await _authService.logout();
+    } catch (e) {
+      _errorMessage = 'Đăng xuất thất bại: ${e.toString()}';
+    }
     notifyListeners();
   }
 
