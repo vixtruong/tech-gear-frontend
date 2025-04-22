@@ -3,7 +3,7 @@ import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 
 class UserService {
-  final String baseUrl = '/api/user';
+  final String baseUrl = '/api/v1/users';
   final DioClient _dioClient;
 
   UserService(SessionProvider sessionProvider)

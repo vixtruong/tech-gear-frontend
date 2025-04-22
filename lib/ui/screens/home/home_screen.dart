@@ -496,7 +496,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         return _iconBtn(
                           icon: badges.Badge(
                             badgeContent: Text(
-                              '${context.watch<CartProvider>().itemCount}',
+                              '${cartProvider.itemCount}',
                               style: const TextStyle(
                                   color: Colors.white, fontSize: 10),
                             ),

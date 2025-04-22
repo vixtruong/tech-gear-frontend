@@ -21,6 +21,7 @@ import 'package:techgear/providers/product_providers/variant_option_provider.dar
 import 'package:techgear/providers/product_providers/variant_value_provider.dart';
 import 'package:techgear/ui/widgets/product/color_variant_box.dart';
 import 'package:techgear/ui/widgets/product/specs_variant_box.dart';
+import 'package:badges/badges.dart' as badges;
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -230,7 +231,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     for (var colorsSpec in productSpec.colors!) {
       for (var entry in colorsSpec.entries) {
-        if (selectedSpecs!.productItems.contains(entry.key)) {
+        bool exists =
+            list.any((map) => map.keys.any((item) => item.id == entry.key.id));
+        if (selectedSpecs!.productItems.contains(entry.key) && !exists) {
           list.add({entry.key: entry.value});
         }
       }
@@ -246,6 +249,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
       var productItem =
           _productItems.firstWhere((item) => item.id == productItemId);
+
+      await _cartProvider.loadCart();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -284,7 +289,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               if (!kIsWeb)
                 buildCircleButton(
-                  icon: Icons.arrow_back_outlined,
+                  icon: Icon(Icons.arrow_back_outlined),
                   onTaped: () {
                     context.pop();
                   },
@@ -292,9 +297,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Spacer(),
               if (!widget.isAdmin)
                 buildCircleButton(
-                  icon: Icons.favorite_outline,
+                  icon: Icon(Icons.favorite_outline),
                   onTaped: () {},
                 ),
+              SizedBox(
+                width: 5,
+              ),
+              if (!widget.isAdmin)
+                cartBadgeCircleButton(context, () {
+                  context.push('/cart');
+                }),
             ],
           ),
         ),
@@ -357,9 +369,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             );
           }
 
-          productItemProvider.fetchProductItemsByProductId(widget.productId);
           _productItems = productItemProvider.productItems;
-          colorSpecsList = getColorsForSelectedSpecs();
 
           return Container(
             height: MediaQuery.of(context).size.height,
@@ -508,10 +518,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                             isSelect: selectedSpecs == specs,
                                             onTap: () {
                                               setState(() {
-                                                if (selectedSpecs != specs) {
+                                                if (selectedSpecs == specs) {
                                                   return;
                                                 }
                                                 selectedSpecs = specs;
+
                                                 colorSpecsList =
                                                     getColorsForSelectedSpecs();
                                                 if (colorSpecsList.isNotEmpty) {
@@ -671,7 +682,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget buildCircleButton({
-    required IconData icon,
+    required Widget icon,
     required VoidCallback onTaped,
   }) {
     return Container(
@@ -681,10 +692,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         color: Colors.black.withAlpha((0.3 * 255).toInt()),
       ),
       child: IconButton(
-        icon: Icon(icon),
+        icon: icon,
         color: Colors.white,
         onPressed: onTaped,
       ),
+    );
+  }
+
+  Widget cartBadgeCircleButton(BuildContext context, VoidCallback onTap) {
+    return Consumer<CartProvider>(
+      builder: (context, cartProvider, _) {
+        return buildCircleButton(
+          icon: badges.Badge(
+            badgeContent: Text(
+              '${cartProvider.itemCount}',
+              style: const TextStyle(color: Colors.white, fontSize: 10),
+            ),
+            child: const Icon(Icons.shopping_cart_outlined),
+          ),
+          onTaped: onTap,
+        );
+      },
     );
   }
 

@@ -39,6 +39,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late ProductItemProvider _productItemProvider;
   late UserProvider _userProvider;
   late OrderProvider _orderProvider;
+  late CartProvider _cartProvider;
 
   String? checkUserId;
   bool? isLogin;
@@ -85,6 +86,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _orderProvider = Provider.of<OrderProvider>(context, listen: false);
     _productItemProvider =
         Provider.of<ProductItemProvider>(context, listen: false);
+    _cartProvider = Provider.of<CartProvider>(context, listen: false);
     _loadInformation();
   }
 
@@ -156,6 +158,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         currentStep++;
       });
     } else {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        // ignore: deprecated_member_use
+        barrierColor: Colors.black.withOpacity(0.3),
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            color: Colors.blue,
+          ),
+        ),
+      );
       if (isLogin == false) {
         try {
           final registerRequest = RegisterRequestDto(
@@ -168,7 +181,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
 
           final data = await _authProvider.register(registerRequest);
-          final userId = data!['userId'];
+
+          if (data == null) {
+            if (mounted) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                      'User already exists. Please change information or login'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+            return;
+          }
+
+          final userId = data['userId'];
           final userAddressId = data['userAddressId'];
 
           final List<OrderItemDto> orderItems = List.generate(
@@ -200,13 +228,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               loginResponse['accessToken'], loginResponse['refreshToken']);
           await _sessionProvider.loadSession();
 
+          await _cartProvider.updateCartToServer();
+
           // Điều hướng đến '/activity' và đồng bộ NavigationProvider
           SchedulerBinding.instance.addPostFrameCallback((_) {
             _navigationProvider.setSelectedIndex(1);
-            context.go('/activity?fromCheckout=true');
+            context.go('/activity');
           });
 
           if (!mounted) return;
+
+          Navigator.of(context).pop(); // Đóng dialog
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text("Order successfully."),
@@ -214,6 +246,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           );
         } catch (e) {
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
           if (!mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

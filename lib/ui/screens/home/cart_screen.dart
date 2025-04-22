@@ -46,7 +46,7 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _loadInformations() async {
     try {
       setState(() => _isLoading = true);
-      await _cartProvider.loadCartFromStorage();
+      await _cartProvider.loadCart();
 
       _cartItems = _cartProvider.items;
       if (_cartItems.isEmpty) {
@@ -142,10 +142,6 @@ class _CartScreenState extends State<CartScreen> {
     final cartItem = _cartItems[index];
     final product = _productItemInfos[index];
     try {
-      final removedIndex = index;
-      final removedCartItem = cartItem;
-      final removedProduct = product;
-
       debugPrint('Removing item: ${cartItem.productItemId}');
 
       setState(() {
@@ -172,31 +168,6 @@ class _CartScreenState extends State<CartScreen> {
       await _cartProvider.removeItem(cartItem.productItemId);
 
       debugPrint('Item removed successfully: ${cartItem.productItemId}');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "${product.productName} removed from cart",
-              style: const TextStyle(color: Colors.black),
-            ),
-            backgroundColor: Colors.grey[200],
-            action: SnackBarAction(
-              label: 'Undo',
-              onPressed: () async {
-                setState(() {
-                  _cartItems.insert(removedIndex, removedCartItem);
-                  _productItemInfos.insert(removedIndex, removedProduct);
-                  _selectedItems[removedIndex] = false;
-                  _offsets[removedIndex] =
-                      ValueNotifier<double>(0.0); // Reinitialize offset
-                });
-                await _cartProvider.addItem(removedCartItem);
-              },
-            ),
-          ),
-        );
-      }
     } catch (e) {
       setState(() {
         _cartItems.insert(index, cartItem);
@@ -347,97 +318,138 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildMobileBody(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15.0),
-      child: Column(
-        children: List.generate(_cartItems.length, (index) {
-          final cartItem = _cartItems[index];
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onHorizontalDragUpdate: (details) {
-              final notifier = _offsets[index]!;
-              notifier.value =
-                  (notifier.value + details.primaryDelta!).clamp(-80.0, 0.0);
-            },
-            onHorizontalDragEnd: (details) {
-              final notifier = _offsets[index]!;
-              notifier.value = (notifier.value < -40) ? -80.0 : 0.0;
-            },
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: GestureDetector(
-                      onTap: () => _removeItem(index),
-                      child: Container(
-                        width: 80,
-                        height: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 15),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.delete,
-                            color: Colors.white, size: 30),
+      child: _cartItems.isEmpty || _productItemInfos.isEmpty
+          ? SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              width: double.infinity,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    "Your cart is empty",
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "Shop Now",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ),
-                ValueListenableBuilder<double>(
-                  valueListenable: _offsets[index]!,
-                  builder: (context, offset, child) {
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      transform: Matrix4.translationValues(offset, 0, 0),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 15),
-                        padding:
-                            const EdgeInsets.only(top: 10, right: 10, left: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              // ignore: deprecated_member_use
-                              color: Colors.grey.withOpacity(0.2),
-                              spreadRadius: 2,
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Checkbox(
-                              activeColor: Colors.orange,
-                              value: _selectedItems[index] ?? false,
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedItems[index] = value!;
-                                  _isSelectAll = _selectedItems.values
-                                      .every((selected) => selected);
-                                });
-                              },
-                            ),
-                            Expanded(
-                              child: CartItemCard(
-                                productItemId:
-                                    int.parse(cartItem.productItemId),
-                                quantity: cartItem.quantity,
-                                onIncrease: () => _updateQuantity(index, true),
-                                onDecrease: () => _updateQuantity(index, false),
+                ],
+              ),
+            )
+          : Column(
+              children: List.generate(_cartItems.length, (index) {
+                final cartItem = _cartItems[index];
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onHorizontalDragUpdate: (details) {
+                    final notifier = _offsets[index]!;
+                    notifier.value = (notifier.value + details.primaryDelta!)
+                        .clamp(-80.0, 0.0);
+                  },
+                  onHorizontalDragEnd: (details) {
+                    final notifier = _offsets[index]!;
+                    notifier.value = (notifier.value < -40) ? -80.0 : 0.0;
+                  },
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () => _removeItem(index),
+                            child: Container(
+                              width: 80,
+                              height: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 15),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(12),
                               ),
+                              child: const Icon(Icons.delete,
+                                  color: Colors.white, size: 30),
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    );
-                  },
-                ),
-              ],
+                      ValueListenableBuilder<double>(
+                        valueListenable: _offsets[index]!,
+                        builder: (context, offset, child) {
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            transform: Matrix4.translationValues(offset, 0, 0),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 15),
+                              padding: const EdgeInsets.only(
+                                  top: 10, right: 10, left: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    // ignore: deprecated_member_use
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 2,
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Checkbox(
+                                    activeColor: Colors.orange,
+                                    value: _selectedItems[index] ?? false,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedItems[index] = value!;
+                                        _isSelectAll = _selectedItems.values
+                                            .every((selected) => selected);
+                                      });
+                                    },
+                                  ),
+                                  Expanded(
+                                    child: CartItemCard(
+                                      productItemId:
+                                          int.parse(cartItem.productItemId),
+                                      quantity: cartItem.quantity,
+                                      onIncrease: () =>
+                                          _updateQuantity(index, true),
+                                      onDecrease: () =>
+                                          _updateQuantity(index, false),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ),
-          );
-        }),
-      ),
     );
   }
 

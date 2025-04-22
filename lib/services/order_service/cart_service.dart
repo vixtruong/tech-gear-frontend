@@ -7,7 +7,7 @@ import 'package:techgear/services/dio_client.dart';
 class CartService {
   final String _cartKey = 'cart_items';
   final DioClient _dioClient;
-  final String apiUrl = '/api/v1/cart';
+  final String apiUrl = '/api/v1/carts';
 
   CartService(SessionProvider sessionProvider)
       : _dioClient = DioClient(sessionProvider);
@@ -31,9 +31,9 @@ class CartService {
     return cartList.cast<Map<String, dynamic>>();
   }
 
-  Future<List<Map<String, dynamic>>> loadCartFromServer() async {
+  Future<List<Map<String, dynamic>>> loadCartFromServer(int userId) async {
     try {
-      final response = await _dioClient.instance.get(apiUrl);
+      final response = await _dioClient.instance.get('$apiUrl/$userId');
       final List<dynamic> data = response.data;
       print('CartService: Loaded cart from server: $data');
       return data.cast<Map<String, dynamic>>();
@@ -45,9 +45,11 @@ class CartService {
     }
   }
 
-  Future<void> addItemCart(int productItemId, {required int quantity}) async {
+  Future<void> addItemCart(int userId, int productItemId,
+      {required int quantity}) async {
     try {
       final body = {
+        'userId': userId,
         'productItemId': productItemId,
         'quantity': quantity,
       };
@@ -61,9 +63,56 @@ class CartService {
     }
   }
 
-  Future<void> removeItemCart(int productItemId) async {
+  Future<void> updateCart(
+      int userId, List<Map<String, dynamic>> cartItems) async {
     try {
-      await _dioClient.instance.delete('$apiUrl/remove/$productItemId');
+      final body = {
+        'userId': userId,
+        'cartItems': cartItems
+            .map((item) => {
+                  'productItemId': item['productItemId'],
+                  'quantity': item['quantity'],
+                })
+            .toList(),
+      };
+      print('CartService: Updating cart with body: $body');
+      await _dioClient.instance.post('$apiUrl/update', data: body);
+      print('CartService: Cart updated successfully for userId: $userId');
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? 'Failed to update cart';
+      print('CartService: Error updating cart: $msg');
+      throw Exception(msg);
+    }
+  }
+
+  Future<void> updateQuantity(
+      int userId, int productItemId, int quantity) async {
+    try {
+      final body = {
+        'userId': userId,
+        'productItemId': productItemId,
+        'quantity': quantity,
+      };
+      print('CartService: Updating quantity with body: $body');
+      await _dioClient.instance.put('$apiUrl/update-quantity', data: body);
+      print(
+          'CartService: Quantity updated successfully for productItemId: $productItemId');
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? 'Failed to update quantity';
+      print('CartService: Error updating quantity: $msg');
+      throw Exception(msg);
+    }
+  }
+
+  Future<void> removeItemCart(int userId, int productItemId) async {
+    try {
+      await _dioClient.instance.delete(
+        '$apiUrl/delete/$productItemId',
+        data: {
+          'userId': userId,
+          'productItemId': productItemId,
+        },
+      );
       print('CartService: Removed item from cart: $productItemId');
     } on DioException catch (e) {
       final msg =
