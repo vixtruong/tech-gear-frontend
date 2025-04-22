@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:techgear/dtos/product_item_info_dto.dart';
 import 'package:techgear/models/product/product_item.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/product_services/product_item_service.dart';
 
 class ProductItemProvider with ChangeNotifier {
-  final ProductItemService _service = ProductItemService();
+  final ProductItemService _service;
+  // ignore: unused_field
+  final SessionProvider _sessionProvider;
+
+  ProductItemProvider(this._sessionProvider)
+      : _service = ProductItemService(_sessionProvider);
   List<ProductItem> _productItems = [];
 
   List<ProductItem> get productItems => _productItems;
@@ -29,6 +36,36 @@ class ProductItemProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       e.toString();
+    }
+  }
+
+  Future<List<ProductItemInfoDto>?> fetchProductItemsByIds(
+      List<int> productItemIds) async {
+    try {
+      List<Map<String, dynamic>> fetchedData =
+          await _service.fetchProductItemsInfoByIds(productItemIds);
+      var result =
+          fetchedData.map((data) => ProductItemInfoDto.fromMap(data)).toList();
+
+      return result;
+    } catch (e) {
+      e.toString();
+      return null;
+    }
+  }
+
+  Future<List<int>> getPrice(List<int> productItemIds) async {
+    try {
+      if (productItemIds.isEmpty) {
+        return []; // Return empty list for empty input
+      }
+
+      List<int> priceData = await _service.getPrice(productItemIds);
+
+      return priceData;
+    } catch (e) {
+      e.toString();
+      return List.empty();
     }
   }
 

@@ -61,7 +61,7 @@ class _CustomDropdownState extends State<CustomDropdown> {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        style: const TextStyle(color: Colors.black),
+        style: const TextStyle(color: Colors.black, fontSize: 14),
         iconEnabledColor: Colors.black,
         dropdownColor: Colors.white,
         isDense: true, // Làm cho giao diện gọn gàng hơn

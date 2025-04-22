@@ -1,11 +1,10 @@
 class CartItem {
   final String productItemId;
   final int quantity;
+  final int? price;
 
-  const CartItem({
-    required this.productItemId,
-    required this.quantity,
-  });
+  const CartItem(
+      {required this.productItemId, required this.quantity, this.price = 0});
 
   factory CartItem.fromMap(Map<String, dynamic> data) {
     return CartItem(

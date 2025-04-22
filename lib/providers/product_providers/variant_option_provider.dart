@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/product/variant_option.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/product_services/variant_option_service.dart';
 
 class VariantOptionProvider with ChangeNotifier {
-  final VariantOptionService _service = VariantOptionService();
+  final VariantOptionService _service;
+  // ignore: unused_field
+  final SessionProvider _sessionProvider;
+
+  VariantOptionProvider(this._sessionProvider)
+      : _service = VariantOptionService(_sessionProvider);
   List<VariantOption> _variantOptions = [];
   String? _selectedCategoryId;
 

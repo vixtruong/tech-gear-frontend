@@ -57,6 +57,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
             keyboardType: widget.inputType,
             decoration: InputDecoration(
               hintText: widget.hint,
+              hintStyle: TextStyle(
+                fontSize: 14,
+              ),
               prefixIcon: widget.isSearch
                   ? const Icon(Icons.search, color: Colors.black54)
                   : null,
@@ -67,10 +70,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
         ),
         if (errorText != null)
           Padding(
-            padding: const EdgeInsets.only(top: 5, left: 10),
+            padding: const EdgeInsets.only(top: 5, left: 15),
             child: Text(
               errorText!,
-              style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+              style: const TextStyle(color: Colors.redAccent, fontSize: 10),
             ),
           ),
       ],

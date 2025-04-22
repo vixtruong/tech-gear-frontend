@@ -10,6 +10,7 @@ class ProductItem {
   String productId;
   DateTime? createdAt;
   bool available;
+  int discount;
 
   ProductItem({
     this.id,
@@ -21,6 +22,7 @@ class ProductItem {
     required this.productId,
     this.createdAt,
     this.available = true,
+    this.discount = 0,
   });
 
   factory ProductItem.fromMap(Map<String, dynamic> data) {
@@ -36,6 +38,7 @@ class ProductItem {
           ? DateTime.tryParse(data['createdAt'])
           : null,
       available: data['available'] == true,
+      discount: data['discount'] ?? 0,
     );
   }
 }

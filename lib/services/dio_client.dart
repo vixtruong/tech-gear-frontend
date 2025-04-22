@@ -1,17 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:techgear/services/auth_service/token_service.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import '../environment.dart';
 
 class DioClient {
-  static final Dio _dio = Dio(BaseOptions(
-    baseUrl: Environment.baseUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-    headers: {'Content-Type': 'application/json'},
-  ))
-    ..interceptors.add(InterceptorsWrapper(
+  final SessionProvider _sessionProvider;
+
+  DioClient(this._sessionProvider) {
+    _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final accessToken = await TokenStorageService.getAccessToken();
+        final accessToken = _sessionProvider.accessToken;
         if (accessToken != null) {
           options.headers['Authorization'] = 'Bearer $accessToken';
         }
@@ -21,8 +18,8 @@ class DioClient {
         if (error.response?.statusCode == 401) {
           final refreshed = await _refreshToken();
           if (refreshed) {
+            final newAccess = _sessionProvider.accessToken;
             final retryRequest = error.requestOptions;
-            final newAccess = await TokenStorageService.getAccessToken();
             retryRequest.headers['Authorization'] = 'Bearer $newAccess';
             final cloned = await _dio.fetch(retryRequest);
             return handler.resolve(cloned);
@@ -31,25 +28,39 @@ class DioClient {
         return handler.next(error);
       },
     ));
+  }
 
-  static Dio get instance => _dio;
+  final Dio _dio = Dio(BaseOptions(
+    baseUrl: Environment.baseUrl,
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+    headers: {'Content-Type': 'application/json'},
+  ));
 
-  static Future<bool> _refreshToken() async {
-    final refresh = await TokenStorageService.getRefreshToken();
-    if (refresh == null) return false;
+  Dio get instance => _dio;
 
+  bool _isRefreshing = false;
+
+  Future<bool> _refreshToken() async {
+    if (_isRefreshing) return false;
+    _isRefreshing = true;
     try {
-      final response = await _dio.post('/auth/refresh', data: {
-        'refreshToken': refresh,
+      final refreshToken = _sessionProvider.refreshToken;
+      if (refreshToken == null) return false;
+
+      final response = await _dio.post('/api/auth/refresh', data: {
+        'refreshToken': refreshToken,
       });
 
       final data = response.data;
-      await TokenStorageService.saveTokens(
+      await _sessionProvider.saveSession(
           data['accessToken'], data['refreshToken']);
       return true;
-    } catch (_) {
-      await TokenStorageService.clearTokens();
+    } catch (e) {
+      await _sessionProvider.clearSession();
       return false;
+    } finally {
+      _isRefreshing = false;
     }
   }
 }

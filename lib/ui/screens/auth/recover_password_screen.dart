@@ -23,7 +23,7 @@ class _RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
           child: Padding(
             padding: EdgeInsets.symmetric(
               vertical: 30,
-              horizontal: wide ? 100 : 34,
+              horizontal: wide ? 100 : 10,
             ),
             child: Container(
               constraints: const BoxConstraints(maxWidth: 600),
@@ -81,9 +81,7 @@ class _RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        // TODO: Send OTP logic
-                      },
+                      onPressed: () {},
                       child: const Text(
                         "Send OTP",
                         style: TextStyle(color: Colors.black45),
@@ -93,9 +91,7 @@ class _RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
                   const SizedBox(height: 10),
                   CustomButton(
                     text: "Confirm",
-                    onPressed: () {
-                      // TODO: Confirm logic
-                    },
+                    onPressed: () {},
                     color: Colors.blue,
                   ),
                 ],

@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/product_services/category_service.dart';
 
 import '../../models/product/category.dart';
 
 class CategoryProvider with ChangeNotifier {
-  final CategoryService _service = CategoryService();
+  final CategoryService _service;
+  // ignore: unused_field
+  final SessionProvider _sessionProvider;
 
+  CategoryProvider(this._sessionProvider)
+      : _service = CategoryService(_sessionProvider);
   List<Category> _categories = [];
 
   List<Category> get categories => _categories;

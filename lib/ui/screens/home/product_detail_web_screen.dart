@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // Added
+import 'package:techgear/models/cart/cart_item.dart';
 import 'package:techgear/models/product/brand.dart';
 import 'package:techgear/models/product/category.dart';
 import 'package:techgear/models/product/group_product_specs.dart';
@@ -8,6 +9,7 @@ import 'package:techgear/models/product/product.dart';
 import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/models/product/product_specification.dart';
 import 'package:techgear/models/product/variant_value.dart';
+import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_config_provider.dart';
@@ -38,6 +40,7 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
   late ProductConfigProvider _productConfigProvider;
   late VariantOptionProvider _variantOptionProvider;
   late VariantValueProvider _variantValueProvider;
+  late CartProvider _cartProvider;
 
   late CategoryProvider _categoryProvider;
   late BrandProvider _brandProvider;
@@ -74,6 +77,7 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
         Provider.of<VariantOptionProvider>(context, listen: false);
     _variantValueProvider =
         Provider.of<VariantValueProvider>(context, listen: false);
+    _cartProvider = Provider.of<CartProvider>(context, listen: false);
 
     _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     _brandProvider = Provider.of<BrandProvider>(context, listen: false);
@@ -216,6 +220,34 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
     return list;
   }
 
+  Future<void> _addToCart(String productItemId, int count) async {
+    try {
+      var cartItem = CartItem(productItemId: productItemId, quantity: count);
+      await _cartProvider.addItem(cartItem);
+
+      var productItem =
+          _productItems.firstWhere((item) => item.id == productItemId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("${productItem.sku} added to cart"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to add to cart: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      debugPrint('Error adding to cart: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -239,12 +271,6 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
               icon: Icon(Icons.favorite_outline),
               onPressed: () {},
               tooltip: "Add to Wishlist",
-            ),
-          if (!widget.isAdmin)
-            IconButton(
-              icon: Icon(Icons.add_shopping_cart_outlined),
-              onPressed: () {},
-              tooltip: "Add to Cart",
             ),
           SizedBox(width: 16),
         ],
@@ -285,6 +311,7 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
+                                    // ignore: deprecated_member_use
                                     color: Colors.grey.withOpacity(0.2),
                                     spreadRadius: 2,
                                     blurRadius: 8,
@@ -585,7 +612,8 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
                                     child: buildButton(
                                       "Add to Cart",
                                       Colors.blue,
-                                      () {},
+                                      () =>
+                                          _addToCart(selectedItem!.id!, count),
                                     ),
                                   ),
                                   SizedBox(width: 16),

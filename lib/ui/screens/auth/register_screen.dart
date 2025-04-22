@@ -24,7 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Padding(
             padding: EdgeInsets.symmetric(
               vertical: 30,
-              horizontal: wide ? 100 : 34,
+              horizontal: wide ? 100 : 10,
             ),
             child: Container(
               constraints: BoxConstraints(maxWidth: 600),

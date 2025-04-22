@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:techgear/models/product/brand.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/ui/widgets/common/custom_text_field.dart';
@@ -15,7 +16,13 @@ class _AddBrandScreenState extends State<AddBrandScreen> {
 
   final TextEditingController _brandController = TextEditingController();
 
-  final BrandProvider _brandProvider = BrandProvider();
+  late BrandProvider _brandProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _brandProvider = Provider.of<BrandProvider>(context, listen: false);
+  }
 
   void _handleSubmit() async {
     if (_key.currentState!.validate()) {

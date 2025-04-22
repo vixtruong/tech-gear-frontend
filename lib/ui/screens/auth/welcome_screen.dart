@@ -16,6 +16,7 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
+// Mobile Layout
 class WelcomeMobileLayout extends StatelessWidget {
   const WelcomeMobileLayout({super.key});
 
@@ -134,9 +135,7 @@ class WelcomeMobileLayout extends StatelessWidget {
   }
 }
 
-// --------------------------
-// ✅ Web layout mở rộng
-// --------------------------
+// Web layout mở rộng
 class WelcomeWebLayout extends StatelessWidget {
   const WelcomeWebLayout({super.key});
 
@@ -155,6 +154,7 @@ class WelcomeWebLayout extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 700),
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
+              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.4),
               borderRadius: BorderRadius.circular(24),
             ),
