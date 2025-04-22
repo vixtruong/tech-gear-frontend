@@ -40,7 +40,11 @@ class CartProvider with ChangeNotifier {
 
   Future<void> loadCartFromServer() async {
     try {
-      final rawList = await _cartService.loadCartFromServer();
+      final userId = _sessionProvider.userId;
+      if (userId == null) {
+        throw Exception('User ID is null');
+      }
+      final rawList = await _cartService.loadCartFromServer(int.parse(userId));
       _items = rawList.map((map) => CartItem.fromMap(map)).toList();
       notifyListeners();
     } catch (e) {
@@ -58,28 +62,33 @@ class CartProvider with ChangeNotifier {
 
   Future<void> addItem(CartItem newItem) async {
     try {
+      final index = _items
+          .indexWhere((item) => item.productItemId == newItem.productItemId);
+      if (index >= 0) {
+        _items[index] = _items[index].copyWith(
+          quantity: _items[index].quantity + newItem.quantity,
+        );
+      } else {
+        _items.add(newItem);
+      }
+      await saveCart();
+
       final productItemId = int.tryParse(newItem.productItemId);
       if (productItemId == null) {
         throw Exception('Invalid productItemId');
       }
 
       if (_sessionProvider.isLoggedIn) {
+        final userId = _sessionProvider.userId;
+        if (userId == null) {
+          throw Exception('User ID is null');
+        }
         await _cartService.addItemCart(
+          int.parse(userId),
           productItemId,
           quantity: newItem.quantity,
         );
         await loadCartFromServer();
-      } else {
-        final index = _items
-            .indexWhere((item) => item.productItemId == newItem.productItemId);
-        if (index >= 0) {
-          _items[index] = _items[index].copyWith(
-            quantity: _items[index].quantity + newItem.quantity,
-          );
-        } else {
-          _items.add(newItem);
-        }
-        await saveCart();
       }
 
       notifyListeners();
@@ -99,9 +108,21 @@ class CartProvider with ChangeNotifier {
             increase ? currentQuantity + 1 : currentQuantity - 1;
 
         if (newQuantity < 1 || newQuantity > 99) return;
-
         _items[index] = _items[index].copyWith(quantity: newQuantity);
         await saveCart();
+        if (_sessionProvider.isLoggedIn) {
+          final userId = _sessionProvider.userId;
+          if (userId == null) {
+            throw Exception('User ID is null');
+          }
+          await _cartService.updateQuantity(
+            int.parse(userId),
+            int.parse(productItemId),
+            newQuantity,
+          );
+          await loadCartFromServer();
+        }
+
         notifyListeners();
       }
     } catch (e) {
@@ -110,16 +131,46 @@ class CartProvider with ChangeNotifier {
     }
   }
 
-  Future<void> removeItem(String productItemId) async {
+  Future<void> updateCartToServer() async {
     try {
-      final productItemIdInt = int.tryParse(productItemId);
-      if (_sessionProvider.isLoggedIn && productItemIdInt != null) {
-        await _cartService.removeItemCart(productItemIdInt);
+      if (_sessionProvider.isLoggedIn) {
+        final userId = _sessionProvider.userId;
+        if (userId == null) {
+          throw Exception('User ID is null');
+        }
+        final cartMap = _items
+            .map((item) => {
+                  'productItemId': int.parse(item.productItemId),
+                  'quantity': item.quantity,
+                })
+            .toList();
+        await _cartService.updateCart(int.parse(userId), cartMap);
         await loadCartFromServer();
       } else {
-        _items.removeWhere((item) => item.productItemId == productItemId);
         await saveCart();
       }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error updating cart: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeItem(String productItemId) async {
+    try {
+      _items.removeWhere((item) => item.productItemId == productItemId);
+      await saveCart();
+
+      final productItemIdInt = int.tryParse(productItemId);
+      if (_sessionProvider.isLoggedIn && productItemIdInt != null) {
+        final userId = _sessionProvider.userId;
+        if (userId == null) {
+          throw Exception('User ID is null');
+        }
+        await _cartService.removeItemCart(int.parse(userId), productItemIdInt);
+        await loadCartFromServer();
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error removing item: $e');
@@ -139,8 +190,13 @@ class CartProvider with ChangeNotifier {
 
   Future<void> syncLocalCartToServer() async {
     if (_sessionProvider.isLoggedIn) {
+      final userId = _sessionProvider.userId;
+      if (userId == null) {
+        throw Exception('User ID is null');
+      }
       for (var item in _items) {
         await _cartService.addItemCart(
+          int.parse(userId),
           int.parse(item.productItemId),
           quantity: item.quantity,
         );

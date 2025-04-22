@@ -16,7 +16,6 @@ class HomeWebNavBar extends StatefulWidget {
 
 class _HomeWebNavBarState extends State<HomeWebNavBar> {
   late CartProvider _cartProvider;
-  int cartItemCount = 0;
   String? _lastSyncedRoute; // Track the last synced route
 
   @override
@@ -44,11 +43,7 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
 
   Future<void> _loadInformations() async {
     try {
-      await _cartProvider.loadCartFromStorage();
-      var cartCount = _cartProvider.itemCount;
-      setState(() {
-        cartItemCount = cartCount;
-      });
+      await _cartProvider.loadCart();
     } catch (e) {
       print(e.toString());
     }
@@ -144,12 +139,17 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
               ),
               const SizedBox(width: 10),
               _iconBtn(
-                icon: badges.Badge(
-                  badgeContent: Text(
-                    '$cartItemCount',
-                    style: TextStyle(color: Colors.white, fontSize: 10),
-                  ),
-                  child: const Icon(Icons.shopping_cart_outlined),
+                icon: Consumer<CartProvider>(
+                  builder: (context, cartProvider, _) {
+                    return badges.Badge(
+                      badgeContent: Text(
+                        '${cartProvider.itemCount}',
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 10),
+                      ),
+                      child: const Icon(Icons.shopping_cart_outlined),
+                    );
+                  },
                 ),
                 onPressed: () => context.go('/cart'),
               ),
