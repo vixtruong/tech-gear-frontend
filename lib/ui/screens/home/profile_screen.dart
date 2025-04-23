@@ -38,6 +38,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout(BuildContext context) async {
+    final outerContext = context; // Lưu context gốc
+
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => CustomConfirmDialog(
@@ -47,7 +49,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         confirmColor: Colors.redAccent,
         onConfirmed: () async {
           try {
+            showDialog(
+              context: outerContext,
+              barrierDismissible: false,
+              // ignore: deprecated_member_use
+              barrierColor: Colors.black.withOpacity(0.3),
+              builder: (context) => const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.blue,
+                ),
+              ),
+            );
+
             await _authProvider.logout();
+
+            if (outerContext.mounted) {
+              outerContext.go('/login');
+            }
           } catch (e) {
             debugPrint('Logout error: ${e.toString()}');
             SchedulerBinding.instance.addPostFrameCallback((_) {

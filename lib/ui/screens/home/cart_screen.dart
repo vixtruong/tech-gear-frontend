@@ -307,7 +307,11 @@ class _CartScreenState extends State<CartScreen> {
               ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Colors.blue,
+              ),
+            )
           : isWeb
               ? _buildWebBody(context)
               : _buildMobileBody(context),

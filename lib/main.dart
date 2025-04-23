@@ -6,6 +6,7 @@ import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/auth_provider.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
+import 'package:techgear/providers/order_providers/coupon_provider.dart';
 import 'package:techgear/providers/order_providers/order_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
@@ -15,6 +16,7 @@ import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/providers/product_providers/rating_provider.dart';
 import 'package:techgear/providers/product_providers/variant_option_provider.dart';
 import 'package:techgear/providers/product_providers/variant_value_provider.dart';
+import 'package:techgear/providers/user_provider/user_address_provider.dart';
 import 'package:techgear/providers/user_provider/user_provider.dart';
 import 'package:techgear/services/order_service/cart_service.dart';
 
@@ -29,7 +31,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (_) => SessionProvider()),
 
-        // Providers that depend on SessionProvider
         // CartProvider (depends on SessionProvider for CartService)
         ChangeNotifierProxyProvider<SessionProvider, CartProvider>(
           create: (context) => CartProvider(
@@ -123,6 +124,13 @@ void main() async {
           update: (context, sessionProvider, orderProvider) =>
               orderProvider ?? OrderProvider(sessionProvider),
         ),
+        ChangeNotifierProxyProvider<SessionProvider, CouponProvider>(
+          create: (context) => CouponProvider(
+            Provider.of<SessionProvider>(context, listen: false),
+          ),
+          update: (context, sessionProvider, orderProvider) =>
+              orderProvider ?? CouponProvider(sessionProvider),
+        ),
 
         // UserProvider (depends on SessionProvider)
         ChangeNotifierProxyProvider<SessionProvider, UserProvider>(
@@ -131,6 +139,13 @@ void main() async {
           ),
           update: (context, sessionProvider, userProvider) =>
               userProvider ?? UserProvider(sessionProvider),
+        ),
+        ChangeNotifierProxyProvider<SessionProvider, UserAddressProvider>(
+          create: (context) => UserAddressProvider(
+            Provider.of<SessionProvider>(context, listen: false),
+          ),
+          update: (context, sessionProvider, userAddressProvider) =>
+              userAddressProvider ?? UserAddressProvider(sessionProvider),
         ),
       ],
       child: const App(),

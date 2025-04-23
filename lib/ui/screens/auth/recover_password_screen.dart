@@ -52,27 +52,31 @@ class _RecoverPasswordScreenState extends State<RecoverPasswordScreen> {
                   const SizedBox(height: 15),
                   _buildTitleText(),
                   const SizedBox(height: 30),
-                  const CustomInputField(
+                  CustomInputField(
+                    controller: TextEditingController(),
                     icon: Icons.email,
                     hintText: "Email address",
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 15),
-                  const CustomInputField(
+                  CustomInputField(
+                    controller: TextEditingController(),
                     icon: Icons.lock,
                     hintText: "New password",
                     keyboardType: TextInputType.visiblePassword,
                     obscureText: true,
                   ),
                   const SizedBox(height: 15),
-                  const CustomInputField(
+                  CustomInputField(
+                    controller: TextEditingController(),
                     icon: Icons.password,
                     hintText: "Confirm password",
                     keyboardType: TextInputType.visiblePassword,
                     obscureText: true,
                   ),
                   const SizedBox(height: 15),
-                  const CustomInputField(
+                  CustomInputField(
+                    controller: TextEditingController(),
                     icon: Icons.lock_outline,
                     hintText: "OTP",
                     keyboardType: TextInputType.number,
