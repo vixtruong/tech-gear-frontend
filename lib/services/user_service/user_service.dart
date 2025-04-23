@@ -3,7 +3,7 @@ import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 
 class UserService {
-  final String baseUrl = '/api/v1/users';
+  final String apiUrl = '/api/v1/users';
   final DioClient _dioClient;
 
   UserService(SessionProvider sessionProvider)
@@ -13,7 +13,7 @@ class UserService {
   Future<Map<String, dynamic>> createUser(Map<String, dynamic> userData) async {
     try {
       final response =
-          await _dioClient.instance.post('$baseUrl/create', data: userData);
+          await _dioClient.instance.post('$apiUrl/create', data: userData);
       return Map<String, dynamic>.from(response.data);
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? 'Create user failed';
@@ -24,7 +24,7 @@ class UserService {
   /// Lấy điểm tích lũy hiện tại của user
   Future<int> getUserPoints(int userId) async {
     try {
-      final response = await _dioClient.instance.get('$baseUrl/$userId/points');
+      final response = await _dioClient.instance.get('$apiUrl/$userId/points');
       return response.data is int
           ? response.data
           : int.parse(response.data.toString());
@@ -37,8 +37,7 @@ class UserService {
   /// Cập nhật (trừ) điểm của user sau khi đặt hàng
   Future<void> updateUserPoints(int userId, int usedPoints) async {
     try {
-      await _dioClient.instance
-          .put('$baseUrl/$userId/points', data: usedPoints);
+      await _dioClient.instance.put('$apiUrl/$userId/points', data: usedPoints);
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? 'Failed to update points';
       throw Exception(msg);

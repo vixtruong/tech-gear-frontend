@@ -8,17 +8,21 @@ import 'package:techgear/dtos/order_dto.dart';
 import 'package:techgear/dtos/order_item_dto.dart';
 import 'package:techgear/dtos/register_request_dto.dart';
 import 'package:techgear/models/cart/cart_item.dart';
+import 'package:techgear/models/order/coupon.dart';
+import 'package:techgear/models/user/user_address.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/auth_provider.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
-import 'package:badges/badges.dart' as badges;
+import 'package:techgear/providers/order_providers/coupon_provider.dart';
 import 'package:techgear/providers/order_providers/order_provider.dart';
 import 'package:techgear/providers/product_providers/product_item_provider.dart';
+import 'package:techgear/providers/user_provider/user_address_provider.dart';
 import 'package:techgear/providers/user_provider/user_provider.dart';
 import 'package:techgear/ui/widgets/cart/cart_item_card.dart';
 import 'package:techgear/ui/widgets/common/custom_button.dart';
 import 'package:techgear/ui/widgets/common/custom_text_field.dart';
+import 'package:techgear/ui/widgets/user/user_address_card.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -40,19 +44,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late UserProvider _userProvider;
   late OrderProvider _orderProvider;
   late CartProvider _cartProvider;
+  late UserAddressProvider _addressProvider;
+  late CouponProvider _couponProvider;
 
   String? checkUserId;
   bool? isLogin;
   int? userPoint;
+  Coupon? couponVoucher;
 
   int currentStep = 0;
   int? selectedPaymentMethod;
   bool isUsePoint = false;
-  String note = "Text note...";
+  String? note;
   String fullName = "";
   String email = "";
   String phoneNumber = "";
   String address = "";
+  int totalAmount = 0;
+  int discountAmount = 0;
+
+  final shippingFee = 30000;
 
   final steps = [
     {'icon': Icons.local_shipping, 'label': 'Shipping'},
@@ -68,7 +79,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _noteController = TextEditingController();
 
   List<int> prices = [];
+  List<UserAddress> userAddresses = [];
+  int? selectedAddressId; // ID địa chỉ được chọn
+
   final vndFormat = NumberFormat.decimalPattern('vi_VN');
+
+  List<Coupon> coupons = [];
+
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -87,59 +105,98 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _productItemProvider =
         Provider.of<ProductItemProvider>(context, listen: false);
     _cartProvider = Provider.of<CartProvider>(context, listen: false);
+    _addressProvider = Provider.of<UserAddressProvider>(context, listen: false);
+    _couponProvider = Provider.of<CouponProvider>(context, listen: false);
     _loadInformation();
   }
 
   Future<void> _loadInformation() async {
+    // Load session thông tin đăng nhập
     await _sessionProvider.loadSession();
-
     checkUserId = _sessionProvider.userId;
 
+    // Lấy danh sách ID các sản phẩm trong giỏ hàng
     final productItemIds =
         widget.cartItems.map((item) => int.parse(item.productItemId)).toList();
+
     final fetchIsLogin = await _authProvider.isCustomerLogin();
     final fetchPrices = await _productItemProvider.getPrice(productItemIds);
 
+    await _couponProvider.fetchCoupons();
+    final fetchCoupons = _couponProvider.coupons;
+
     if (checkUserId != null) {
-      _userProvider.setUserId(int.parse(checkUserId!));
+      final userIdInt = int.parse(checkUserId!);
+      _userProvider.setUserId(userIdInt);
+
       await _userProvider.fetchLoyaltyPoints();
-      userPoint = _userProvider.loyaltyPoints;
+      await _addressProvider.fetchUserAddresses();
+
+      if (_addressProvider.addresses.isNotEmpty) {
+        final defaultAddress = _addressProvider.addresses.firstWhere(
+          (addr) => addr.isDefault,
+          orElse: () => _addressProvider.addresses.first,
+        );
+        selectedAddressId = defaultAddress.id;
+      }
     }
 
+    // Cập nhật lại UI state
     setState(() {
       prices = fetchPrices;
       isLogin = fetchIsLogin;
+      if (checkUserId != null) {
+        userPoint = _userProvider.loyaltyPoints;
+        userAddresses = _addressProvider.addresses;
+      }
+
+      coupons = fetchCoupons;
+      totalAmount = getProductTotalPrice() + shippingFee;
+      discountAmount = totalAmount;
+
+      _isLoading = false;
     });
   }
 
   Future<void> _handleConfirm() async {
     if (currentStep < steps.length - 1) {
       if (currentStep == 0) {
-        if (!_key.currentState!.validate()) return;
+        if (isLogin == false) {
+          if (!_key.currentState!.validate()) return;
 
-        String checkFullName = _fullNameController.text.trim();
-        String checkEmail = _emailController.text.trim();
-        String checkPhoneNumber = _phoneNumberController.text.trim();
-        String checkAddress = _addressController.text.trim();
+          String checkFullName = _fullNameController.text.trim();
+          String checkEmail = _emailController.text.trim();
+          String checkPhoneNumber = _phoneNumberController.text.trim();
+          String checkAddress = _addressController.text.trim();
 
-        // Regex kiểm tra định dạng email
-        final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+          // Regex kiểm tra định dạng email
+          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
-        if (checkFullName.isEmpty ||
-            checkEmail.isEmpty ||
-            checkPhoneNumber.isEmpty ||
-            checkAddress.isEmpty ||
-            !emailRegex.hasMatch(checkEmail) ||
-            !RegExp(r'^\d{10}$').hasMatch(checkPhoneNumber)) {
-          return;
+          if (checkFullName.isEmpty ||
+              checkEmail.isEmpty ||
+              checkPhoneNumber.isEmpty ||
+              checkAddress.isEmpty ||
+              !emailRegex.hasMatch(checkEmail) ||
+              !RegExp(r'^\d{10}$').hasMatch(checkPhoneNumber)) {
+            return;
+          }
+
+          setState(() {
+            fullName = checkFullName;
+            email = checkEmail;
+            phoneNumber = checkPhoneNumber;
+            address = checkAddress;
+          });
+        } else {
+          final selectedAddress =
+              userAddresses.where((a) => a.id == selectedAddressId).first;
+
+          setState(() {
+            fullName = selectedAddress.recipientName;
+            phoneNumber = selectedAddress.recipientPhone;
+            address = selectedAddress.address;
+          });
         }
-
-        setState(() {
-          fullName = checkFullName;
-          email = checkEmail;
-          phoneNumber = checkPhoneNumber;
-          address = checkAddress;
-        });
       }
 
       if (currentStep == 1) {
@@ -158,6 +215,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         currentStep++;
       });
     } else {
+      // Handle order
+      // Order without log in
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -212,6 +271,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             userId: userId,
             userAddressId: userAddressId,
             totalAmount: getProductTotalPrice(),
+            couponId: couponVoucher?.id,
+            note: note,
             paymentMethod: selectedPaymentMethod == 1 ? 'COD' : 'Momo',
             createdAt: DateTime.now().toUtc(),
             orderItems: orderItems,
@@ -253,6 +314,69 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Order fail!: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } else {
+        // Order when log in
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          // ignore: deprecated_member_use
+          barrierColor: Colors.black.withOpacity(0.3),
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(
+              color: Colors.blue,
+            ),
+          ),
+        );
+
+        try {
+          final userId = _sessionProvider.userId;
+          final userAddressId = selectedAddressId;
+          final List<OrderItemDto> orderItems = List.generate(
+            widget.cartItems.length,
+            (index) => OrderItemDto(
+              productItemId: int.parse(widget.cartItems[index].productItemId),
+              quantity: widget.cartItems[index].quantity,
+              price: prices[index],
+            ),
+          );
+
+          final orderDto = OrderDto(
+            userId: int.parse(userId!),
+            userAddressId: userAddressId!,
+            totalAmount: totalAmount,
+            couponId: couponVoucher?.id,
+            note: note,
+            paymentMethod: selectedPaymentMethod == 1 ? 'COD' : 'Momo',
+            createdAt: DateTime.now().toUtc(),
+            orderItems: orderItems,
+            isUsePoint: userPoint == 0 ? false : isUsePoint,
+          );
+
+          await _orderProvider.createOrder(orderDto);
+
+          if (!mounted) return;
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Order successfully.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            _navigationProvider.setSelectedIndex(1);
+            context.go('/activity');
+          });
+        } catch (e) {
+          if (mounted) {
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to create order. Please try again.'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -314,32 +438,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Consumer<CartProvider>(
-              builder: (context, cartProvider, child) {
-                return IconButton(
-                  icon: badges.Badge(
-                    badgeStyle: const badges.BadgeStyle(
-                      badgeColor: Colors.red,
-                      padding: EdgeInsets.all(5),
-                    ),
-                    badgeContent: Text(
-                      '${cartProvider.itemCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
-                    ),
-                    child: const Icon(Icons.shopping_cart_outlined),
-                  ),
-                  onPressed: () {},
-                );
-              },
-            ),
-          ),
-        ],
       ),
       body: (itemCount == 0)
           ? Builder(
@@ -350,64 +448,70 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 return const Center(child: CircularProgressIndicator());
               },
             )
-          : Center(
-              child: Container(
-                color: Colors.white,
-                width: isWeb
-                    ? MediaQuery.of(context).size.width * 0.5
-                    : double.infinity,
-                child: Column(
-                  children: [
-                    _buildStepper(),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildStepContent(),
-                            SizedBox(height: 20),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (currentStep > 0)
-                            Expanded(
-                              child: CustomButton(
-                                text: "Back",
-                                onPressed: () {
-                                  setState(() {
-                                    currentStep--;
-                                  });
-                                },
-                                color: Colors.grey,
-                                borderRadius: 20,
-                              ),
-                            ),
-                          if (currentStep > 0) const SizedBox(width: 10),
-                          Expanded(
-                            child: CustomButton(
-                              text: currentStep == steps.length - 1
-                                  ? "Confirm"
-                                  : "Next",
-                              onPressed: () => _handleConfirm(),
-                              color: Colors.black,
-                              borderRadius: 20,
+          : (_isLoading)
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.blue,
+                  ),
+                )
+              : Center(
+                  child: Container(
+                    color: Colors.white,
+                    width: isWeb
+                        ? MediaQuery.of(context).size.width * 0.5
+                        : double.infinity,
+                    child: Column(
+                      children: [
+                        _buildStepper(),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildStepContent(),
+                                SizedBox(height: 20),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (currentStep > 0)
+                                Expanded(
+                                  child: CustomButton(
+                                    text: "Back",
+                                    onPressed: () {
+                                      setState(() {
+                                        currentStep--;
+                                      });
+                                    },
+                                    color: Colors.grey,
+                                    borderRadius: 20,
+                                  ),
+                                ),
+                              if (currentStep > 0) const SizedBox(width: 10),
+                              Expanded(
+                                child: CustomButton(
+                                  text: currentStep == steps.length - 1
+                                      ? "Confirm"
+                                      : "Next",
+                                  onPressed: () => _handleConfirm(),
+                                  color: Colors.black,
+                                  borderRadius: 20,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
     );
   }
 
@@ -482,145 +586,131 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildStepContent() {
     switch (currentStep) {
       case 0:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text(
-              "Enter Shipping Details",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                "Enter Shipping Details",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Form(
-              key: _key,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Full name textfield
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15),
-                    child: Text(
-                      "Full Name*",
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+              const SizedBox(height: 20),
+              if (isLogin == false)
+                Form(
+                  key: _key,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 15),
+                        child: Text("Full Name*",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                      const SizedBox(height: 5),
+                      CustomTextField(
+                        controller: _fullNameController,
+                        hint: "Full Name",
+                        inputType: TextInputType.text,
+                        isSearch: false,
+                        validator: (value) => value == null || value.isEmpty
+                            ? "Please enter full name"
+                            : null,
+                      ),
+                      const SizedBox(height: 15),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 15),
+                        child: Text("Email*",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                      const SizedBox(height: 5),
+                      CustomTextField(
+                        controller: _emailController,
+                        hint: "Email",
+                        inputType: TextInputType.emailAddress,
+                        isSearch: false,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Please enter email";
+                          }
+                          final emailRegex =
+                              RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                          return !emailRegex.hasMatch(value)
+                              ? "Please enter a valid email"
+                              : null;
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 15),
+                        child: Text("Phone Number*",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                      const SizedBox(height: 5),
+                      CustomTextField(
+                        controller: _phoneNumberController,
+                        hint: "Phone Number",
+                        inputType: TextInputType.number,
+                        isSearch: false,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Please enter phone number";
+                          }
+                          return !RegExp(r'^\d{10}$').hasMatch(value)
+                              ? "Phone number must be exactly 10 digits and contain only numbers"
+                              : null;
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 15),
+                        child: Text("Address*",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                      const SizedBox(height: 5),
+                      CustomTextField(
+                        controller: _addressController,
+                        hint: "123, Tran Hung Dao, phuong 5,...",
+                        inputType: TextInputType.text,
+                        isSearch: false,
+                        validator: (value) => value == null || value.isEmpty
+                            ? "Please enter delivery address"
+                            : null,
+                      ),
+                      const SizedBox(height: 15),
+                    ],
                   ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  CustomTextField(
-                    controller: _fullNameController,
-                    hint: "Full Name",
-                    inputType: TextInputType.text,
-                    isSearch: false,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter full name";
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(
-                    height: 15,
-                  ),
-
-                  // Email textfield
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15),
-                    child: Text(
-                      "Email*",
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  CustomTextField(
-                      controller: _emailController,
-                      hint: "Email",
-                      inputType: TextInputType.text,
-                      isSearch: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Please enter email";
-                        }
-
-                        final emailRegex =
-                            RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-
-                        if (!emailRegex.hasMatch(value)) {
-                          return "Please enter a valid email";
-                        }
-
-                        return null;
-                      }),
-                  SizedBox(
-                    height: 15,
-                  ),
-
-                  // Phone number textfield
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15),
-                    child: Text(
-                      "Phone Number*",
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  CustomTextField(
-                    controller: _phoneNumberController,
-                    hint: "Phone Number",
-                    inputType: TextInputType.number,
-                    isSearch: false,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter phone number";
-                      }
-                      if (!RegExp(r'^\d{10}$').hasMatch(value)) {
-                        return "Phone number must be exactly 10 digits and contain only numbers";
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(
-                    height: 15,
-                  ),
-
-                  // Address textfield
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15),
-                    child: Text(
-                      "Address*",
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  CustomTextField(
-                    controller: _addressController,
-                    hint: "123, Tran Hung Dao, phuong 5,...",
-                    inputType: TextInputType.text,
-                    isSearch: false,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please enter delivery address";
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(
-                    height: 15,
-                  ),
-                ],
-              ),
-            )
-          ],
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: userAddresses.length,
+                  itemBuilder: (context, index) {
+                    final address = userAddresses[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: UserAddressCard(
+                        name: address.recipientName,
+                        phone: address.recipientPhone,
+                        address: address.address,
+                        value: address.id!,
+                        groupValue: selectedAddressId ?? -1,
+                        onChanged: (val) {
+                          setState(() {
+                            selectedAddressId = val;
+                          });
+                        },
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
         );
+
       case 1:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -843,19 +933,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     height: 0.1,
                     color: Colors.grey[300],
                   ),
-                  if (isLogin == true)
-                    Column(
-                      children: [
-                        _buildListTile(
-                          "Voucher",
-                          "Select or text code",
-                          () {},
-                        ),
-                        _buildListTile(
-                          "Note for shop",
-                          note,
-                          _showNoteBottomSheet,
-                        ),
+                  Column(
+                    children: [
+                      _buildListTile(
+                        "Voucher",
+                        couponVoucher?.code ?? "Select a voucher",
+                        () {
+                          _showVoucherBottomSheet(coupons);
+                        },
+                      ),
+                      _buildListTile(
+                        "Note for shop",
+                        note ?? "Text note...",
+                        _showNoteBottomSheet,
+                      ),
+                      if (isLogin == true)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Row(
@@ -885,6 +977,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   onChanged: (value) {
                                     setState(() {
                                       isUsePoint = value;
+
+                                      if (isUsePoint) {
+                                        discountAmount -= userPoint! * 1000;
+                                      } else {
+                                        discountAmount += userPoint! * 1000;
+                                      }
                                     });
                                   },
                                 ),
@@ -892,12 +990,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ],
                           ),
                         ),
-                        Divider(
-                          height: 0.1,
-                          color: Colors.grey[300],
-                        ),
-                      ],
-                    ),
+                      Divider(
+                        height: 0.1,
+                        color: Colors.grey[300],
+                      ),
+                    ],
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 15),
@@ -912,7 +1010,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              "${vndFormat.format(getProductTotalPrice())}đ", // giá khuyến mãi
+                              "${vndFormat.format(discountAmount)}đ", // giá khuyến mãi
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -921,7 +1019,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              "${vndFormat.format(getProductTotalPrice())}đ",
+                              "${vndFormat.format(totalAmount)}đ",
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -970,7 +1068,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Subtotal"),
+                      Text("Payment method"),
+                      Text((selectedPaymentMethod == 1) ? "COD" : "Momo"),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Product Amount"),
                       Text("${vndFormat.format(getProductTotalPrice())}đ"),
                     ],
                   ),
@@ -981,21 +1086,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Text("30.000đ"),
                     ],
                   ),
+                  if (isUsePoint == true && userPoint != 0)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Points"),
+                        Text(
+                          '-${vndFormat.format(userPoint! * 1000)}đ',
+                          style: TextStyle(
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (couponVoucher != null)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Voicher discount"),
+                        Text(
+                          '-${vndFormat.format(couponVoucher!.value)}đ',
+                          style: TextStyle(
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Grand Total"),
                       Text(
-                        "${vndFormat.format(getProductTotalPrice() + 30000)}đ",
+                        "${vndFormat.format(discountAmount)}đ",
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Payment method"),
-                      Text((selectedPaymentMethod == 1) ? "COD" : "Momo"),
                     ],
                   ),
                 ],
@@ -1011,106 +1135,266 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  void _showVoucherBottomSheet(List<Coupon> vouchers) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent, // for smooth rounded effect
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Available Vouchers",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: vouchers.isEmpty
+                        ? const Center(child: Text("No vouchers available."))
+                        : ListView.separated(
+                            controller: scrollController,
+                            itemCount: vouchers.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final voucher = vouchers[index];
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      // ignore: deprecated_member_use
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          voucher.code,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          "Discount: ${vndFormat.format(voucher.value)}₫ • Limit: ${voucher.usageLimit} uses",
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "Min order: ${vndFormat.format(voucher.minimumOrderAmount)}₫",
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black54),
+                                        ),
+                                        Text(
+                                          voucher.expirationDate != null
+                                              ? "Expires: ${DateFormat('dd/MM/yyyy').format(voucher.expirationDate!)}"
+                                              : "No expiration",
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.redAccent),
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          if (couponVoucher != voucher) {
+                                            couponVoucher = voucher;
+                                            discountAmount -= voucher.value;
+                                          } else {
+                                            couponVoucher = null;
+                                            discountAmount += voucher.value;
+                                          }
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            (couponVoucher == voucher)
+                                                ? Colors.grey
+                                                : Colors.black,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      child: Text((couponVoucher == voucher)
+                                          ? "Applied"
+                                          : "Apply"),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showNoteBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Enter Note for Shop",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+        return DraggableScrollableSheet(
+          initialChildSize: 0.4,
+          minChildSize: 0.3,
+          maxChildSize: 0.5,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _noteController,
-                decoration: InputDecoration(
-                  hintText: "Enter your note here...",
-                  hintStyle:
-                      const TextStyle(fontSize: 14), // Font size for hint text
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: Colors.grey, width: 1.5),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                ),
-                style:
-                    const TextStyle(fontSize: 14), // Font size for typed text
-                cursorColor: Colors.black,
-                maxLines: 2,
-                autofocus: true,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (value) {
-                  setState(() {});
-                  Navigator.pop(context);
-                },
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: ListView(
+                controller: scrollController,
+                shrinkWrap: true,
                 children: [
-                  TextButton(
-                    onPressed: () {
-                      _noteController.clear();
-                      Navigator.pop(context);
-                      setState(() {
-                        note = "Text note...";
-                      });
-                    },
-                    child: const Text(
-                      "Clear",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        note = _noteController.text.trim();
-                      });
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text("Save"),
                   ),
+                  const Text(
+                    "Add Note for the Shop",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _noteController,
+                    decoration: InputDecoration(
+                      hintText: "Write something like: 'Leave at front door'",
+                      hintStyle: const TextStyle(fontSize: 14),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: Colors.grey.shade300, // More subtle gray color
+                          width: 1.0, // Thinner border
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                    ),
+                    maxLines: 3,
+                    cursorColor: Colors.black,
+                    autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (value) {
+                      setState(() {
+                        note = value.trim();
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          _noteController.clear();
+                          Navigator.pop(context);
+                          setState(() {
+                            note = null;
+                          });
+                        },
+                        child: const Text(
+                          "Clear",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            note = _noteController.text.trim();
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text("Save"),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                 ],
               ),
-              const SizedBox(height: 10),
-            ],
-          ),
+            );
+          },
         );
       },
     );

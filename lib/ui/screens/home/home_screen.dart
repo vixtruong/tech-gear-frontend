@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await _productProvider.fetchBestSellerProducts();
       await _productProvider.fetchNewProducts();
       await _productProvider.fetchPromotionProducts();
-      await _cartProvider.loadCartFromStorage();
+      await _cartProvider.loadCart();
 
       setState(() {
         _categories = _categoryProvider.categories;
@@ -444,7 +444,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 20),
                 ],
               );
             }),

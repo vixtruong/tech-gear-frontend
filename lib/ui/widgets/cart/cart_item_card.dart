@@ -64,7 +64,11 @@ class _CartItemCardState extends State<CartItemCard> {
     final vndFormat = NumberFormat.decimalPattern('vi_VN');
     final isWeb = MediaQuery.of(context).size.width >= 800;
     return _isLoading
-        ? const Center(child: CircularProgressIndicator())
+        ? const Center(
+            child: CircularProgressIndicator(
+              color: Colors.blue,
+            ),
+          )
         : Container(
             decoration: BoxDecoration(
               color: Colors.white,

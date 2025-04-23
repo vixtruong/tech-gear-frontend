@@ -70,8 +70,8 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        await _sessionProvider.clearSession();
         await _cartService.clearCart(_sessionProvider);
+        await _sessionProvider.clearSession();
         print('AuthService: Logout successful');
       } else {
         throw Exception('Logout failed with status: ${response.statusCode}');
@@ -79,13 +79,13 @@ class AuthService {
     } on DioException catch (e) {
       print(
           'AuthService: Logout failed: ${e.response?.data['message'] ?? e.message}');
-      await _sessionProvider.clearSession();
       await _cartService.clearCart(_sessionProvider);
+      await _sessionProvider.clearSession();
       rethrow;
     } catch (e) {
       print('AuthService: Unexpected error during logout: $e');
-      await _sessionProvider.clearSession();
       await _cartService.clearCart(_sessionProvider);
+      await _sessionProvider.clearSession();
       rethrow;
     }
   }

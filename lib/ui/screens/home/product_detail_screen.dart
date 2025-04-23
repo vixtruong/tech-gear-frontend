@@ -244,7 +244,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Future<void> _addToCart(String productItemId) async {
     try {
-      var cartItem = CartItem(productItemId: productItemId, quantity: 1);
+      var cartItem = CartItem(productItemId: productItemId, quantity: count);
       await _cartProvider.addItem(cartItem);
 
       var productItem =

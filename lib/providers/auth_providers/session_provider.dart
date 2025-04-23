@@ -15,7 +15,7 @@ class SessionProvider with ChangeNotifier {
   String? get refreshToken => _refreshToken;
   String? get userId => _userId;
   String? get role => _role;
-  bool get isLoggedIn => _userId != null && _accessToken != null;
+  bool get isLoggedIn => _userId != null;
   bool get isSessionLoaded => _isSessionLoaded;
 
   Future<void> loadSession() async {
