@@ -19,9 +19,11 @@ import 'package:techgear/providers/product_providers/variant_value_provider.dart
 import 'package:techgear/providers/user_provider/user_address_provider.dart';
 import 'package:techgear/providers/user_provider/user_provider.dart';
 import 'package:techgear/services/order_service/cart_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('vi_VN', null);
   HttpOverrides.global = MyHttpOverrides();
 
   runApp(

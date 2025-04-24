@@ -64,6 +64,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Future<void> _loadProducts() async {
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
       await _categoryProvider.fetchCategories();
       await _productProvider.fetchProducts();
       await _productProvider.fetchBestSellerProducts();
@@ -77,14 +81,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _newProducts = _productProvider.newProducts;
         _bestSellerProducts = _productProvider.bestSellerProducts;
         _promotionProducts = _productProvider.promotionProducts;
-
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error: ${e.toString()}"),
+          content: Text("Lỗi khi tải dữ liệu: ${e.toString()}"),
           backgroundColor: Colors.red[400],
         ),
       );
@@ -112,9 +118,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 return Container(
                   padding: const EdgeInsets.all(20),
                   child: SingleChildScrollView(
-                    // Thêm SingleChildScrollView
-                    controller:
-                        controller, // Gắn controller để hỗ trợ DraggableScrollableSheet
+                    controller: controller,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -239,8 +243,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           ],
                         ),
-                        const SizedBox(
-                            height: 20), // Đảm bảo đủ không gian ở cuối
+                        const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -380,7 +383,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
               final screenWidth = MediaQuery.of(context).size.width;
               final isWeb = screenWidth >= 800;
-              final maxItem = (isWeb) ? 10 : 4;
+              final maxItem = isWeb ? 10 : 4;
 
               // Kiểm tra trạng thái mở rộng của danh mục
               final isExpanded = expandedCategories[category.id] ?? false;
@@ -422,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       );
                     }),
                   ),
-                  // Hiển thị nút "Xem thêm" nếu danh mục có nhiều hơn 8 sản phẩm
+                  // Hiển thị nút "Xem thêm" nếu danh mục có nhiều hơn maxItem sản phẩm
                   if (categoryProducts.length > maxItem)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -430,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         child: TextButton(
                           onPressed: () {
                             setState(() {
-                              expandedCategories[category.id] = !(isExpanded);
+                              expandedCategories[category.id] = !isExpanded;
                             });
                           },
                           child: Text(
@@ -458,344 +461,366 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final isWeb = MediaQuery.of(context).size.width >= 800;
 
     return SafeArea(
-        child: Scaffold(
-      backgroundColor: Colors.white,
-      appBar: !isWeb
-          ? AppBar(
-              surfaceTintColor: Colors.white,
-              backgroundColor: Colors.white,
-              shadowColor: Colors.white,
-              leadingWidth: double.infinity,
-              leading: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15.0, vertical: 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: CustomTextField(
-                        controller: _searchController,
-                        hint: "Search...",
-                        isSearch: true,
-                        inputType: TextInputType.text,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _iconBtn(
-                      icon: const Icon(Icons.filter_list),
-                      onPressed: () => _showFilterBottomSheet(context),
-                    ),
-                    const SizedBox(width: 10),
-                    _iconBtn(
-                      icon: const Icon(Icons.favorite_border),
-                      onPressed: () => _navigate(context, '/wish-list'),
-                    ),
-                    const SizedBox(width: 10),
-                    Consumer<CartProvider>(
-                      builder: (context, cartProvider, child) {
-                        return _iconBtn(
-                          icon: badges.Badge(
-                            badgeContent: Text(
-                              '${cartProvider.itemCount}',
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 10),
-                            ),
-                            child: const Icon(Icons.shopping_cart_outlined),
-                          ),
-                          onPressed: () => kIsWeb
-                              ? context.go('/cart')
-                              : context.push('/cart'),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : null,
-      body: Consumer<ProductProvider>(
-        builder: (context, productProvider, child) {
-          if (_isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-              ),
-            );
-          }
-
-          _products = productProvider.products;
-          _newProducts = productProvider.newProducts;
-          _bestSellerProducts = productProvider.bestSellerProducts;
-          _promotionProducts = productProvider.promotionProducts;
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Sidebar cho Web
-              if (isWeb)
-                Container(
-                  width: 300,
-                  padding: const EdgeInsets.all(20),
-                  color: Colors.grey[50],
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: !isWeb
+            ? AppBar(
+                surfaceTintColor: Colors.white,
+                backgroundColor: Colors.white,
+                shadowColor: Colors.white,
+                leadingWidth: double.infinity,
+                leading: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15.0, vertical: 4),
+                  child: Row(
                     children: [
-                      const Text(
-                        "Filter Options",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                      Expanded(
+                        child: CustomTextField(
+                          controller: _searchController,
+                          hint: "Search...",
+                          isSearch: true,
+                          inputType: TextInputType.text,
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        "Sort by",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
+                      const SizedBox(width: 10),
+                      _iconBtn(
+                        icon: const Icon(Icons.filter_list),
+                        onPressed: () => _showFilterBottomSheet(context),
                       ),
-                      const SizedBox(height: 10),
-                      CustomDropdown(
-                        label: "Sort",
-                        items: [
-                          {'id': '', 'name': 'Không sắp xếp'},
-                          {
-                            'id': 'price_low_to_high',
-                            'name': 'Giá: Thấp đến Cao'
-                          },
-                          {
-                            'id': 'price_high_to_low',
-                            'name': 'Giá: Cao đến Thấp'
-                          },
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedSortOption = value;
-                          });
+                      const SizedBox(width: 10),
+                      _iconBtn(
+                        icon: const Icon(Icons.favorite_border),
+                        onPressed: () => _navigate(context, '/wish-list'),
+                      ),
+                      const SizedBox(width: 10),
+                      Consumer<CartProvider>(
+                        builder: (context, cartProvider, child) {
+                          return _iconBtn(
+                            icon: badges.Badge(
+                              badgeContent: Text(
+                                '${cartProvider.itemCount}',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 10),
+                              ),
+                              child: const Icon(Icons.shopping_cart_outlined),
+                            ),
+                            onPressed: () => kIsWeb
+                                ? context.go('/cart')
+                                : context.push('/cart'),
+                          );
                         },
-                        value: _selectedSortOption,
-                      ),
-                      const SizedBox(height: 40),
-                      const Text(
-                        "Categories",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      CustomDropdown(
-                        label: "Categories",
-                        items: [
-                          {'id': '', 'name': 'Tất cả danh mục'},
-                          ..._categories.map(
-                            (cate) => {'id': cate.id, 'name': cate.name},
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedCategoryId = value;
-                          });
-                        },
-                        value: _selectedCategoryId,
-                      ),
-                      const SizedBox(height: 40),
-                      const Text(
-                        "Price",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildPriceFilterChip(
-                            label: "Dưới 2 triệu",
-                            value: 'under_2m',
-                            updateState: setState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "2 - 5 triệu",
-                            value: '2m_5m',
-                            updateState: setState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "5 - 10 triệu",
-                            value: '5m_10m',
-                            updateState: setState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "10 - 20 triệu",
-                            value: '10m_20m',
-                            updateState: setState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "20 - 30 triệu",
-                            value: '20m_30m',
-                            updateState: setState,
-                          ),
-                          _buildPriceFilterChip(
-                            label: "Trên 30 triệu",
-                            value: 'above_30m',
-                            updateState: setState,
-                          ),
-                        ],
                       ),
                     ],
                   ),
                 ),
-              // Nội dung chính
-              Expanded(
-                child: Column(
-                  children: [
-                    // TabBar
-                    TabBar(
-                      controller: _tabController,
-                      labelColor: Colors.blue,
-                      unselectedLabelColor: Colors.grey[600],
-                      overlayColor: WidgetStateProperty.all(Colors.grey[200]),
-                      indicatorColor: Colors.blue,
-                      indicatorWeight: 2.0,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      labelPadding:
-                          const EdgeInsets.symmetric(horizontal: 20.0),
-                      tabs: const [
-                        Tab(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.grid_view, size: 18),
-                              SizedBox(width: 4),
-                              Text("All"),
-                            ],
+              )
+            : null,
+        body: Consumer<ProductProvider>(
+          builder: (context, productProvider, child) {
+            if (_isLoading) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+              );
+            }
+
+            _products = productProvider.products;
+            _newProducts = productProvider.newProducts;
+            _bestSellerProducts = productProvider.bestSellerProducts;
+            _promotionProducts = productProvider.promotionProducts;
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sidebar cho Web
+                if (isWeb)
+                  Container(
+                    width: 300,
+                    padding: const EdgeInsets.all(20),
+                    color: Colors.grey[50],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Filter Options",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
                         ),
-                        Tab(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.local_fire_department,
-                                  color: Colors.red, size: 18),
-                              SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  "Promotional",
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 20),
+                        const Text(
+                          "Sort by",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black54,
                           ),
                         ),
-                        Tab(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.card_giftcard,
-                                  color: Colors.deepPurple, size: 18),
-                              SizedBox(width: 4),
-                              Text("New"),
-                            ],
+                        const SizedBox(height: 10),
+                        CustomDropdown(
+                          label: "Sort",
+                          items: [
+                            {'id': '', 'name': 'Không sắp xếp'},
+                            {
+                              'id': 'price_low_to_high',
+                              'name': 'Giá: Thấp đến Cao'
+                            },
+                            {
+                              'id': 'price_high_to_low',
+                              'name': 'Giá: Cao đến Thấp'
+                            },
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedSortOption = value;
+                            });
+                          },
+                          value: _selectedSortOption,
+                        ),
+                        const SizedBox(height: 40),
+                        const Text(
+                          "Categories",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black54,
                           ),
                         ),
-                        Tab(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.star, color: Colors.amber, size: 18),
-                              SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  "Best Seller",
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 10),
+                        CustomDropdown(
+                          label: "Categories",
+                          items: [
+                            {'id': '', 'name': 'Tất cả danh mục'},
+                            ..._categories.map(
+                              (cate) => {'id': cate.id, 'name': cate.name},
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedCategoryId = value;
+                            });
+                          },
+                          value: _selectedCategoryId,
+                        ),
+                        const SizedBox(height: 40),
+                        const Text(
+                          "Price",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black54,
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _buildPriceFilterChip(
+                              label: "Dưới 2 triệu",
+                              value: 'under_2m',
+                              updateState: setState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "2 - 5 triệu",
+                              value: '2m_5m',
+                              updateState: setState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "5 - 10 triệu",
+                              value: '5m_10m',
+                              updateState: setState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "10 - 20 triệu",
+                              value: '10m_20m',
+                              updateState: setState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "20 - 30 triệu",
+                              value: '20m_30m',
+                              updateState: setState,
+                            ),
+                            _buildPriceFilterChip(
+                              label: "Trên 30 triệu",
+                              value: 'above_30m',
+                              updateState: setState,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    // TabBarView
-                    Expanded(
-                      child: TabBarView(
+                  ),
+                // Nội dung chính
+                Expanded(
+                  child: Column(
+                    children: [
+                      // TabBar
+                      TabBar(
                         controller: _tabController,
-                        children: [
-                          SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(vertical: 15.0),
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 1200),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15.0),
-                                  child: _buildCategoryList(_products),
-                                ),
-                              ),
+                        labelColor: Colors.blue,
+                        unselectedLabelColor: Colors.grey[600],
+                        overlayColor: WidgetStateProperty.all(Colors.grey[200]),
+                        indicatorColor: Colors.blue,
+                        indicatorWeight: 2.0,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        labelPadding:
+                            const EdgeInsets.symmetric(horizontal: 20.0),
+                        tabs: const [
+                          Tab(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.grid_view, size: 18),
+                                SizedBox(width: 4),
+                                Text("All"),
+                              ],
                             ),
                           ),
-                          SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(vertical: 15.0),
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 1200),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15.0),
-                                  child: _buildCategoryList(_promotionProducts),
+                          Tab(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.local_fire_department,
+                                    color: Colors.red, size: 18),
+                                SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    "Promotional",
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
-                          SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(vertical: 15.0),
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 1200),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15.0),
-                                  child: _buildCategoryList(_newProducts),
-                                ),
-                              ),
+                          Tab(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.card_giftcard,
+                                    color: Colors.deepPurple, size: 18),
+                                SizedBox(width: 4),
+                                Text("New"),
+                              ],
                             ),
                           ),
-                          SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(vertical: 15.0),
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 1200),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15.0),
-                                  child:
-                                      _buildCategoryList(_bestSellerProducts),
+                          Tab(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.star, color: Colors.amber, size: 18),
+                                SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    "Best Seller",
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      // TabBarView
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            RefreshIndicator(
+                              onRefresh: _loadProducts,
+                              color: Colors.blue,
+                              child: SingleChildScrollView(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15.0),
+                                child: Center(
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 1200),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 15.0),
+                                      child: _buildCategoryList(_products),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            RefreshIndicator(
+                              onRefresh: _loadProducts,
+                              color: Colors.blue,
+                              child: SingleChildScrollView(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15.0),
+                                child: Center(
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 1200),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 15.0),
+                                      child: _buildCategoryList(
+                                          _promotionProducts),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            RefreshIndicator(
+                              onRefresh: _loadProducts,
+                              color: Colors.blue,
+                              child: SingleChildScrollView(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15.0),
+                                child: Center(
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 1200),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 15.0),
+                                      child: _buildCategoryList(_newProducts),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            RefreshIndicator(
+                              onRefresh: _loadProducts,
+                              color: Colors.blue,
+                              child: SingleChildScrollView(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15.0),
+                                child: Center(
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 1200),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 15.0),
+                                      child: _buildCategoryList(
+                                          _bestSellerProducts),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
-    ));
+    );
   }
 
   Widget _iconBtn({required Widget icon, required VoidCallback onPressed}) {

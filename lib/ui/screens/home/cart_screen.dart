@@ -243,7 +243,7 @@ class _CartScreenState extends State<CartScreen> {
     final isWeb = MediaQuery.of(context).size.width >= 800;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,

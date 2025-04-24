@@ -10,6 +10,10 @@ class OrderProvider with ChangeNotifier {
 
   OrderProvider(this._sessionProvider)
       : _orderService = OrderService(_sessionProvider);
+
+  List<OrderDto> _orders = [];
+  List<OrderDto> get orders => _orders;
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -18,6 +22,16 @@ class OrderProvider with ChangeNotifier {
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
+
+  Future<void> fetchOrdersByUserId(int userId) async {
+    try {
+      final data = await _orderService.fetchOrdersByUserId(userId);
+      _orders = data.map((item) => OrderDto.fromJson(item)).toList();
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+    notifyListeners();
+  }
 
   /// Tạo đơn hàng mới
   Future<void> createOrder(OrderDto order) async {
