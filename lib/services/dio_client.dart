@@ -46,15 +46,19 @@ class DioClient {
     _isRefreshing = true;
     try {
       final refreshToken = _sessionProvider.refreshToken;
-      if (refreshToken == null) return false;
+      final userId = _sessionProvider.userId;
+      if (refreshToken == null || userId == null) return false;
 
-      final response = await _dio.post('/api/auth/refresh', data: {
+      final response = await _dio.post('/api/v1/auth/refresh-token', data: {
+        'userId': int.parse(userId),
         'refreshToken': refreshToken,
       });
 
       final data = response.data;
       await _sessionProvider.saveSession(
           data['accessToken'], data['refreshToken']);
+
+      print("RefreshToken");
       return true;
     } catch (e) {
       await _sessionProvider.clearSession();

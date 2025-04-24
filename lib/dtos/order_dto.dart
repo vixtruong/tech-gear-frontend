@@ -6,8 +6,10 @@ class OrderDto {
   final int userAddressId;
   final int? couponId;
   final int totalAmount;
+  final int? paymentAmount;
   final String paymentMethod;
   final String? note;
+  final String? status;
   final bool isUsePoint;
   final DateTime createdAt;
   final List<OrderItemDto>? orderItems;
@@ -18,8 +20,10 @@ class OrderDto {
     required this.userAddressId,
     this.couponId,
     required this.totalAmount,
+    this.paymentAmount,
     required this.paymentMethod,
     this.note,
+    this.status,
     required this.createdAt,
     required this.isUsePoint,
     this.orderItems,
@@ -32,8 +36,10 @@ class OrderDto {
       userAddressId: json['userAddressId'],
       couponId: json['couponId'],
       totalAmount: json['totalAmount'],
-      paymentMethod: json['paymentMethod'],
-      note: json['note'],
+      paymentAmount: json['paymentAmount'],
+      paymentMethod: json['paymentMethod'] ?? '',
+      note: json['note'] ?? '',
+      status: json['status'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
       isUsePoint: json['isUsePoint'],
       orderItems: json['orderItems'] != null
@@ -51,6 +57,7 @@ class OrderDto {
         'couponId': couponId,
         'isUsePoint': isUsePoint,
         'totalAmount': totalAmount,
+        'paymentAmount': paymentAmount,
         'paymentMethod': paymentMethod,
         'note': note,
         'createdAt': createdAt.toIso8601String(),

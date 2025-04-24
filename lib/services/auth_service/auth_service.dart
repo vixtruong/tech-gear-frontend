@@ -63,10 +63,10 @@ class AuthService {
   Future<void> logout() async {
     try {
       final refreshToken = _sessionProvider.refreshToken;
-
+      final userId = _sessionProvider.userId;
       final response = await _dioClient.instance.post(
         '$apiUrl/logout',
-        data: {'refreshToken': refreshToken},
+        data: {'userId': int.parse(userId ?? ''), 'refreshToken': refreshToken},
       );
 
       if (response.statusCode == 200) {

@@ -8,6 +8,7 @@ class OrderService {
   final DioClient _dioClient;
   OrderService(SessionProvider sessionProvider)
       : _dioClient = DioClient(sessionProvider);
+
   Future<bool> createOrder(OrderDto order) async {
     try {
       final response = await _dioClient.instance
@@ -22,6 +23,18 @@ class OrderService {
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? 'Unknown error';
       throw Exception('Create order failed: $msg');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchOrdersByUserId(int userId) async {
+    try {
+      final response =
+          await _dioClient.instance.get('$apiUrl/get-by-user/$userId');
+      final List data = response.data;
+
+      return data.map((e) => Map<String, dynamic>.from(e)).toList();
+    } on DioException catch (e) {
+      throw Exception('Create order failed: $e');
     }
   }
 }
