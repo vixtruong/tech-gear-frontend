@@ -7,6 +7,7 @@ import 'package:techgear/providers/auth_providers/auth_provider.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/ui/widgets/common/custom_button.dart';
+import 'package:techgear/ui/widgets/dialogs/otp_dialog.dart';
 import '../../widgets/common/custom_input_field.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -37,7 +38,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _cartProvider = Provider.of<CartProvider>(context, listen: false);
   }
 
-  Future<void> _submidRegister() async {
+  Future<void> _sendOtp() async {
+    if (!_key.currentState!.validate()) return;
+
+    final fullName = _fullNameController.text.trim();
+    final email = _emailController.text.trim();
+    final phoneNumber = _phoneController.text.trim();
+    final address = _addressController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (fullName.isEmpty ||
+        email.isEmpty ||
+        !emailRegex.hasMatch(email) ||
+        phoneNumber.isEmpty ||
+        phoneNumber.length != 10 ||
+        address.isEmpty ||
+        password.isEmpty ||
+        password.length < 8 ||
+        password.length > 24 ||
+        confirmPassword != password) {
+      return;
+    }
+
+    OtpDialog.show(context, _submidRegister);
+
+    await _authProvider.sendOtp(email);
+  }
+
+  Future<void> _submidRegister(String otp) async {
     if (!_key.currentState!.validate()) return;
 
     final fullName = _fullNameController.text.trim();
@@ -81,6 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: password,
         role: "Customer",
         address: address,
+        otp: otp,
       );
 
       final data = await _authProvider.register(registerRequest);
@@ -90,8 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                  'User already exists. Please change information or login'),
+              content: Text('${_authProvider.errorMessage}'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -281,7 +311,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     CustomButton(
                       text: "Register",
                       onPressed: () {
-                        _submidRegister();
+                        _sendOtp();
                       },
                       color: Colors.blue,
                     ),

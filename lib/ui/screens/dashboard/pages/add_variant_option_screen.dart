@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -101,7 +102,12 @@ class _AddVariantOptionScreenState extends State<AddVariantOptionScreen> {
           backgroundColor: Colors.green[400],
         ),
       );
-      context.pop();
+
+      if (kIsWeb) {
+        context.go('/manage-variant-options');
+      } else {
+        context.pop();
+      }
     } catch (e) {
       if (!mounted) return;
       if (context.mounted) {

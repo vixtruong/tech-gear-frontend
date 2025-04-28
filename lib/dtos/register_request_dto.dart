@@ -5,6 +5,7 @@ class RegisterRequestDto {
   final String password;
   final String role;
   final String address;
+  final String otp;
 
   RegisterRequestDto({
     required this.email,
@@ -13,6 +14,7 @@ class RegisterRequestDto {
     required this.password,
     required this.role,
     required this.address,
+    required this.otp,
   });
 
   Map<String, dynamic> toJson() => {
@@ -22,5 +24,6 @@ class RegisterRequestDto {
         'rawPassword': password,
         'role': role,
         'address': address,
+        'otp': otp,
       };
 }

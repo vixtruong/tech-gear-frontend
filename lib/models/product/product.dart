@@ -1,11 +1,11 @@
-import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class Product {
   final String id;
   final String name;
   final double price;
   final String description;
-  final File imgFile;
+  final XFile imgFile;
   final String imgUrl;
   final String brandId;
   final String categoryId;
@@ -29,7 +29,7 @@ class Product {
       name: data['name'] ?? '',
       price: (data['price'] ?? 0).toDouble(),
       description: data['description'] ?? '',
-      imgFile: File(''),
+      imgFile: XFile(''),
       imgUrl: data['productImage'] ?? '',
       brandId: data['brandId']?.toString() ?? '',
       categoryId: data['categoryId']?.toString() ?? '',

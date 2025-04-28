@@ -6,6 +6,7 @@ import 'package:techgear/core/routes.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/auth_provider.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
+import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/order_providers/coupon_provider.dart';
 import 'package:techgear/providers/order_providers/order_provider.dart';
@@ -151,6 +152,15 @@ void main() async {
               userAddressProvider ?? UserAddressProvider(sessionProvider),
         ),
 
+        // ChatProvider (depends on SessionProvider)
+        ChangeNotifierProxyProvider<SessionProvider, ChatProvider>(
+          create: (context) => ChatProvider(
+            Provider.of<SessionProvider>(context, listen: false),
+          ),
+          update: (context, sessionProvider, chatProvider) =>
+              chatProvider ?? ChatProvider(sessionProvider),
+        ),
+
         // Map controller
         ChangeNotifierProvider(
           create: (context) => MenuAppController(),
@@ -180,10 +190,9 @@ class App extends StatelessWidget {
       theme: ThemeData(
         fontFamily: "Poppins",
         textSelectionTheme: TextSelectionThemeData(
-          cursorColor: Colors.black87, // Màu của con trỏ
-          selectionColor: Colors.grey, // Màu nền khi văn bản được chọn
-          selectionHandleColor:
-              Colors.red, // Màu của thanh kéo khi chọn văn bản
+          cursorColor: Colors.black87,
+          selectionColor: Colors.grey,
+          selectionHandleColor: Colors.blue,
         ),
       ),
       routerConfig: router,

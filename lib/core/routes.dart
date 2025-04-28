@@ -31,7 +31,7 @@ import 'package:techgear/ui/screens/home/profile_screen.dart';
 import 'package:techgear/ui/widgets/navbar/home/home_bottom_nav_bar.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/dashboard',
+  initialLocation: '/welcome',
   redirect: (BuildContext context, GoRouterState state) async {
     final sessionProvider =
         Provider.of<SessionProvider>(context, listen: false);

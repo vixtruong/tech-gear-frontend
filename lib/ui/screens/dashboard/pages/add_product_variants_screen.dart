@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/product/brand.dart';
 import 'package:techgear/models/product/category.dart';
@@ -17,6 +16,7 @@ import 'package:techgear/providers/product_providers/product_item_provider.dart'
 import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/providers/product_providers/variant_option_provider.dart';
 import 'package:techgear/providers/product_providers/variant_value_provider.dart';
+import 'package:techgear/ui/screens/dashboard/responsive.dart';
 import 'package:techgear/ui/widgets/common/custom_dropdown.dart';
 import 'package:techgear/ui/widgets/common/custom_text_field.dart';
 import 'package:techgear/ui/widgets/image/image_picker_field.dart';
@@ -57,7 +57,7 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
 
   final List<String> _selectVariantValueIds = [];
 
-  File? _selectedImage;
+  XFile? _selectedImage;
 
   bool _isLoading = true;
   bool _isSubmitting = false;
@@ -306,8 +306,15 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
                               return SizedBox(
                                 width: isLastOdd
                                     ? double.infinity
-                                    : MediaQuery.of(context).size.width / 2 -
-                                        20,
+                                    : (Responsive.isDesktop(context)
+                                        ? ((MediaQuery.of(context).size.width *
+                                                    5 /
+                                                    6) /
+                                                2) -
+                                            20
+                                        : MediaQuery.of(context).size.width /
+                                                2 -
+                                            20),
                                 child: CustomDropdown(
                                   label: option.name,
                                   hint: "Select ${option.name} value",

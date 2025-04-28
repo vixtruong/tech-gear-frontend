@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:badges/badges.dart' as badges;
+import 'package:techgear/providers/auth_providers/session_provider.dart';
+import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
 
 class HomeWebNavBar extends StatefulWidget {
@@ -15,8 +18,10 @@ class HomeWebNavBar extends StatefulWidget {
 
 class _HomeWebNavBarState extends State<HomeWebNavBar> {
   late CartProvider _cartProvider;
-  String? _lastSyncedRoute; // Track the last synced route
-  bool _isCartLoaded = false; // Thêm biến để kiểm soát việc tải giỏ hàng
+  late ChatProvider _chatProvider;
+  bool _isCartLoaded = false;
+  bool _isUnreadCountLoaded = false;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
@@ -31,40 +36,70 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
       Provider.of<NavigationProvider>(context, listen: false)
           .syncWithRoute(currentRoute);
     });
+
+    // Start polling for unread count updates (optional)
+    _startPolling();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _cartProvider = Provider.of<CartProvider>(context, listen: false);
+    _chatProvider = Provider.of<ChatProvider>(context, listen: false);
     if (!_isCartLoaded) {
-      _loadInformations();
+      _loadCart();
       _isCartLoaded = true;
     }
-    _syncRoute();
+    if (!_isUnreadCountLoaded) {
+      _loadUnreadCount();
+      _isUnreadCountLoaded = true;
+    }
   }
 
-  Future<void> _loadInformations() async {
+  Future<void> _loadCart() async {
     try {
       await _cartProvider.loadCart();
     } catch (e) {
-      print(e.toString());
+      print('Error loading cart: $e');
     }
   }
 
-  void _syncRoute() {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      final currentRoute = GoRouter.of(context)
-          .routerDelegate
-          .currentConfiguration
-          .uri
-          .toString();
-      if (_lastSyncedRoute != currentRoute) {
-        Provider.of<NavigationProvider>(context, listen: false)
-            .syncWithRoute(currentRoute);
-        _lastSyncedRoute = currentRoute;
+  Future<void> _loadUnreadCount() async {
+    try {
+      final sessionProvider =
+          Provider.of<SessionProvider>(context, listen: false);
+
+      await sessionProvider.loadSession();
+      final userId = sessionProvider.userId;
+
+      if (userId != null) {
+        await _chatProvider.fetchUnreadMessageCount(1, int.parse(userId));
+      }
+    } catch (e) {
+      print('Error loading unread count: $e');
+    }
+  }
+
+  // Optional: Poll for unread count updates every 30 seconds
+  void _startPolling() {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final sessionProvider =
+          Provider.of<SessionProvider>(context, listen: false);
+      final userId = sessionProvider.userId;
+      if (userId != null) {
+        await _loadUnreadCount();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -181,7 +216,7 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
         context.go('/activity');
         break;
       case 2:
-        context.go('/chat');
+        context.go('/support-center');
         break;
       case 3:
         context.go('/profile');
@@ -230,11 +265,12 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Consumer<CartProvider>(
-              builder: (context, cartProvider, _) {
+            Consumer<ChatProvider>(
+              builder: (context, chatProvider, _) {
                 return badges.Badge(
+                  showBadge: chatProvider.unreadCount > 0,
                   badgeContent: Text(
-                    '${cartProvider.itemCount}',
+                    '${chatProvider.unreadCount}',
                     style: const TextStyle(color: Colors.white, fontSize: 10),
                   ),
                   child: Icon(

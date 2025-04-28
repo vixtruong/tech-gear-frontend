@@ -1,7 +1,7 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/product/brand.dart';
 import 'package:techgear/models/product/category.dart';
@@ -37,7 +37,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
 
-  File? _selectedImage;
+  XFile? _selectedImage;
 
   bool _isLoading = true;
 
@@ -122,7 +122,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ),
       );
 
-      context.pop();
+      if (kIsWeb) {
+        context.go('/manage-product');
+      } else {
+        context.pop();
+      }
     } catch (e) {
       if (!mounted) return;
 

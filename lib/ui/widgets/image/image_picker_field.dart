@@ -1,11 +1,11 @@
+import 'dart:typed_data'; // Dùng để load bytes
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 class ImagePickerField extends StatefulWidget {
   final String label;
-  final Function(File?) onImagePicked;
-  final FormFieldValidator<File?>? validator;
+  final Function(XFile?) onImagePicked;
+  final FormFieldValidator<XFile?>? validator;
 
   const ImagePickerField({
     super.key,
@@ -19,14 +19,17 @@ class ImagePickerField extends StatefulWidget {
 }
 
 class _ImagePickerFieldState extends State<ImagePickerField> {
-  File? _selectedImage;
+  XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
+  Uint8List? _imageBytes; // Cho Web dùng
 
-  Future<void> _pickImage(FormFieldState<File?> field) async {
+  Future<void> _pickImage(FormFieldState<XFile?> field) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
+      final bytes = await image.readAsBytes();
       setState(() {
-        _selectedImage = File(image.path);
+        _selectedImage = image;
+        _imageBytes = bytes;
       });
 
       widget.onImagePicked(_selectedImage);
@@ -37,29 +40,25 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
 
   @override
   Widget build(BuildContext context) {
-    return FormField<File?>(
+    return FormField<XFile?>(
       validator: widget.validator,
-      builder: (FormFieldState<File?> field) {
+      builder: (FormFieldState<XFile?> field) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             InkWell(
               onTap: () => _pickImage(field),
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.grey,
-                  ),
+                  border: Border.all(color: Colors.grey),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   widget.label,
-                  style: TextStyle(
-                    color: Colors.black,
-                  ),
+                  style: const TextStyle(color: Colors.black),
                 ),
               ),
             ),
@@ -72,14 +71,15 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
                 ),
               ),
             const SizedBox(height: 15),
-            if (_selectedImage != null)
+            if (_imageBytes != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                   ),
-                  child: Image.file(_selectedImage!, fit: BoxFit.cover),
+                  child: Image.memory(_imageBytes!,
+                      fit: BoxFit.cover), // Dùng memory cho Web
                 ),
               ),
           ],

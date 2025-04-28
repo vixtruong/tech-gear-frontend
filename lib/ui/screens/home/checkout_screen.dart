@@ -22,6 +22,7 @@ import 'package:techgear/providers/user_provider/user_provider.dart';
 import 'package:techgear/ui/widgets/cart/cart_item_card.dart';
 import 'package:techgear/ui/widgets/common/custom_button.dart';
 import 'package:techgear/ui/widgets/common/custom_text_field.dart';
+import 'package:techgear/ui/widgets/dialogs/otp_dialog.dart';
 import 'package:techgear/ui/widgets/user/user_address_card.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -142,20 +143,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     // Cập nhật lại UI state
-    setState(() {
-      prices = fetchPrices;
-      isLogin = fetchIsLogin;
-      if (checkUserId != null) {
-        userPoint = _userProvider.loyaltyPoints;
-        userAddresses = _addressProvider.addresses;
-      }
+    if (mounted) {
+      setState(() {
+        prices = fetchPrices;
+        isLogin = fetchIsLogin;
+        if (checkUserId != null) {
+          userPoint = _userProvider.loyaltyPoints;
+          userAddresses = _addressProvider.addresses;
+        }
 
-      coupons = fetchCoupons;
-      totalAmount = getProductTotalPrice() + shippingFee;
-      discountAmount = totalAmount;
+        coupons = fetchCoupons;
+        totalAmount = getProductTotalPrice() + shippingFee;
+        discountAmount = totalAmount;
 
-      _isLoading = false;
-    });
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _sendOtp(String email) async {
+    OtpDialog.show(context, _submitWithoutLogin);
+
+    await _authProvider.sendOtp(email);
   }
 
   Future<void> _handleConfirm() async {
@@ -215,110 +224,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         currentStep++;
       });
     } else {
-      // Handle order
-      // Order without log in
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        // ignore: deprecated_member_use
-        barrierColor: Colors.black.withOpacity(0.3),
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            color: Colors.blue,
-          ),
-        ),
-      );
       if (isLogin == false) {
-        try {
-          final registerRequest = RegisterRequestDto(
-            email: email,
-            fullName: fullName,
-            phoneNumber: phoneNumber,
-            password: phoneNumber,
-            role: "Customer",
-            address: address,
-          );
-
-          final data = await _authProvider.register(registerRequest);
-
-          if (data == null) {
-            if (mounted) {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      'User already exists. Please change information or login'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-            return;
-          }
-
-          final userId = data['userId'];
-          final userAddressId = data['userAddressId'];
-
-          final List<OrderItemDto> orderItems = List.generate(
-            widget.cartItems.length,
-            (index) => OrderItemDto(
-              productItemId: int.parse(widget.cartItems[index].productItemId),
-              quantity: widget.cartItems[index].quantity,
-              price: prices[index],
-            ),
-          );
-
-          final orderDto = OrderDto(
-            userId: userId,
-            userAddressId: userAddressId,
-            totalAmount: getProductTotalPrice(),
-            couponId: couponVoucher?.id,
-            note: note,
-            paymentMethod: selectedPaymentMethod == 1 ? 'COD' : 'Momo',
-            createdAt: DateTime.now().toUtc(),
-            orderItems: orderItems,
-            isUsePoint: userPoint == 0 ? false : isUsePoint,
-          );
-
-          await _orderProvider.createOrder(orderDto);
-
-          var loginResponse = await _authProvider.login(email, phoneNumber);
-          if (loginResponse == null) {
-            return;
-          }
-          await _sessionProvider.saveSession(
-              loginResponse['accessToken'], loginResponse['refreshToken']);
-          await _sessionProvider.loadSession();
-
-          await _cartProvider.updateCartToServer();
-
-          // Điều hướng đến '/activity' và đồng bộ NavigationProvider
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            _navigationProvider.setSelectedIndex(1);
-            context.go('/activity');
-          });
-
-          if (!mounted) return;
-
-          Navigator.of(context).pop(); // Đóng dialog
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Order successfully."),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } catch (e) {
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
-          if (!mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Order fail!: ${e.toString()}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
+        _sendOtp(email);
       } else {
         // Order when log in
         showDialog(
@@ -382,6 +289,111 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             );
           }
         }
+      }
+    }
+  }
+
+  Future<void> _submitWithoutLogin(String otp) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        // ignore: deprecated_member_use
+        barrierColor: Colors.black.withOpacity(0.3),
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            color: Colors.blue,
+          ),
+        ),
+      );
+
+      final registerRequest = RegisterRequestDto(
+        email: email,
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+        password: phoneNumber,
+        role: "Customer",
+        address: address,
+        otp: otp,
+      );
+
+      final data = await _authProvider.register(registerRequest);
+
+      if (data == null) {
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${_authProvider.errorMessage}'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      final userId = data['userId'];
+      final userAddressId = data['userAddressId'];
+
+      final List<OrderItemDto> orderItems = List.generate(
+        widget.cartItems.length,
+        (index) => OrderItemDto(
+          productItemId: int.parse(widget.cartItems[index].productItemId),
+          quantity: widget.cartItems[index].quantity,
+          price: prices[index],
+        ),
+      );
+
+      final orderDto = OrderDto(
+        userId: userId,
+        userAddressId: userAddressId,
+        totalAmount: getProductTotalPrice(),
+        couponId: couponVoucher?.id,
+        note: note,
+        paymentMethod: selectedPaymentMethod == 1 ? 'COD' : 'Momo',
+        createdAt: DateTime.now().toUtc(),
+        orderItems: orderItems,
+        isUsePoint: userPoint == 0 ? false : isUsePoint,
+      );
+
+      await _orderProvider.createOrder(orderDto);
+
+      var loginResponse = await _authProvider.login(email, phoneNumber);
+      if (loginResponse == null) {
+        return;
+      }
+      await _sessionProvider.saveSession(
+          loginResponse['accessToken'], loginResponse['refreshToken']);
+      await _sessionProvider.loadSession();
+
+      await _cartProvider.updateCartToServer();
+
+      // Điều hướng đến '/activity' và đồng bộ NavigationProvider
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        _navigationProvider.setSelectedIndex(1);
+        context.go('/activity');
+      });
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); // Đóng dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Order successfully."),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      if (!mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Order fail!: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

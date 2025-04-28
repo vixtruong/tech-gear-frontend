@@ -1,15 +1,15 @@
 class Message {
-  final int id;
+  final int? id;
   final int senderId;
   final int receiverId;
-  final String? content;
+  final String? content; // Keep content internally
   final bool isImage;
   final String? imageUrl;
   final bool isRead;
   final DateTime sentAt;
 
   Message({
-    required this.id,
+    this.id,
     required this.senderId,
     required this.receiverId,
     this.content,
@@ -22,10 +22,10 @@ class Message {
   // fromJson
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['id'] as int,
+      id: json['id'] as int?,
       senderId: json['senderId'] as int,
       receiverId: json['receiverId'] as int,
-      content: json['content'] as String?,
+      content: json['content'] as String?, // Map backend 'message' to content
       isImage: json['isImage'] as bool,
       imageUrl: json['imageUrl'] as String?,
       isRead: json['isRead'] as bool,
@@ -36,14 +36,14 @@ class Message {
   // toJson
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'senderId': senderId,
-      'receiverId': receiverId,
-      'content': content,
-      'isImage': isImage,
-      'imageUrl': imageUrl,
-      'isRead': isRead,
-      'sentAt': sentAt.toIso8601String(),
+      'Id': id, // Use capital 'Id' to match C# property
+      'SenderId': senderId,
+      'ReceiverId': receiverId,
+      'Content': content, // Map content to backend 'Message'
+      'IsImage': isImage,
+      'ImageUrl': imageUrl,
+      'IsRead': isRead,
+      'SentAt': sentAt.toIso8601String(),
     };
   }
 }

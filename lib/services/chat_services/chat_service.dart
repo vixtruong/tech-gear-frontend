@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:techgear/dtos/mark_as_read_dto.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 import 'package:techgear/models/chat/message.dart';
@@ -20,16 +21,49 @@ class ChatService {
 
   Future<bool> sendMessage(Message message) async {
     try {
-      var response = await _dioClient.instance
+      final response = await _dioClient.instance
           .post('$apiUrl/send', data: message.toJson());
-
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
       }
-      return false;
+      throw Exception(
+          'Failed to send message: ${response.statusCode} - ${response.data}');
     } on DioException catch (e) {
-      e.toString();
-      return false;
+      final errorMessage = e.response != null
+          ? 'Failed to send message: ${e.response!.statusCode} - ${e.response!.data}'
+          : 'Network error: ${e.message}';
+      print(errorMessage);
+      throw Exception(errorMessage);
+    }
+  }
+
+  Future<int> getUnreadMessageCount(int senderId, int receiverId) async {
+    try {
+      final response = await _dioClient.instance
+          .get('$apiUrl/unread-count/$senderId/$receiverId');
+      if (response.statusCode == 200) {
+        return response.data as int;
+      }
+      throw Exception(
+          'Failed to fetch unread message count: ${response.statusCode}');
+    } on DioException catch (e) {
+      final errorMessage = e.response != null
+          ? 'Error: ${e.response!.statusCode} - ${e.response!.data}'
+          : 'Network error: ${e.message}';
+      throw Exception('Error fetching unread message count: $errorMessage');
+    }
+  }
+
+  Future<void> markAsRead(MarkAsReadDto dto) async {
+    try {
+      await _dioClient.instance
+          .post('$apiUrl/mark-as-read', data: dto.toJson());
+    } on DioException catch (e) {
+      final errorMessage = e.response != null
+          ? 'Failed to mark as read: ${e.response!.statusCode} - ${e.response!.data}'
+          : 'Network error: ${e.message}';
+      print(errorMessage);
+      throw Exception(errorMessage);
     }
   }
 }
