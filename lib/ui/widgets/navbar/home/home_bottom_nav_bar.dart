@@ -1,6 +1,5 @@
 // lib/ui/widgets/bottom_nav_bar.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
@@ -11,27 +10,8 @@ class HomeBottomNavBar extends StatelessWidget {
 
   const HomeBottomNavBar({super.key, required this.navigationShell});
 
-  void _syncRoute(BuildContext context) {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      final currentRoute = GoRouter.of(context)
-          .routerDelegate
-          .currentConfiguration
-          .uri
-          .toString();
-      // Use a static variable or Provider to track last synced route
-      if (_lastSyncedRoute != currentRoute) {
-        Provider.of<NavigationProvider>(context, listen: false)
-            .syncWithRoute(currentRoute);
-        _lastSyncedRoute = currentRoute;
-      }
-    });
-  }
-
-  static String? _lastSyncedRoute;
-
   @override
   Widget build(BuildContext context) {
-    _syncRoute(context);
     final selectedIndex =
         Provider.of<NavigationProvider>(context).selectedIndex;
     const chatItemCount = 3;
@@ -73,7 +53,7 @@ class HomeBottomNavBar extends StatelessWidget {
             ),
             child: Icon(Icons.chat),
           ),
-          label: "Chat",
+          label: "Support",
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outlined),

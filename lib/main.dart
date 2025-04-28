@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:techgear/controllers/map_dashboard_controller.dart';
 import 'package:techgear/core/routes.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/auth_provider.dart';
@@ -149,6 +150,11 @@ void main() async {
           update: (context, sessionProvider, userAddressProvider) =>
               userAddressProvider ?? UserAddressProvider(sessionProvider),
         ),
+
+        // Map controller
+        ChangeNotifierProvider(
+          create: (context) => MenuAppController(),
+        ),
       ],
       child: const App(),
     ),
@@ -173,6 +179,12 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: "Poppins",
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: Colors.black87, // Màu của con trỏ
+          selectionColor: Colors.grey, // Màu nền khi văn bản được chọn
+          selectionHandleColor:
+              Colors.red, // Màu của thanh kéo khi chọn văn bản
+        ),
       ),
       routerConfig: router,
     );

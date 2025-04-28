@@ -659,73 +659,84 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   child: Column(
                     children: [
                       // TabBar
-                      TabBar(
-                        controller: _tabController,
-                        labelColor: Colors.blue,
-                        unselectedLabelColor: Colors.grey[600],
-                        overlayColor: WidgetStateProperty.all(Colors.grey[200]),
-                        indicatorColor: Colors.blue,
-                        indicatorWeight: 2.0,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        labelPadding:
-                            const EdgeInsets.symmetric(horizontal: 20.0),
-                        tabs: const [
-                          Tab(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.grid_view, size: 18),
-                                SizedBox(width: 4),
-                                Text("All"),
-                              ],
-                            ),
-                          ),
-                          Tab(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.local_fire_department,
-                                    color: Colors.red, size: 18),
-                                SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    "Promotional",
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
+                      Container(
+                        color: Colors.white,
+                        child: SizedBox(
+                          height: kToolbarHeight,
+                          child: TabBar(
+                            controller: _tabController,
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            labelPadding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            labelColor: Colors.blue,
+                            unselectedLabelColor: Colors.grey[600],
+                            overlayColor:
+                                WidgetStateProperty.all(Colors.grey[200]),
+                            indicatorColor: Colors.blue,
+                            indicatorWeight: 2.0,
+                            indicatorSize: TabBarIndicatorSize.label,
+                            tabs: const [
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.grid_view, size: 18),
+                                    SizedBox(width: 4),
+                                    Text("All"),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          Tab(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.card_giftcard,
-                                    color: Colors.deepPurple, size: 18),
-                                SizedBox(width: 4),
-                                Text("New"),
-                              ],
-                            ),
-                          ),
-                          Tab(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.star, color: Colors.amber, size: 18),
-                                SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    "Best Seller",
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.local_fire_department,
+                                        color: Colors.red, size: 18),
+                                    SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        "Promotional",
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.card_giftcard,
+                                        color: Colors.deepPurple, size: 18),
+                                    SizedBox(width: 4),
+                                    Text("New"),
+                                  ],
+                                ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.star,
+                                        color: Colors.amber, size: 18),
+                                    SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        "Best Seller",
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
+
                       // TabBarView
                       Expanded(
                         child: TabBarView(

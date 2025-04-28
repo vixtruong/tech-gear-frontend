@@ -27,6 +27,8 @@ class _AddVariantOptionScreenState extends State<AddVariantOptionScreen> {
 
   final _key = GlobalKey<FormState>();
 
+  bool _isLoading = true;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -42,6 +44,7 @@ class _AddVariantOptionScreenState extends State<AddVariantOptionScreen> {
       await _categoryProvider.fetchCategories();
       setState(() {
         categories = _categoryProvider.categories;
+        _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
@@ -114,84 +117,77 @@ class _AddVariantOptionScreenState extends State<AddVariantOptionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        surfaceTintColor: Colors.white,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.white,
-        leading: GestureDetector(
-          onTap: () {
-            context.pop();
-          },
-          child: Icon(Icons.arrow_back_outlined),
-        ),
-        title: Text(
-          "Add Variant Option",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-      ),
-      body: Form(
-        key: _key,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(15),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CustomDropdown(
-                    label: "Categories",
-                    hint: "Select a category",
-                    items: categories
-                        .map((category) =>
-                            {'id': category.id, 'name': category.name})
-                        .toList(),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please choose category";
-                      }
-                      return null;
-                    },
-                    onChanged: (value) => {
-                      setState(() {
-                        _selectCatgoryId = value;
-                      })
-                    },
-                  ),
-                ],
+      backgroundColor: Colors.grey[50],
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Colors.blue,
               ),
-              SizedBox(height: 15),
-              CustomTextField(
-                controller: _controller,
-                hint: "Variant Option",
-                inputType: TextInputType.text,
-                isSearch: false,
-              ),
-              SizedBox(height: 15),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: _handleSubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+            )
+          : Form(
+              key: _key,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(15),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          // Đảm bảo CustomDropdown có thể mở rộng
+                          child: CustomDropdown(
+                            label: "Categories",
+                            hint: "Select a category",
+                            items: categories
+                                .map((category) =>
+                                    {'id': category.id, 'name': category.name})
+                                .toList(),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please choose category";
+                              }
+                              return null;
+                            },
+                            onChanged: (value) {
+                              setState(() {
+                                _selectCatgoryId = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  child: Text(
-                    "Submit",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                    SizedBox(height: 15),
+                    CustomTextField(
+                      controller: _controller,
+                      hint: "Variant Option",
+                      inputType: TextInputType.text,
+                      isSearch: false,
                     ),
-                  ),
+                    SizedBox(height: 15),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton(
+                        onPressed: _handleSubmit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                        ),
+                        child: Text(
+                          "Submit",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -91,7 +92,11 @@ class WelcomeMobileLayout extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.push('/login');
+                    if (kIsWeb) {
+                      context.go('/login');
+                    } else {
+                      context.push('/login');
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.greenAccent,

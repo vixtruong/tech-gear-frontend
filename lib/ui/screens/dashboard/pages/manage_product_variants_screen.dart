@@ -73,12 +73,6 @@ class _ManageProductVariantsScreenState
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,
         shadowColor: Colors.white,
-        leading: GestureDetector(
-          onTap: () {
-            context.pop();
-          },
-          child: Icon(Icons.arrow_back_outlined),
-        ),
         title: Text(
           product?.name ?? "Manage Product Variants",
           style: TextStyle(fontWeight: FontWeight.w600),

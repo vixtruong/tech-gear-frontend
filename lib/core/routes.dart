@@ -3,21 +3,24 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/cart/cart_item.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
-import 'package:techgear/ui/screens/dashboard/add_brand_screen.dart';
-import 'package:techgear/ui/screens/dashboard/add_category_screen.dart';
-import 'package:techgear/ui/screens/dashboard/add_product_screen.dart';
-import 'package:techgear/ui/screens/dashboard/add_product_variants_screen.dart';
-import 'package:techgear/ui/screens/dashboard/add_variant_option_screen.dart';
-import 'package:techgear/ui/screens/dashboard/manage_product_screen.dart';
-import 'package:techgear/ui/screens/dashboard/manage_variant_options_screen.dart';
-import 'package:techgear/ui/screens/dashboard/manage_product_variants_screen.dart';
+import 'package:techgear/ui/screens/dashboard/dashboard_screen.dart';
+import 'package:techgear/ui/screens/dashboard/main_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/add_brand_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/add_category_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/add_product_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/add_product_variants_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/add_variant_option_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_product_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_variant_options_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_product_variants_screen.dart';
 import 'package:techgear/ui/screens/home/activity_screen.dart';
 import 'package:techgear/ui/screens/home/cart_screen.dart';
-import 'package:techgear/ui/screens/home/chat_screen.dart';
+import 'package:techgear/ui/screens/home/support_center_screen.dart';
 import 'package:techgear/ui/screens/home/checkout_screen.dart';
 import 'package:techgear/ui/screens/home/home_screen.dart';
 import 'package:techgear/ui/screens/home/product_detail_web_screen.dart';
 import 'package:techgear/ui/layouts/user_web_layout.dart';
+import 'package:techgear/ui/screens/home/rate_order_screen.dart';
 import 'package:techgear/ui/screens/home/wish_list_screen.dart';
 import 'package:techgear/ui/screens/auth/login_screen.dart';
 import 'package:techgear/ui/screens/home/product_detail_screen.dart';
@@ -28,7 +31,7 @@ import 'package:techgear/ui/screens/home/profile_screen.dart';
 import 'package:techgear/ui/widgets/navbar/home/home_bottom_nav_bar.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/welcome',
+  initialLocation: '/dashboard',
   redirect: (BuildContext context, GoRouterState state) async {
     final sessionProvider =
         Provider.of<SessionProvider>(context, listen: false);
@@ -103,8 +106,8 @@ final GoRouter router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/chat',
-              builder: (context, state) => const ChatScreen(),
+              path: '/support-center',
+              builder: (context, state) => const SupportCenterScreen(),
             ),
           ],
         ),
@@ -140,9 +143,22 @@ final GoRouter router = GoRouter(
             ? ProductDetailScreenWeb(productId: productId, isAdmin: isAdmin)
             : ProductDetailScreen(productId: productId, isAdmin: isAdmin);
 
-        return isWeb ? UserWebLayout(child: screen) : screen;
+        // Conditional rendering based on the `isAdmin` flag
+        if (isWeb) {
+          // Check if it's a web layout and if it's an admin
+          if (isAdmin) {
+            return screen; // Show MainScreen for admins
+          } else {
+            return UserWebLayout(
+                child: screen); // Show UserWebLayout for regular users
+          }
+        } else {
+          // If it's a mobile layout, just return the screen directly
+          return screen;
+        }
       },
     ),
+
     GoRoute(
       path: '/wish-list',
       builder: (context, state) {
@@ -176,77 +192,91 @@ final GoRouter router = GoRouter(
       },
     ),
 
+    GoRoute(
+      path: '/rate-order/:orderId', // Thêm :orderId vào path
+      builder: (context, state) {
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        final orderId = int.parse(
+            state.pathParameters['orderId']!); // Lấy orderId từ pathParameters
+        return isWeb
+            ? UserWebLayout(child: RateOrderScreen(orderId: orderId))
+            : RateOrderScreen(orderId: orderId);
+      },
+    ),
+
     // Admin screens
+    GoRoute(
+      path: '/dashboard',
+      builder: (context, state) {
+        return MainScreen(screen: DashboardScreen(), title: "Dashboard");
+      },
+    ),
+
     GoRoute(
       path: '/add-brand',
       builder: (context, state) {
-        final isWeb = MediaQuery.of(context).size.width > 800;
-        return isWeb
-            ? UserWebLayout(child: AddBrandScreen())
-            : AddBrandScreen();
+        return MainScreen(screen: AddBrandScreen(), title: "Add Brand");
       },
     ),
     GoRoute(
       path: '/add-category',
       builder: (context, state) {
-        final isWeb = MediaQuery.of(context).size.width > 800;
-        return isWeb
-            ? UserWebLayout(child: AddCategoryScreen())
-            : AddCategoryScreen();
+        return MainScreen(screen: AddCategoryScreen(), title: "Add Category");
       },
     ),
     GoRoute(
       path: '/add-product',
       builder: (context, state) {
-        final isWeb = MediaQuery.of(context).size.width > 800;
-        return isWeb
-            ? const UserWebLayout(child: AddProductScreen())
-            : const AddProductScreen();
+        return MainScreen(screen: AddProductScreen(), title: "Add Product");
       },
     ),
     GoRoute(
       path: '/manage-product',
       builder: (context, state) {
-        final isWeb = MediaQuery.of(context).size.width > 800;
-        return isWeb
-            ? const UserWebLayout(child: ManageProductScreen())
-            : const ManageProductScreen();
+        return MainScreen(
+          screen: ManageProductScreen(),
+          title: "Products",
+        );
       },
     ),
     GoRoute(
       path: '/manage-product-variants/:productId',
       builder: (context, state) {
         final String productId = state.pathParameters['productId']!;
-        final isWeb = MediaQuery.of(context).size.width > 800;
         final screen = ManageProductVariantsScreen(productId: productId);
-        return isWeb ? UserWebLayout(child: screen) : screen;
+        return MainScreen(
+          screen: screen,
+          title: "Product Variations",
+        );
       },
     ),
     GoRoute(
       path: '/add-product-variants/:productId',
       builder: (context, state) {
         final String productId = state.pathParameters['productId']!;
-        final isWeb = MediaQuery.of(context).size.width > 800;
         final screen = AddProductVariantsScreen(productId: productId);
-        return isWeb ? UserWebLayout(child: screen) : screen;
+        return MainScreen(
+          screen: screen,
+          title: "Add product variation",
+        );
       },
     ),
     GoRoute(
       path: '/manage-variant-options',
       builder: (context, state) {
-        final isWeb = MediaQuery.of(context).size.width > 800;
-        return isWeb
-            ? UserWebLayout(child: ManageVariantOptionsScreen())
-            : ManageVariantOptionsScreen();
+        return MainScreen(
+          screen: ManageVariantOptionsScreen(),
+          title: "Variantions",
+        );
       },
     ),
     GoRoute(
       path: '/add-variant-option',
       builder: (context, state) {
-        final isWeb = MediaQuery.of(context).size.width > 800;
-        return isWeb
-            ? UserWebLayout(child: AddVariantOptionScreen())
-            : AddVariantOptionScreen();
+        return MainScreen(
+          screen: AddVariantOptionScreen(),
+          title: "Add Variantion",
+        );
       },
     ),
   ],

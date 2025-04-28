@@ -1,4 +1,3 @@
-// lib/ui/widgets/web_nav_bar.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +16,7 @@ class HomeWebNavBar extends StatefulWidget {
 class _HomeWebNavBarState extends State<HomeWebNavBar> {
   late CartProvider _cartProvider;
   String? _lastSyncedRoute; // Track the last synced route
+  bool _isCartLoaded = false; // Thêm biến để kiểm soát việc tải giỏ hàng
 
   @override
   void initState() {
@@ -37,7 +37,10 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _cartProvider = Provider.of<CartProvider>(context, listen: false);
-    _loadInformations();
+    if (!_isCartLoaded) {
+      _loadInformations();
+      _isCartLoaded = true;
+    }
     _syncRoute();
   }
 
@@ -158,7 +161,7 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
               _buildTopNavItem(
                   Icons.article_outlined, 1, "Activities", context),
               _buildTopNavItemWithBadge(
-                  Icons.chat_outlined, 2, "Chat", context),
+                  Icons.chat_outlined, 2, "Support", context),
               _buildTopNavItem(Icons.person_outline, 3, "User", context),
             ],
           ),
@@ -227,15 +230,19 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            badges.Badge(
-              badgeContent: Text(
-                '${context.watch<CartProvider>().itemCount}',
-                style: const TextStyle(color: Colors.white, fontSize: 10),
-              ),
-              child: Icon(
-                isSelected ? _getFilledIcon(icon) : icon,
-                color: isSelected ? Colors.black : Colors.black54,
-              ),
+            Consumer<CartProvider>(
+              builder: (context, cartProvider, _) {
+                return badges.Badge(
+                  badgeContent: Text(
+                    '${cartProvider.itemCount}',
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                  ),
+                  child: Icon(
+                    isSelected ? _getFilledIcon(icon) : icon,
+                    color: isSelected ? Colors.black : Colors.black54,
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 4),
             Text(

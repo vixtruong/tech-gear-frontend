@@ -259,12 +259,6 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
           product?.name ?? "Product Details",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        // leading: IconButton(
-        //   icon: Icon(Icons.arrow_back),
-        //   onPressed: () {
-        //     context.pop();
-        //   },
-        // ),
         actions: [
           if (!widget.isAdmin)
             IconButton(

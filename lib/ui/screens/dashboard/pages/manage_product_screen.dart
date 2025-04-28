@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:go_router/go_router.dart';
@@ -37,7 +38,6 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
     _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     _brandProvider = Provider.of<BrandProvider>(context, listen: false);
     _loadProducts();
-    _isLoading = false;
   }
 
   Future<void> _loadProducts() async {
@@ -45,20 +45,27 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
       await _productProvider.fetchProducts();
       await _categoryProvider.fetchCategories();
       await _brandProvider.fetchBrands();
-      setState(() {
-        // _products = _productProvider.products;
-        _categories = _categoryProvider.categories;
-        _brands = _brandProvider.brands;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _products = _productProvider.products;
+          _categories = _categoryProvider.categories;
+          _brands = _brandProvider.brands;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      if (!mounted) return;
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text("Error: ${e.toString()}"),
-              backgroundColor: Colors.red[400]),
+            content: Text("Error: ${e.toString()}"),
+            backgroundColor: Colors.red[400],
+          ),
         );
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -68,57 +75,55 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        surfaceTintColor: Colors.white,
-        backgroundColor: Colors.white,
-        shadowColor: Colors.white,
-        leading: GestureDetector(
-          onTap: () {
-            context.pop();
-          },
-          child: Icon(Icons.arrow_back_outlined),
-        ),
-        title: Text(
-          "Manage Product (${_products.length})",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: Colors.grey[50],
+      // appBar: AppBar(
+      //   surfaceTintColor: Colors.white,
+      //   backgroundColor: Colors.white,
+      //   shadowColor: Colors.white,
+      //   title: Text(
+      //     "Manage Product (${_products.length})",
+      //     style: const TextStyle(fontWeight: FontWeight.w600),
+      //   ),
+      //   centerTitle: true,
+      // ),
       floatingActionButton: SpeedDial(
-        backgroundColor: Colors.white, // Màu nền trắng
+        backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         animatedIcon: AnimatedIcons.menu_close,
-        shape: BeveledRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
+        shape: const BeveledRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(6)),
         ),
         elevation: 10.0,
         children: [
+          // SpeedDialChild(
+          //   child: const Icon(Icons.settings, color: Colors.white),
+          //   backgroundColor: Colors.blueGrey,
+          //   label: 'Manage Variant Option',
+          //   labelStyle: const TextStyle(fontSize: 16),
+          //   onTap: () {
+          //     context.push('/manage-variant-options');
+          //   },
+          // ),
           SpeedDialChild(
-            child: Icon(Icons.settings, color: Colors.white),
-            backgroundColor: Colors.blueGrey,
-            label: 'Manage Variant Option',
-            labelStyle: TextStyle(fontSize: 16),
-            onTap: () {
-              context.push('/manage-variant-options');
-            },
-          ),
-          SpeedDialChild(
-            child: Icon(Icons.add_circle, color: Colors.white),
+            child: const Icon(Icons.add_circle, color: Colors.white),
             backgroundColor: Colors.green,
             label: 'Add New Product',
-            labelStyle: TextStyle(fontSize: 16),
+            labelStyle: const TextStyle(fontSize: 16),
             onTap: () {
-              context.push('/add-product');
+              if (kIsWeb) {
+                context.go('/add-product');
+              } else {
+                context.push('/add-product');
+              }
             },
           ),
           SpeedDialChild(
-            child: Icon(Icons.block, color: Colors.white),
+            child: const Icon(Icons.block, color: Colors.white),
             backgroundColor: Colors.grey[400],
             label: 'Disabled Products',
-            labelStyle: TextStyle(fontSize: 16),
+            labelStyle: const TextStyle(fontSize: 16),
             onTap: () {
-              // context.push('/add-product');
+              // TODO: Implement navigation to disabled products screen
             },
           ),
         ],
@@ -126,7 +131,7 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
       body: Consumer<ProductProvider>(
         builder: (context, productProvider, child) {
           if (_isLoading) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
               ),
@@ -134,7 +139,7 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
           }
           _products = productProvider.products;
           return SingleChildScrollView(
-            padding: EdgeInsets.all(15.0),
+            padding: const EdgeInsets.all(15.0),
             child: Column(
               children: [
                 CustomTextField(
@@ -143,40 +148,39 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
                   isSearch: true,
                   inputType: TextInputType.text,
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 Row(
                   children: [
-                    CustomDropdown(
-                      label: "Brands",
-                      hint: "Select a brand",
-                      items: _brands
-                          .map((brand) => {'id': brand.id, 'name': brand.name})
-                          .toList(),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Please choose brand";
-                        }
-                        return null;
-                      },
+                    Expanded(
+                      child: CustomDropdown(
+                        label: "Brands",
+                        hint: "Select a brand",
+                        items: _brands
+                            .map(
+                                (brand) => {'id': brand.id, 'name': brand.name})
+                            .toList(),
+                        validator: (value) {
+                          return null; // Optional selection
+                        },
+                      ),
                     ),
-                    SizedBox(width: 10),
-                    CustomDropdown(
-                      label: "Categories",
-                      hint: "Select a category",
-                      items: _categories
-                          .map((category) =>
-                              {'id': category.id, 'name': category.name})
-                          .toList(),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Please choose category";
-                        }
-                        return null;
-                      },
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: CustomDropdown(
+                        label: "Categories",
+                        hint: "Select a category",
+                        items: _categories
+                            .map((category) =>
+                                {'id': category.id, 'name': category.name})
+                            .toList(),
+                        validator: (value) {
+                          return null; // Optional selection
+                        },
+                      ),
                     ),
                   ],
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -193,5 +197,11 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

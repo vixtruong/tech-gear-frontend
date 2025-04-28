@@ -73,11 +73,6 @@ class _AddBrandScreenState extends State<AddBrandScreen> {
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,
         shadowColor: Colors.white,
-        leading: GestureDetector(
-            onTap: () {
-              // context.pop();
-            },
-            child: Icon(Icons.arrow_back_outlined)),
         title: const Text(
           "Add Brand",
           style: TextStyle(fontWeight: FontWeight.w600),

@@ -12,6 +12,7 @@ class OrderDto {
   final String? status;
   final bool isUsePoint;
   final DateTime createdAt;
+  final DateTime? deliveredDate;
   final List<OrderItemDto>? orderItems;
 
   OrderDto({
@@ -25,6 +26,7 @@ class OrderDto {
     this.note,
     this.status,
     required this.createdAt,
+    this.deliveredDate,
     required this.isUsePoint,
     this.orderItems,
   });
@@ -41,6 +43,9 @@ class OrderDto {
       note: json['note'] ?? '',
       status: json['status'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
+      deliveredDate: json['deliveredDate'] != null
+          ? DateTime.parse(json['deliveredDate'])
+          : null,
       isUsePoint: json['isUsePoint'],
       orderItems: json['orderItems'] != null
           ? (json['orderItems'] as List)

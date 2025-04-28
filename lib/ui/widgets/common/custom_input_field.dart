@@ -7,6 +7,7 @@ class CustomInputField extends StatefulWidget {
   final TextInputType keyboardType;
   final bool obscureText;
   final FormFieldValidator<String>? validator;
+  final bool disabled;
 
   const CustomInputField({
     super.key,
@@ -15,6 +16,7 @@ class CustomInputField extends StatefulWidget {
     required this.hintText,
     required this.keyboardType,
     this.obscureText = false,
+    this.disabled = false,
     this.validator,
   });
 
@@ -52,6 +54,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
             ],
           ),
           child: TextFormField(
+            enabled: !widget.disabled,
             controller: widget.controller,
             onChanged: (value) => {
               if (value.isEmpty)
