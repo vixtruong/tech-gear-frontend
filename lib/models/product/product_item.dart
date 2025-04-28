@@ -1,9 +1,9 @@
-import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class ProductItem {
   String? id;
   String sku;
-  File imgFile;
+  XFile imgFile;
   String imgUrl;
   int quantity;
   double price;
@@ -30,10 +30,10 @@ class ProductItem {
       id: data['id']?.toString() ?? '',
       sku: data['sku'] ?? '',
       price: (data['price'] ?? 0).toDouble(),
-      imgFile: File(''),
+      imgFile: XFile(''),
       imgUrl: data['productImage'] ?? '',
       productId: data['productId']?.toString() ?? '',
-      quantity: (data['quantity'] ?? 0).toInt(),
+      quantity: (data['qtyInStock'] ?? 0).toInt(),
       createdAt: data['createdAt'] != null
           ? DateTime.tryParse(data['createdAt'])
           : null,

@@ -19,7 +19,7 @@ class CustomConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Theme.of(context).dialogBackgroundColor,
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -34,7 +34,6 @@ class CustomConfirmDialog extends StatelessWidget {
         content,
         style: const TextStyle(fontSize: 16),
       ),
-      actionsPadding: const EdgeInsets.only(bottom: 10, right: 10),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),

@@ -7,7 +7,6 @@ class NavigationProvider with ChangeNotifier {
 
   void setSelectedIndex(int index) {
     _selectedIndex = index;
-    print('Selected Index updated to: $_selectedIndex');
     notifyListeners();
   }
 
@@ -19,7 +18,7 @@ class NavigationProvider with ChangeNotifier {
       case '/home':
         _selectedIndex = 0;
         break;
-      case '/activity':
+      case '/support-center':
         _selectedIndex = 1;
         break;
       case '/chat':
@@ -31,7 +30,6 @@ class NavigationProvider with ChangeNotifier {
       default:
         _selectedIndex = (kIsWeb) ? -1 : 0;
     }
-    print('Selected Index set to: $_selectedIndex');
     notifyListeners();
   }
 }

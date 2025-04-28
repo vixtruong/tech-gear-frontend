@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
+import 'package:techgear/services/cloudinary/cloudinary_service.dart';
 import 'package:techgear/services/dio_client.dart';
-import 'package:techgear/services/google_services/google_drive_service.dart';
 
 class ProductItemService {
   final String apiUrl = '/api/v1/productitems';
@@ -60,12 +60,12 @@ class ProductItemService {
 
   Future<Map<String, dynamic>?> addProductItem(ProductItem productItem) async {
     try {
-      final driveService = GoogleDriveService();
-      await driveService.init();
-      final fileId = await driveService.uploadFile(productItem.imgFile);
-      driveService.dispose();
+      final cloudinaryService = CloudinaryService();
+      final imageUrl = await cloudinaryService.uploadImage(productItem.imgFile);
 
-      final imageUrl = 'https://lh3.googleusercontent.com/d/$fileId=w300';
+      if (imageUrl == null) {
+        throw Exception('Failed to upload image to Cloudinary');
+      }
 
       final body = {
         'sku': productItem.sku,

@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
+import 'package:techgear/services/cloudinary/cloudinary_service.dart';
 import 'package:techgear/services/dio_client.dart';
 import 'package:techgear/models/product/product.dart';
-import 'package:techgear/services/google_services/google_drive_service.dart';
 
 class ProductService {
   final String apiUrl = '/api/v1/products';
@@ -48,17 +48,19 @@ class ProductService {
 
   Future<void> addProduct(Product product) async {
     try {
-      final driveService = GoogleDriveService();
-      await driveService.init();
-      final fileId = await driveService.uploadFile(product.imgFile);
-      driveService.dispose();
+      // Upload ảnh lên Cloudinary
+      final cloudinaryService = CloudinaryService();
+      final imageUrl = await cloudinaryService.uploadImage(product.imgFile);
 
-      final imageUrl = 'https://lh3.googleusercontent.com/d/$fileId=w300';
+      if (imageUrl == null) {
+        throw Exception('Failed to upload image to Cloudinary');
+      }
 
+      // Tạo body gửi lên server
       final body = {
         'name': product.name,
         'price': product.price.toInt(),
-        'productImage': imageUrl,
+        'productImage': imageUrl, // Link ảnh từ Cloudinary
         'description': product.description,
         'brandId': int.parse(product.brandId),
         'categoryId': int.parse(product.categoryId),
@@ -66,6 +68,7 @@ class ProductService {
         'createdAt': DateTime.now().toIso8601String(),
       };
 
+      // Gửi POST request
       final response = await _dioClient.instance.post(apiUrl, data: body);
 
       if (response.statusCode != 200 && response.statusCode != 201) {

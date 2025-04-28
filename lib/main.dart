@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:techgear/controllers/map_dashboard_controller.dart';
 import 'package:techgear/core/routes.dart';
 import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/auth_provider.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
+import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/order_providers/coupon_provider.dart';
 import 'package:techgear/providers/order_providers/order_provider.dart';
@@ -149,6 +151,20 @@ void main() async {
           update: (context, sessionProvider, userAddressProvider) =>
               userAddressProvider ?? UserAddressProvider(sessionProvider),
         ),
+
+        // ChatProvider (depends on SessionProvider)
+        ChangeNotifierProxyProvider<SessionProvider, ChatProvider>(
+          create: (context) => ChatProvider(
+            Provider.of<SessionProvider>(context, listen: false),
+          ),
+          update: (context, sessionProvider, chatProvider) =>
+              chatProvider ?? ChatProvider(sessionProvider),
+        ),
+
+        // Map controller
+        ChangeNotifierProvider(
+          create: (context) => MenuAppController(),
+        ),
       ],
       child: const App(),
     ),
@@ -173,6 +189,11 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: "Poppins",
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: Colors.black87,
+          selectionColor: Colors.grey,
+          selectionHandleColor: Colors.blue,
+        ),
       ),
       routerConfig: router,
     );

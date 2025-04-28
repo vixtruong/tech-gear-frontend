@@ -99,4 +99,58 @@ class AuthService {
         'AuthService: isCustomerLogin: $isLoggedIn (userId: $userId, role: $userRole)');
     return isLoggedIn;
   }
+
+  Future<void> sendOtp(String email) async {
+    try {
+      final response = await _dioClient.instance.post(
+        '$apiUrl/otp/request',
+        data: {'email': email},
+      );
+
+      if (response.statusCode == 200) {
+        print('AuthService: OTP sent successfully');
+      } else {
+        throw Exception(
+            'OTP request failed with status: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? 'Unknown error';
+      print('AuthService: OTP request failed: $msg');
+      throw Exception('OTP request failed: $msg');
+    } catch (e) {
+      print('AuthService: Unexpected error during OTP request: $e');
+      throw Exception('OTP request failed: $e');
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _dioClient.instance.post(
+        '$apiUrl/reset-password',
+        data: {
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+            'Reset password failed with status: ${response.statusCode}');
+      }
+
+      print('AuthService: Password reset successful');
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? 'Unknown error';
+      print('AuthService: Reset password failed: $msg');
+      throw Exception('Reset password failed: $msg');
+    } catch (e) {
+      print('AuthService: Unexpected error during reset password: $e');
+      throw Exception('Reset password failed: $e');
+    }
+  }
 }

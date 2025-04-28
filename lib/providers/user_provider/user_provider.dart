@@ -23,6 +23,12 @@ class UserProvider with ChangeNotifier {
     print('UserProvider: User ID set to $id');
   }
 
+  Future<String?> fetchUserName(int userId) async {
+    final result = await _userService.getUserName(userId);
+
+    return result;
+  }
+
   /// Fetch current loyalty points from the server
   Future<void> fetchLoyaltyPoints() async {
     // Use SessionProvider to get userId if not set

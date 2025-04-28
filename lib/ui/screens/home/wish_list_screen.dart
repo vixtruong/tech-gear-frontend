@@ -58,14 +58,6 @@ class _WishListScreenState extends State<WishListScreen> {
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,
         elevation: kIsWeb ? 1 : 0,
-        leading: kIsWeb
-            ? null
-            : GestureDetector(
-                onTap: () {
-                  context.pop();
-                },
-                child: const Icon(Icons.arrow_back_outlined),
-              ),
         title: const Text(
           "Wishlist",
           style: TextStyle(fontWeight: FontWeight.w600),

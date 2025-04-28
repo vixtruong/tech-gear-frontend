@@ -1,0 +1,499 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:techgear/dtos/mark_as_read_dto.dart';
+import 'package:techgear/models/chat/message.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
+import 'package:techgear/providers/chat_providers/chat_provider.dart';
+import 'package:techgear/services/cloudinary/cloudinary_service.dart';
+
+class SupportCenterScreen extends StatefulWidget {
+  const SupportCenterScreen({super.key});
+
+  @override
+  State<SupportCenterScreen> createState() => _SupportCenterScreenState();
+}
+
+class _SupportCenterScreenState extends State<SupportCenterScreen> {
+  late ChatProvider _chatProvider;
+  late SessionProvider _sessionProvider;
+
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  XFile? _selectedImage;
+  bool _isSending = false;
+  bool _isSendEnabled = false;
+
+  String? userId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    _sessionProvider = Provider.of<SessionProvider>(context, listen: false);
+    _loadInformation();
+  }
+
+  Future<void> _loadInformation() async {
+    try {
+      await _sessionProvider.loadSession();
+      userId = _sessionProvider.userId;
+
+      if (userId != null) {
+        await _chatProvider.fetchMessages(int.parse(userId!), 1);
+
+        await _chatProvider.markAsRead(
+            MarkAsReadDto(senderId: 1, receiverId: int.parse(userId!)));
+      }
+    } catch (e) {
+      print('Error loading information: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Show bottom sheet for image selection
+  void _showImagePickerBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading:
+                      const Icon(Icons.photo_library, color: Color(0xFF0088CC)),
+                  title: const Text('Select from Gallery'),
+                  onTap: () async {
+                    Navigator.pop(context); // Close bottom sheet
+                    final picker = ImagePicker();
+                    final XFile? image =
+                        await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setState(() {
+                        _selectedImage = image;
+                        _isSendEnabled = true;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Send message or image
+  Future<void> _sendMessage() async {
+    if (userId == null) return;
+
+    final senderId = int.parse(userId!);
+    final receiverId = 1; // Assuming 1 is the support center ID
+    final content = _messageController.text.trim();
+
+    if (content.isEmpty && _selectedImage == null) return;
+
+    setState(() {
+      _isSending = true;
+    });
+
+    bool hasError = false;
+
+    try {
+      // Send image message first if there is an image
+      if (_selectedImage != null) {
+        final cloudService = CloudinaryService();
+        final imageUrl = await cloudService.uploadImage(_selectedImage!);
+        if (imageUrl != null) {
+          final imageMessage = Message(
+            id: null, // Backend will assign ID
+            senderId: senderId,
+            receiverId: receiverId,
+            content: "Image message", // Placeholder for backend
+            isImage: true,
+            imageUrl: imageUrl,
+            isRead: false,
+            sentAt: DateTime.now(),
+          );
+          final result = await _chatProvider.sendMessage(imageMessage);
+          if (!result) hasError = true;
+        } else {
+          if (!mounted) return;
+          hasError = true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to upload image')),
+          );
+        }
+      }
+
+      // Send text message if there is content
+      if (content.isNotEmpty) {
+        final textMessage = Message(
+          id: null, // Backend will assign ID
+          senderId: senderId,
+          receiverId: receiverId,
+          content: content,
+          isImage: false,
+          imageUrl: null,
+          isRead: false,
+          sentAt: DateTime.now(),
+        );
+        final result = await _chatProvider.sendMessage(textMessage);
+        if (!result) hasError = true;
+      }
+
+      // Clear input and image if no error
+      if (!hasError) {
+        setState(() {
+          _messageController.clear();
+          _selectedImage = null;
+          _isSendEnabled = false;
+        });
+
+        // Scroll only if no error and controller is attached to ListView
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      print('Error sending message: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send message: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
+  }
+
+  // Group messages by date
+  List<Map<String, dynamic>> _groupMessagesByDate(List<Message> messages) {
+    if (messages.isEmpty) return [];
+
+    // Sort messages by date (ascending)
+    messages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
+
+    List<Map<String, dynamic>> groupedMessages = [];
+    DateTime? currentDate;
+    List<Message> currentGroup = [];
+
+    final today = DateTime.now();
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    for (var message in messages) {
+      // Extract date (without time)
+      final messageDate = DateTime(
+        message.sentAt.year,
+        message.sentAt.month,
+        message.sentAt.day,
+      );
+
+      if (currentDate == null || messageDate != currentDate) {
+        if (currentGroup.isNotEmpty) {
+          // Add the previous group to the result
+          groupedMessages.add({
+            'date': currentDate,
+            'messages': List<Message>.from(currentGroup),
+          });
+          currentGroup.clear();
+        }
+        currentDate = messageDate;
+      }
+      currentGroup.add(message);
+    }
+
+    // Add the last group
+    if (currentGroup.isNotEmpty) {
+      groupedMessages.add({
+        'date': currentDate,
+        'messages': List<Message>.from(currentGroup),
+      });
+    }
+
+    // Add formatted date labels
+    return groupedMessages.map((group) {
+      final date = group['date'] as DateTime;
+      String label;
+      if (date.year == today.year &&
+          date.month == today.month &&
+          date.day == today.day) {
+        label = 'Today';
+      } else if (date.year == yesterday.year &&
+          date.month == yesterday.month &&
+          date.day == yesterday.day) {
+        label = 'Yesterday';
+      } else {
+        label = DateFormat('MMMM d, yyyy').format(date);
+      }
+      return {
+        'dateLabel': label,
+        'messages': group['messages'] as List<Message>,
+      };
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        title: const Text(
+          'Support Center',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          // Message list
+          Expanded(
+            child: Consumer<ChatProvider>(
+              builder: (context, chatProvider, child) {
+                if (chatProvider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (chatProvider.error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Error: ${chatProvider.error}'),
+                        ElevatedButton(
+                          onPressed: () {
+                            chatProvider.clearError();
+                            _loadInformation();
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final groupedMessages =
+                    _groupMessagesByDate(chatProvider.messages);
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  itemCount: groupedMessages.length,
+                  itemBuilder: (context, groupIndex) {
+                    final group = groupedMessages[groupIndex];
+                    final dateLabel = group['dateLabel'] as String;
+                    final messages = group['messages'] as List<Message>;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Date header
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            dateLabel,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                        // Messages for this date
+                        ...messages.map((message) {
+                          final isSentByUser =
+                              message.senderId == int.parse(userId ?? '0');
+                          return _buildMessageBubble(message, isSentByUser);
+                        }),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          // Image preview (if any)
+          if (_selectedImage != null) _buildImagePreview(),
+          // Input area
+          _buildInputArea(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(Message message, bool isSentByUser) {
+    return Align(
+      alignment: isSentByUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: isSentByUser ? const Color(0xFF0088CC) : Colors.grey[200],
+          borderRadius: BorderRadius.circular(12).copyWith(
+            bottomRight: isSentByUser ? Radius.zero : const Radius.circular(12),
+            bottomLeft: isSentByUser ? const Radius.circular(12) : Radius.zero,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isSentByUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (message.isImage && message.imageUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  message.imageUrl!,
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Text(
+                    'Failed to load image',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              )
+            else
+              Text(
+                message.content ?? '',
+                style: TextStyle(
+                  color: isSentByUser ? Colors.white : Colors.black87,
+                  fontSize: 16,
+                ),
+              ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('HH:mm').format(message.sentAt),
+              style: TextStyle(
+                color: isSentByUser ? Colors.white70 : Colors.black54,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      color: Colors.grey[300],
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.file(
+              File(_selectedImage!.path),
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.black, size: 20),
+              onPressed: () {
+                setState(() {
+                  _selectedImage = null;
+                  _isSendEnabled = _messageController.text.trim().isNotEmpty;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputArea() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      color: Colors.grey[200],
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: _showImagePickerBottomSheet,
+            icon: const Icon(Icons.image, color: Color(0xFF0088CC)),
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
+          ),
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                hintText: 'Enter message...',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _isSendEnabled =
+                      value.trim().isNotEmpty || _selectedImage != null;
+                });
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: _isSending || !_isSendEnabled ? null : _sendMessage,
+            icon: _isSending
+                ? const CircularProgressIndicator(strokeWidth: 2)
+                : Icon(
+                    Icons.send,
+                    color:
+                        _isSendEnabled ? const Color(0xFF0088CC) : Colors.grey,
+                  ),
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+}

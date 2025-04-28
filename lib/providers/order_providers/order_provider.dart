@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/dtos/order_dto.dart';
+import 'package:techgear/dtos/product_item_info_dto.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/order_service/order_service.dart';
 
@@ -33,6 +34,22 @@ class OrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<List<ProductItemInfoDto>?> fetchOrderItemsInfoByOrderId(
+      int orderId) async {
+    try {
+      final data = await _orderService.fetchOrderItemsInfoByOrderId(orderId);
+
+      final result =
+          data.map((item) => ProductItemInfoDto.fromMap(item)).toList();
+
+      return result;
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+    notifyListeners();
+    return null;
+  }
+
   /// Tạo đơn hàng mới
   Future<void> createOrder(OrderDto order) async {
     _isLoading = true;
@@ -57,5 +74,14 @@ class OrderProvider with ChangeNotifier {
     _orderSuccess = false;
     _errorMessage = null;
     notifyListeners();
+  }
+
+  Future<bool> checkValidRating(int orderId) async {
+    try {
+      return await _orderService.isValidRating(orderId);
+    } catch (e) {
+      debugPrint('Error checking valid rating: $e');
+    }
+    return false;
   }
 }

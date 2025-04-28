@@ -37,4 +37,28 @@ class OrderService {
       throw Exception('Create order failed: $e');
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchOrderItemsInfoByOrderId(
+      int orderId) async {
+    try {
+      final response = await _dioClient.instance
+          .get('$apiUrl/get-order-items-info/$orderId');
+      final List data = response.data;
+
+      return data.map((e) => Map<String, dynamic>.from(e)).toList();
+    } on DioException catch (e) {
+      throw Exception('Create order failed: $e');
+    }
+  }
+
+  Future<bool> isValidRating(int orderId) async {
+    try {
+      final response =
+          await _dioClient.instance.get('$apiUrl/is-valid-rating/$orderId');
+      return response.data as bool;
+    } catch (e) {
+      e.toString();
+      rethrow;
+    }
+  }
 }

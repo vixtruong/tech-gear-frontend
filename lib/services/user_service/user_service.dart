@@ -9,6 +9,21 @@ class UserService {
   UserService(SessionProvider sessionProvider)
       : _dioClient = DioClient(sessionProvider);
 
+  Future<String?> getUserName(int userId) async {
+    try {
+      final response = await _dioClient.instance.get('$apiUrl/$userId/name');
+
+      if (response.statusCode == 200) {
+        return response.data as String;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching user name: $e');
+      return null;
+    }
+  }
+
   /// Gọi API tạo user mới
   Future<Map<String, dynamic>> createUser(Map<String, dynamic> userData) async {
     try {

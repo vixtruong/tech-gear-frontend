@@ -31,7 +31,7 @@ class _ProductAdminCardState extends State<ProductAdminCard> {
       ),
       child: GestureDetector(
         onTap: () {
-          context.push(
+          context.pushReplacement(
               '/product-detail?productId=${widget.product.id}&isAdmin=true');
         },
         child: Row(
@@ -82,8 +82,8 @@ class _ProductAdminCardState extends State<ProductAdminCard> {
                 ),
                 PopupMenuItem(
                   onTap: () {
-                    context
-                        .push('/manage-product-variants/${widget.product.id}');
+                    context.pushReplacement(
+                        '/manage-product-variants/${widget.product.id}');
                   },
                   value: 'variants',
                   child: Text('Manage variants'),

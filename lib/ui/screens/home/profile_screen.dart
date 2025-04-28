@@ -84,7 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: Colors.grey[50],
       padding: const EdgeInsets.all(16.0),
       child: userId == null
           ? SizedBox(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // Added
+import 'package:techgear/dtos/rating_review_dto.dart';
 import 'package:techgear/models/cart/cart_item.dart';
 import 'package:techgear/models/product/brand.dart';
 import 'package:techgear/models/product/category.dart';
@@ -17,9 +18,11 @@ import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_config_provider.dart';
 import 'package:techgear/providers/product_providers/product_item_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
+import 'package:techgear/providers/product_providers/rating_provider.dart';
 import 'package:techgear/providers/product_providers/variant_option_provider.dart';
 import 'package:techgear/providers/product_providers/variant_value_provider.dart';
 import 'package:techgear/ui/widgets/product/color_variant_box.dart';
+import 'package:techgear/ui/widgets/product/rating_card_simple.dart';
 import 'package:techgear/ui/widgets/product/specs_variant_box.dart';
 import 'package:badges/badges.dart' as badges;
 
@@ -44,6 +47,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late VariantOptionProvider _variantOptionProvider;
   late VariantValueProvider _variantValueProvider;
   late CartProvider _cartProvider;
+  late RatingProvider _ratingProvider;
 
   late CategoryProvider _categoryProvider;
   late BrandProvider _brandProvider;
@@ -59,6 +63,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<GroupProductSpecs> groupedList = [];
   List<Map<ProductItem, List<VariantValue>>> colorSpecsList = [];
 
+  List<RatingReviewDto> _rating = [];
+
   bool _isLoading = true;
   bool _isDiscontinued = true;
   String? centerImageUrl;
@@ -70,6 +76,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   ProductItem? selectedItem;
 
   int count = 1;
+
+  bool _isExpandedRatings = false;
 
   @override
   void didChangeDependencies() {
@@ -87,6 +95,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     _brandProvider = Provider.of<BrandProvider>(context, listen: false);
+    _ratingProvider = Provider.of<RatingProvider>(context, listen: false);
     _scrollController.addListener(() {
       if (_scrollController.position.pixels > 10) {
         if (!_isExpanded) {
@@ -131,6 +140,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
       productSpec = ProductSpecification(
           productId: widget.productId, specs: specs, colors: colors);
+
+      await _ratingProvider
+          .fetchRatingsByProductId(int.parse(widget.productId));
+
+      setState(() {
+        _rating = _ratingProvider.ratings;
+      });
 
       if (specs.isEmpty && colors.isEmpty) {
         setState(() {
@@ -373,7 +389,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
           return Container(
             height: MediaQuery.of(context).size.height,
-            color: Colors.white,
+            color: Colors.grey[50],
             child: Stack(
               children: [
                 Positioned(
@@ -635,8 +651,69 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       ),
                                     ),
                                   ],
-                                  const SizedBox(
-                                      height: 20), // Khoảng cách cuối cùng
+                                  const SizedBox(height: 20),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "REVIEWS",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                          height:
+                                              8), // Khoảng cách giữa tiêu đề và danh sách
+                                      ListView.separated(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        padding: EdgeInsets.zero,
+                                        itemCount: _isExpandedRatings
+                                            ? _rating.length
+                                            : (_rating.length > 5
+                                                ? 5
+                                                : _rating.length),
+                                        itemBuilder: (context, index) {
+                                          return RatingCardSimple(
+                                              rating: _rating[index]);
+                                        },
+                                        separatorBuilder: (context, index) =>
+                                            const Divider(
+                                          thickness: 1,
+                                          height: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+
+                                      if (_rating.length >
+                                          5) // Chỉ hiển thị nút nếu có nhiều hơn 5 đánh giá
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 8),
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                _isExpandedRatings =
+                                                    !_isExpandedRatings;
+                                              });
+                                            },
+                                            child: Text(
+                                              _isExpandedRatings
+                                                  ? "Collapse"
+                                                  : "See more",
+                                              style: const TextStyle(
+                                                color: Colors.blue,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
