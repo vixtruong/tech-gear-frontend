@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:techgear/dtos/chat_user_dto.dart';
 import 'package:techgear/models/chat/message.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/dtos/mark_as_read_dto.dart';
@@ -7,17 +8,34 @@ import 'package:techgear/services/chat_services/chat_service.dart';
 class ChatProvider with ChangeNotifier {
   final ChatService _chatService;
   List<Message> _messages = [];
+  List<ChatUserDto> _chatUsers = [];
   bool _isLoading = false;
   String? _error;
   int _unreadCount = 0;
 
   ChatProvider(SessionProvider sessionProvider)
-      : _chatService = ChatService(sessionProvider);
+      : _chatService = ChatService(sessionProvider) {
+    _chatService.messageStream.listen((message) {
+      // Kiểm tra xem tin nhắn đã tồn tại chưa
+      if (!_messages.any((m) => m.id == message.id && m.id != null)) {
+        notifyListeners();
+      }
+    });
+  }
 
   List<Message> get messages => _messages;
+  List<ChatUserDto> get chatUsers => _chatUsers;
   bool get isLoading => _isLoading;
   String? get error => _error;
   int get unreadCount => _unreadCount;
+
+  void connectWebSocket(String userId, String? accessToken) {
+    _chatService.connectWebSocket(userId, accessToken);
+  }
+
+  void disconnectWebSocket() {
+    _chatService.disconnectWebSocket();
+  }
 
   Future<void> fetchMessages(int senderId, int receiverId) async {
     _isLoading = true;
@@ -27,7 +45,19 @@ class ChatProvider with ChangeNotifier {
     try {
       final List<Map<String, dynamic>> data =
           await _chatService.fetchMessages(senderId, receiverId);
-      _messages = data.map((e) => Message.fromJson(e)).toList();
+      final newMessages = data.map((e) => Message.fromJson(e)).toList();
+
+      // Đồng bộ tin nhắn: chỉ thêm tin nhắn chưa có trong _messages
+      final updatedMessages = [..._messages];
+      for (var newMessage in newMessages) {
+        if (!updatedMessages
+            .any((m) => m.id == newMessage.id && m.id != null)) {
+          updatedMessages.add(newMessage);
+        }
+      }
+      // Sắp xếp theo thời gian gửi
+      updatedMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
+      _messages = updatedMessages;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -37,7 +67,7 @@ class ChatProvider with ChangeNotifier {
   }
 
   Future<bool> sendMessage(Message message) async {
-    _messages.add(message); // Optimistic update
+    _messages.add(message);
     notifyListeners();
 
     try {
@@ -48,8 +78,6 @@ class ChatProvider with ChangeNotifier {
         notifyListeners();
         return false;
       }
-      // Refresh unread count after sending
-      await fetchUnreadMessageCount(message.senderId, message.receiverId);
       return true;
     } catch (e) {
       _messages.remove(message);
@@ -81,6 +109,18 @@ class ChatProvider with ChangeNotifier {
       _error = e.toString();
       notifyListeners();
     }
+  }
+
+  Future<void> fetchChatUsers() async {
+    try {
+      var data = await _chatService.fetchChatUsers();
+
+      _chatUsers = data.map((item) => ChatUserDto.fromJson(item)).toList();
+    } catch (e) {
+      _error = e.toString();
+      print(_error);
+    }
+    notifyListeners();
   }
 
   void clearError() {

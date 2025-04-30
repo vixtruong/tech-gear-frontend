@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -11,14 +12,18 @@ import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:techgear/services/cloudinary/cloudinary_service.dart';
 
-class SupportCenterScreen extends StatefulWidget {
-  const SupportCenterScreen({super.key});
+class ChatScreen extends StatefulWidget {
+  final int customerId;
+  final String userName;
+
+  const ChatScreen(
+      {super.key, required this.customerId, required this.userName});
 
   @override
-  State<SupportCenterScreen> createState() => _SupportCenterScreenState();
+  State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _SupportCenterScreenState extends State<SupportCenterScreen> {
+class _ChatScreenState extends State<ChatScreen> {
   late ChatProvider _chatProvider;
   late SessionProvider _sessionProvider;
 
@@ -51,9 +56,10 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
           _chatProvider.connectWebSocket(userId!, accessToken);
           _isWebSocketConnected = true;
         }
-        await _chatProvider.fetchMessages(int.parse(userId!), 1);
-        await _chatProvider.markAsRead(
-            MarkAsReadDto(senderId: 1, receiverId: int.parse(userId!)));
+        await _chatProvider.fetchMessages(
+            int.parse(userId!), widget.customerId);
+        await _chatProvider.markAsRead(MarkAsReadDto(
+            senderId: widget.customerId, receiverId: int.parse(userId!)));
       }
 
       setState(() {
@@ -119,7 +125,7 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
     if (userId == null) return;
 
     final senderId = int.parse(userId!);
-    final receiverId = 1;
+    final receiverId = widget.customerId;
     final content = _messageController.text.trim();
 
     if (content.isEmpty && _selectedImage == null) return;
@@ -272,11 +278,9 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
-        title: const Text(
-          'Support Center',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
+        title: Text(
+          widget.userName,
+          style: TextStyle(fontSize: 18),
         ),
         centerTitle: true,
       ),

@@ -18,10 +18,10 @@ class NavigationProvider with ChangeNotifier {
       case '/home':
         _selectedIndex = 0;
         break;
-      case '/support-center':
+      case '/activity':
         _selectedIndex = 1;
         break;
-      case '/chat':
+      case '/support-center':
         _selectedIndex = 2;
         break;
       case '/profile':

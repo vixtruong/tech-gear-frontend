@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -13,11 +12,17 @@ class SideMenu extends StatelessWidget {
 
     return Drawer(
       child: Container(
-        color: Colors.white,
+        color: Colors.white, // Nền trắng giống Zalo
         child: ListView(
           children: [
             DrawerHeader(
               margin: EdgeInsets.zero,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              decoration: BoxDecoration(
+                color: Colors.grey[50], // Nền xám nhạt cho header
+                border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -28,7 +33,10 @@ class SideMenu extends StatelessWidget {
                   const SizedBox(width: 10),
                   const Text(
                     "Tech Gear",
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                    ),
                   ),
                 ],
               ),
@@ -39,24 +47,22 @@ class SideMenu extends StatelessWidget {
               route: '/dashboard',
               currentRoute: currentRoute,
               onTap: () {
-                if (kIsWeb) {
-                  context.go('/dashboard');
-                } else {
-                  context.push('/dashboard');
-                }
+                context.go('/dashboard');
               },
             ),
             DrawListTile(
               title: "Messages",
               iconPath: "assets/icons/menu_chat.svg",
-              route: '/messages', // Define route even if not implemented
+              route: '/chats',
               currentRoute: currentRoute,
-              onTap: () {},
+              onTap: () {
+                context.go('/chats');
+              },
             ),
             DrawListTile(
               title: "Orders",
               iconPath: "assets/icons/menu_store.svg",
-              route: '/orders', // Define route even if not implemented
+              route: '/orders',
               currentRoute: currentRoute,
               onTap: () {},
             ),
@@ -66,11 +72,7 @@ class SideMenu extends StatelessWidget {
               route: '/manage-product',
               currentRoute: currentRoute,
               onTap: () {
-                if (kIsWeb) {
-                  context.go('/manage-product');
-                } else {
-                  context.push('/manage-product');
-                }
+                context.go('/manage-product');
               },
             ),
             DrawListTile(
@@ -79,31 +81,27 @@ class SideMenu extends StatelessWidget {
               route: '/manage-variant-options',
               currentRoute: currentRoute,
               onTap: () {
-                if (kIsWeb) {
-                  context.go('/manage-variant-options');
-                } else {
-                  context.push('/manage-variant-options');
-                }
+                context.go('/manage-variant-options');
               },
             ),
             DrawListTile(
               title: "Brands",
               iconPath: "assets/icons/menu_brand.svg",
-              route: '/brands', // Define route even if not implemented
+              route: '/brands',
               currentRoute: currentRoute,
               onTap: () {},
             ),
             DrawListTile(
               title: "Categories",
               iconPath: "assets/icons/menu_category.svg",
-              route: '/categories', // Define route even if not implemented
+              route: '/categories',
               currentRoute: currentRoute,
               onTap: () {},
             ),
             DrawListTile(
               title: "Transactions",
               iconPath: "assets/icons/menu_tran.svg",
-              route: '/transactions', // Define route even if not implemented
+              route: '/transactions',
               currentRoute: currentRoute,
               onTap: () {},
             ),
@@ -147,26 +145,30 @@ class _DrawListTileState extends State<DrawListTile> {
       onExit: (_) => setState(() => _isHovering = false),
       child: Container(
         color: isActive
-            ? Colors.blue[100] // Highlight for active route
+            ? const Color(0xFF0068FF)
+                // ignore: deprecated_member_use
+                .withOpacity(0.1)
             : _isHovering
-                ? Colors.grey[200] // Hover effect
+                ? Colors.grey[300]
                 : Colors.transparent,
         child: ListTile(
           onTap: widget.onTap,
-          horizontalTitleGap: 10.0,
+          horizontalTitleGap: 12.0, // Tăng gap cho thoáng
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16.0, vertical: 4.0), // Padding tinh tế
           leading: SvgPicture.asset(
             widget.iconPath,
-            width: 18,
+            width: 20, // Tăng kích thước icon
             colorFilter: isActive
-                ? ColorFilter.mode(
-                    Colors.blue, BlendMode.srcIn) // Tint icon when active
-                : null,
+                ? const ColorFilter.mode(Color(0xFF0068FF), BlendMode.srcIn)
+                : ColorFilter.mode(Colors.grey[700]!, BlendMode.srcIn),
           ),
           title: Text(
             widget.title,
             style: TextStyle(
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive ? Colors.blue : Colors.black,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+              fontSize: 15, // Font size tinh tế
+              color: isActive ? const Color(0xFF0068FF) : Colors.black87,
             ),
           ),
         ),

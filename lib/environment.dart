@@ -11,4 +11,14 @@ class Environment {
       return "https://localhost:5001";
     }
   }
+
+  static String get wsUrl {
+    if (kIsWeb) {
+      return "wss://localhost:5001/wss";
+    } else if (Platform.isAndroid) {
+      return "wss://10.0.2.2:5001/wss";
+    } else {
+      return "wss://localhost:5001/wss";
+    }
+  }
 }
