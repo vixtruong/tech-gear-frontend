@@ -75,7 +75,7 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[100],
       // appBar: AppBar(
       //   surfaceTintColor: Colors.white,
       //   backgroundColor: Colors.white,

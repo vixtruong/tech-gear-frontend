@@ -24,6 +24,17 @@ class UserService {
     }
   }
 
+  Future<Map<String, dynamic>> getUser(int userId) async {
+    try {
+      final response = await _dioClient.instance.get('$apiUrl/$userId');
+
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? 'Create user failed';
+      throw Exception(msg);
+    }
+  }
+
   /// Gọi API tạo user mới
   Future<Map<String, dynamic>> createUser(Map<String, dynamic> userData) async {
     try {

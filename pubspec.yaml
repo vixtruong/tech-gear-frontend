@@ -65,6 +65,7 @@ dependencies:
   jwt_decoder: ^2.0.1
 
   flutter_svg: ^2.1.0
+  web_socket_channel: ^3.0.1
 
 dev_dependencies:
   flutter_test:

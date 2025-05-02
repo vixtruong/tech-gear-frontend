@@ -8,7 +8,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        color: Colors.grey[50],
+        color: Colors.grey[100],
         child: SingleChildScrollView(
           primary: false,
           padding: EdgeInsets.all(16),

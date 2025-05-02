@@ -3,18 +3,21 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/cart/cart_item.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
-import 'package:techgear/ui/screens/dashboard/dashboard_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/chat_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/dashboard_screen.dart';
 import 'package:techgear/ui/screens/dashboard/main_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_brand_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_category_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_product_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_product_variants_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_variant_option_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_chats.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_product_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_variant_options_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_product_variants_screen.dart';
 import 'package:techgear/ui/screens/home/activity_screen.dart';
 import 'package:techgear/ui/screens/home/cart_screen.dart';
+import 'package:techgear/ui/screens/home/change_password_screen.dart';
 import 'package:techgear/ui/screens/home/support_center_screen.dart';
 import 'package:techgear/ui/screens/home/checkout_screen.dart';
 import 'package:techgear/ui/screens/home/home_screen.dart';
@@ -31,7 +34,7 @@ import 'package:techgear/ui/screens/home/profile_screen.dart';
 import 'package:techgear/ui/widgets/navbar/home/home_bottom_nav_bar.dart';
 
 final GoRouter router = GoRouter(
-  initialLocation: '/welcome',
+  initialLocation: '/welcome', // Đặt initialLocation về /welcome
   redirect: (BuildContext context, GoRouterState state) async {
     final sessionProvider =
         Provider.of<SessionProvider>(context, listen: false);
@@ -40,18 +43,54 @@ final GoRouter router = GoRouter(
     final isLoggedIn = sessionProvider.isLoggedIn;
     final role = sessionProvider.role;
 
+    // Danh sách các route chỉ dành cho Admin
+    const adminRoutes = [
+      '/dashboard',
+      '/add-brand',
+      '/add-category',
+      '/add-product',
+      '/manage-product',
+      '/manage-product-variants/:productId',
+      '/add-product-variants/:productId',
+      '/manage-variant-options',
+      '/add-variant-option',
+      '/chats',
+      '/chats/:userId',
+    ];
+
+    // Kiểm tra nếu route hiện tại là route admin
+    bool isAdminRoute = adminRoutes.any((route) {
+      if (route.contains(':') && state.uri.toString().contains('/')) {
+        // Xử lý các route có tham số (ví dụ: /chats/:userId)
+        final routePrefix = route.split('/:')[0];
+        return state.uri.toString().startsWith(routePrefix);
+      }
+      return state.uri.toString().startsWith(route);
+    });
+
+    // Nếu chưa đăng nhập và cố truy cập route admin
+    if (!isLoggedIn && isAdminRoute) {
+      return '/welcome';
+    }
+
+    // Nếu đã đăng nhập nhưng không phải Admin và cố truy cập route admin
+    if (isLoggedIn && role != 'Admin' && isAdminRoute) {
+      return '/home';
+    }
+
     // Nếu đã đăng nhập và cố truy cập các màn hình auth
-    if (isLoggedIn && role == 'Customer') {
+    if (isLoggedIn) {
       if (state.uri.toString().startsWith('/welcome') ||
           state.uri.toString().startsWith('/login') ||
           state.uri.toString().startsWith('/register') ||
           state.uri.toString().startsWith('/recover-password')) {
-        return '/home';
+        return role == 'Admin' ? '/dashboard' : '/home';
       }
     }
 
     return null;
   },
+
   routes: [
     // Auth screens (no navbar needed)
     GoRoute(
@@ -111,7 +150,7 @@ final GoRouter router = GoRouter(
             ),
           ],
         ),
-        // Profile branch (static path)
+        // Profile branch
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -145,7 +184,6 @@ final GoRouter router = GoRouter(
 
         // Conditional rendering based on the `isAdmin` flag
         if (isWeb) {
-          // Check if it's a web layout and if it's an admin
           if (isAdmin) {
             return screen; // Show MainScreen for admins
           } else {
@@ -153,7 +191,6 @@ final GoRouter router = GoRouter(
                 child: screen); // Show UserWebLayout for regular users
           }
         } else {
-          // If it's a mobile layout, just return the screen directly
           return screen;
         }
       },
@@ -193,14 +230,23 @@ final GoRouter router = GoRouter(
     ),
 
     GoRoute(
-      path: '/rate-order/:orderId', // Thêm :orderId vào path
+      path: '/rate-order/:orderId',
       builder: (context, state) {
         final isWeb = MediaQuery.of(context).size.width > 800;
-        final orderId = int.parse(
-            state.pathParameters['orderId']!); // Lấy orderId từ pathParameters
+        final orderId = int.parse(state.pathParameters['orderId']!);
         return isWeb
             ? UserWebLayout(child: RateOrderScreen(orderId: orderId))
             : RateOrderScreen(orderId: orderId);
+      },
+    ),
+
+    GoRoute(
+      path: '/change-password',
+      builder: (context, state) {
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        return isWeb
+            ? UserWebLayout(child: ChangePasswordScreen())
+            : ChangePasswordScreen();
       },
     ),
 
@@ -266,7 +312,7 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         return MainScreen(
           screen: ManageVariantOptionsScreen(),
-          title: "Variantions",
+          title: "Variations",
         );
       },
     ),
@@ -275,7 +321,33 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         return MainScreen(
           screen: AddVariantOptionScreen(),
-          title: "Add Variantion",
+          title: "Add Variation",
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/chats',
+      builder: (context, state) {
+        return MainScreen(
+          screen: ManageChats(),
+          title: "Messages",
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/chats/:userId',
+      builder: (context, state) {
+        final userId = int.parse(state.pathParameters['userId']!);
+
+        final userName =
+            (state.extra is Map && (state.extra as Map).containsKey('userName'))
+                ? (state.extra as Map)['userName'] as String
+                : '';
+        return MainScreen(
+          screen: ChatScreen(customerId: userId, userName: userName),
+          title: "Messages",
         );
       },
     ),

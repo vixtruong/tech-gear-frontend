@@ -118,7 +118,7 @@ class _ActivityScreenState extends State<ActivityScreen>
   Widget build(BuildContext context) {
     return userId == null && !_isLoading
         ? Container(
-            color: Colors.grey[50],
+            color: Colors.grey[100],
             height: MediaQuery.of(context).size.height * 0.6,
             width: double.infinity,
             child: Column(
@@ -159,7 +159,7 @@ class _ActivityScreenState extends State<ActivityScreen>
         : Consumer<OrderProvider>(
             builder: (context, orderProvider, child) {
               return Scaffold(
-                backgroundColor: Colors.grey[50],
+                backgroundColor: Colors.grey[100],
                 appBar: AppBar(
                   backgroundColor: Colors.white,
                   surfaceTintColor: Colors.white,

@@ -11,14 +11,18 @@ import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:techgear/services/cloudinary/cloudinary_service.dart';
 
-class SupportCenterScreen extends StatefulWidget {
-  const SupportCenterScreen({super.key});
+class ChatScreen extends StatefulWidget {
+  final int customerId;
+  final String userName;
+
+  const ChatScreen(
+      {super.key, required this.customerId, required this.userName});
 
   @override
-  State<SupportCenterScreen> createState() => _SupportCenterScreenState();
+  State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _SupportCenterScreenState extends State<SupportCenterScreen> {
+class _ChatScreenState extends State<ChatScreen> {
   late ChatProvider _chatProvider;
   late SessionProvider _sessionProvider;
 
@@ -51,11 +55,11 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
           _chatProvider.connectWebSocket(userId!, accessToken);
           _isWebSocketConnected = true;
         }
-        await _chatProvider.fetchMessages(int.parse(userId!), 1);
-        await _chatProvider.markAsRead(
-            MarkAsReadDto(senderId: 1, receiverId: int.parse(userId!)));
+        await _chatProvider.fetchMessages(
+            int.parse(userId!), widget.customerId);
+        await _chatProvider.markAsRead(MarkAsReadDto(
+            senderId: widget.customerId, receiverId: int.parse(userId!)));
       }
-
       _chatProvider.setSupportScreenActive(true);
 
       setState(() {
@@ -82,6 +86,7 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
 
   @override
   void dispose() {
+    // Đặt trạng thái và đóng WebSocket mà không gọi notifyListeners()
     _chatProvider.setSupportScreenActive(false);
     if (_isWebSocketConnected) {
       try {
@@ -91,10 +96,8 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
       }
       _isWebSocketConnected = false;
     }
-
     _messageController.dispose();
     _scrollController.dispose();
-    _isWebSocketConnected = false;
     super.dispose();
   }
 
@@ -141,7 +144,7 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
     if (userId == null) return;
 
     final senderId = int.parse(userId!);
-    final receiverId = 1;
+    final receiverId = widget.customerId;
     final content = _messageController.text.trim();
 
     if (content.isEmpty && _selectedImage == null) return;
@@ -309,15 +312,13 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
         }
 
         return Scaffold(
-          backgroundColor: Colors.grey[50],
+          backgroundColor: Colors.grey[100],
           appBar: AppBar(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.white,
-            title: const Text(
-              'Support Center',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
+            title: Text(
+              widget.userName,
+              style: const TextStyle(fontSize: 18),
             ),
             centerTitle: true,
           ),
