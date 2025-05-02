@@ -139,7 +139,7 @@ class _ManageVariantOptionsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[100],
       floatingActionButton: SpeedDial(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,

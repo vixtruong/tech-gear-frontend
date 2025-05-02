@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:techgear/dtos/change_password_dto.dart';
 import 'package:techgear/dtos/login_request_dto.dart';
 import 'package:techgear/dtos/register_request_dto.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
@@ -123,11 +124,10 @@ class AuthService {
     }
   }
 
-  Future<void> resetPassword({
-    required String email,
-    required String otp,
-    required String newPassword,
-  }) async {
+  Future<void> resetPassword(
+      {required String email,
+      required String otp,
+      required String newPassword}) async {
     try {
       final response = await _dioClient.instance.post(
         '$apiUrl/reset-password',
@@ -151,6 +151,21 @@ class AuthService {
     } catch (e) {
       print('AuthService: Unexpected error during reset password: $e');
       throw Exception('Reset password failed: $e');
+    }
+  }
+
+  Future<void> changePassword(ChangePasswordDto dto) async {
+    try {
+      var response = await _dioClient.instance
+          .post('$apiUrl/change-password', data: dto.toJson());
+      if (response.statusCode != 200) {
+        throw Exception(
+            'Change password failed with status: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? 'Unknown error';
+      print('AuthService: change password failed: $msg');
+      throw Exception('Reset password failed: $msg');
     }
   }
 }

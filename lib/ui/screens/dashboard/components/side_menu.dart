@@ -15,30 +15,35 @@ class SideMenu extends StatelessWidget {
         color: Colors.white, // Nền trắng giống Zalo
         child: ListView(
           children: [
-            DrawerHeader(
-              margin: EdgeInsets.zero,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              decoration: BoxDecoration(
-                color: Colors.grey[50], // Nền xám nhạt cho header
-                border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/tech_gear_logo.png',
-                    width: 50,
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    "Tech Gear",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
+            InkWell(
+              onTap: () {
+                context.go('/dashboard');
+              },
+              child: DrawerHeader(
+                margin: EdgeInsets.zero,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50], // Nền xám nhạt cho header
+                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/tech_gear_logo.png',
+                      width: 50,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    const Text(
+                      "Tech Gear",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             DrawListTile(

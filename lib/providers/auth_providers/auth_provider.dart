@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:techgear/dtos/change_password_dto.dart';
 import 'package:techgear/dtos/login_request_dto.dart';
 import 'package:techgear/dtos/register_request_dto.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
@@ -97,6 +98,22 @@ class AuthProvider with ChangeNotifier {
         otp: otp,
         newPassword: newPassword,
       );
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> changePassword(ChangePasswordDto dto) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _authService.changePassword(dto);
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');

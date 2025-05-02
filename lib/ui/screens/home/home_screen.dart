@@ -462,7 +462,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Colors.grey[100],
         appBar: !isWeb
             ? AppBar(
                 surfaceTintColor: Colors.white,

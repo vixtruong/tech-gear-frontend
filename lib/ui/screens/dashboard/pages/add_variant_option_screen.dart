@@ -123,7 +123,7 @@ class _AddVariantOptionScreenState extends State<AddVariantOptionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[100],
       body: _isLoading
           ? Center(
               child: CircularProgressIndicator(

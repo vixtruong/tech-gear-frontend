@@ -12,13 +12,42 @@ class ChatProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   int _unreadCount = 0;
+  bool _isSupportScreenActive = false;
+  bool _isDisposed = false; // Thêm biến để kiểm tra trạng thái dispose
 
   ChatProvider(SessionProvider sessionProvider)
       : _chatService = ChatService(sessionProvider) {
     _chatService.messageStream.listen((message) {
-      // Kiểm tra xem tin nhắn đã tồn tại chưa
-      if (!_messages.any((m) => m.id == message.id && m.id != null)) {
-        notifyListeners();
+      if (!_isDisposed &&
+          !_messages.any((m) => m.id == message.id && m.id != null)) {
+        _messages.add(message);
+
+        sessionProvider.loadSession();
+        final userId = sessionProvider.userId;
+        if (userId != null) {
+          final currentUserId = int.parse(userId);
+          final userIndex = _chatUsers.indexWhere((user) =>
+              user.id == message.senderId || user.id == message.receiverId);
+          if (userIndex != -1) {
+            final updatedUser = _chatUsers[userIndex].copyWith(
+              lastMessagePreview: message.isImage ? "Image" : message.content,
+              lastMessageSentAt: message.sentAt,
+              isImage: message.isImage,
+              senderId: message.senderId,
+            );
+            _chatUsers = List.from(_chatUsers);
+            _chatUsers[userIndex] = updatedUser;
+            _updateUnreadCount(message.senderId, currentUserId);
+          }
+
+          if (_isSupportScreenActive) {
+            markAsRead(MarkAsReadDto(
+              senderId: message.senderId,
+              receiverId: currentUserId,
+            ));
+          }
+        }
+        if (!_isDisposed) notifyListeners();
       }
     });
   }
@@ -28,6 +57,32 @@ class ChatProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   int get unreadCount => _unreadCount;
+  bool get isSupportScreenActive => _isSupportScreenActive;
+
+  void setSupportScreenActive(bool active) {
+    _isSupportScreenActive = active;
+    if (!_isDisposed)
+      notifyListeners(); // Chỉ gọi notifyListeners nếu chưa dispose
+  }
+
+  Future<void> _updateUnreadCount(int senderId, int receiverId) async {
+    try {
+      final newUnreadCount =
+          await _chatService.getUnreadMessageCount(senderId, receiverId);
+      final userIndex = _chatUsers
+          .indexWhere((user) => user.id == senderId || user.id == receiverId);
+      if (userIndex != -1) {
+        _chatUsers[userIndex] =
+            _chatUsers[userIndex].copyWith(unreadMessageCount: newUnreadCount);
+        _chatUsers = List.from(_chatUsers);
+      }
+      _unreadCount = newUnreadCount;
+      if (!_isDisposed) notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      if (!_isDisposed) notifyListeners();
+    }
+  }
 
   void connectWebSocket(String userId, String? accessToken) {
     _chatService.connectWebSocket(userId, accessToken);
@@ -40,14 +95,13 @@ class ChatProvider with ChangeNotifier {
   Future<void> fetchMessages(int senderId, int receiverId) async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    if (!_isDisposed) notifyListeners();
 
     try {
       final List<Map<String, dynamic>> data =
           await _chatService.fetchMessages(senderId, receiverId);
       final newMessages = data.map((e) => Message.fromJson(e)).toList();
 
-      // Đồng bộ tin nhắn: chỉ thêm tin nhắn chưa có trong _messages
       final updatedMessages = [..._messages];
       for (var newMessage in newMessages) {
         if (!updatedMessages
@@ -55,34 +109,32 @@ class ChatProvider with ChangeNotifier {
           updatedMessages.add(newMessage);
         }
       }
-      // Sắp xếp theo thời gian gửi
       updatedMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
       _messages = updatedMessages;
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
     }
   }
 
   Future<bool> sendMessage(Message message) async {
-    _messages.add(message);
-    notifyListeners();
+    if (!_isDisposed) notifyListeners();
 
     try {
       final success = await _chatService.sendMessage(message);
       if (!success) {
         _messages.remove(message);
         _error = 'Failed to send message';
-        notifyListeners();
+        if (!_isDisposed) notifyListeners();
         return false;
       }
       return true;
     } catch (e) {
       _messages.remove(message);
       _error = e.toString();
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
       return false;
     }
   }
@@ -93,7 +145,7 @@ class ChatProvider with ChangeNotifier {
       await fetchUnreadMessageCount(dto.senderId, dto.receiverId);
     } catch (e) {
       _error = e.toString();
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
     }
   }
 
@@ -103,28 +155,33 @@ class ChatProvider with ChangeNotifier {
           await _chatService.getUnreadMessageCount(senderId, receiverId);
       if (_unreadCount != newUnreadCount) {
         _unreadCount = newUnreadCount;
-        notifyListeners();
+        if (!_isDisposed) notifyListeners();
       }
     } catch (e) {
       _error = e.toString();
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
     }
   }
 
   Future<void> fetchChatUsers() async {
     try {
       var data = await _chatService.fetchChatUsers();
-
       _chatUsers = data.map((item) => ChatUserDto.fromJson(item)).toList();
     } catch (e) {
       _error = e.toString();
       print(_error);
     }
-    notifyListeners();
+    if (!_isDisposed) notifyListeners();
   }
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    if (!_isDisposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true; // Đánh dấu provider đã bị dispose
+    super.dispose();
   }
 }

@@ -135,6 +135,7 @@ class ProfileCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(
           horizontal: 16.0, vertical: 8.0), // Giữ kích thước gốc
       decoration: BoxDecoration(
+        // ignore: deprecated_member_use
         color: Colors.white.withOpacity(0.1), // Nền trắng mờ giống Zalo
         borderRadius:
             const BorderRadius.all(Radius.circular(10)), // Giữ kích thước gốc

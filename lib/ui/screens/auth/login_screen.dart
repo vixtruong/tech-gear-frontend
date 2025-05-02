@@ -79,14 +79,28 @@ class _LoginScreenState extends State<LoginScreen> {
           loginResponse['accessToken'], loginResponse['refreshToken']);
       await _sessionProvider.loadSession();
 
-      await _cartProvider.updateCartToServer();
+      final userRole = _sessionProvider.role;
 
-      if (mounted) {
-        Navigator.of(context).pop();
+      if (userRole != null) {
+        if (userRole == "Customer") {
+          await _cartProvider.updateCartToServer();
 
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          context.go('/home');
-        });
+          if (mounted) {
+            Navigator.of(context).pop();
+
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              context.go('/home');
+            });
+          }
+        } else {
+          if (mounted) {
+            Navigator.of(context).pop();
+
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              context.go('/dashboard');
+            });
+          }
+        }
       }
     } catch (e) {
       if (mounted) {

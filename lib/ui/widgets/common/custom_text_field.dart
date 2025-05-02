@@ -40,12 +40,24 @@ class _CustomTextFieldState extends State<CustomTextField> {
               ? const EdgeInsets.symmetric(horizontal: 8.0)
               : const EdgeInsets.symmetric(horizontal: 15.0),
           child: TextFormField(
+            obscureText: (widget.inputType == TextInputType.visiblePassword)
+                ? true
+                : false,
             controller: widget.controller,
             enabled: widget.enabled,
             onChanged: (value) => {
-              setState(() {
-                errorText = widget.validator?.call(value);
-              })
+              if (value.isEmpty)
+                {
+                  setState(() {
+                    errorText = widget.validator?.call(value);
+                  })
+                }
+              else
+                {
+                  setState(() {
+                    errorText = null;
+                  })
+                }
             },
             validator: (value) {
               final error = widget.validator?.call(value);

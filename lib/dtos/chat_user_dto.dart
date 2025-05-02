@@ -28,4 +28,24 @@ class ChatUserDto {
       lastMessageSentAt: DateTime.parse(json['lastMessageSentAt'] as String),
     );
   }
+
+  ChatUserDto copyWith({
+    int? id,
+    String? userName,
+    String? lastMessagePreview,
+    DateTime? lastMessageSentAt,
+    bool? isImage,
+    int? senderId,
+    int? unreadMessageCount,
+  }) {
+    return ChatUserDto(
+      id: id ?? this.id,
+      userName: userName ?? this.userName,
+      lastMessagePreview: lastMessagePreview ?? this.lastMessagePreview,
+      lastMessageSentAt: lastMessageSentAt ?? this.lastMessageSentAt,
+      isImage: isImage ?? this.isImage,
+      senderId: senderId ?? this.senderId,
+      unreadMessageCount: unreadMessageCount ?? this.unreadMessageCount,
+    );
+  }
 }

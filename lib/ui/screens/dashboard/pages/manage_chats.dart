@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/dtos/chat_user_dto.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -15,18 +16,32 @@ class ManageChats extends StatefulWidget {
 
 class _ManageChatsState extends State<ManageChats> {
   late ChatProvider _chatProvider;
+  late SessionProvider _sessionProvider;
   bool _isLoading = true;
+  bool _isWebSocketConnected = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    _sessionProvider = Provider.of<SessionProvider>(context, listen: false);
+
     _loadInformation();
   }
 
   Future<void> _loadInformation() async {
     try {
       await _chatProvider.fetchChatUsers();
+      await _sessionProvider.loadSession();
+      final userId = _sessionProvider.userId;
+      final accessToken = _sessionProvider.accessToken;
+
+      if (userId != null) {
+        if (!_isWebSocketConnected) {
+          _chatProvider.connectWebSocket(userId, accessToken);
+          _isWebSocketConnected = true;
+        }
+      }
       setState(() {
         _isLoading = false;
       });
@@ -42,9 +57,16 @@ class _ManageChatsState extends State<ManageChats> {
   }
 
   @override
+  void dispose() {
+    _chatProvider.disconnectWebSocket();
+    _isWebSocketConnected = false;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
@@ -83,11 +105,17 @@ class _ManageChatsState extends State<ManageChats> {
                   color: const Color(0xFF0068FF),
                   onRefresh: _loadInformation,
                   child: ListView.builder(
+                    key: ValueKey(provider.chatUsers
+                        .length), // Đảm bảo ListView rebuild khi danh sách thay đổi
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: provider.chatUsers.length,
                     itemBuilder: (context, index) {
                       final user = provider.chatUsers[index];
-                      return ChatUserCard(user: user);
+                      return ChatUserCard(
+                        key: ValueKey(
+                            user.id), // Đảm bảo mỗi item có key duy nhất
+                        user: user,
+                      );
                     },
                   ),
                 );
@@ -117,7 +145,6 @@ class ChatUserCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar
             CircleAvatar(
               radius: 20,
               backgroundColor: const Color(0xFF0068FF),
@@ -131,12 +158,10 @@ class ChatUserCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Nội dung
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Tên người dùng và thời gian
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -151,21 +176,20 @@ class ChatUserCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // Đoạn trích tin nhắn cuối
                   if (user.senderId == 1) ...[
                     Row(
                       children: [
-                        Text(
+                        const Text(
                           "You:",
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.black87,
                           ),
                         ),
-                        SizedBox(width: 5),
+                        const SizedBox(width: 5),
                         if (user.isImage)
                           Row(
-                            children: [
+                            children: const [
                               Icon(
                                 Icons.image_outlined,
                                 color: Colors.black54,
@@ -182,7 +206,7 @@ class ChatUserCard extends StatelessWidget {
                           ),
                         if (!user.isImage)
                           Text(
-                            user.lastMessagePreview!,
+                            user.lastMessagePreview ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -195,7 +219,7 @@ class ChatUserCard extends StatelessWidget {
                   ] else ...[
                     if (user.isImage)
                       Row(
-                        children: [
+                        children: const [
                           Icon(
                             Icons.image_outlined,
                             color: Colors.black54,
@@ -213,7 +237,7 @@ class ChatUserCard extends StatelessWidget {
                       ),
                     if (!user.isImage)
                       Text(
-                        user.lastMessagePreview!,
+                        user.lastMessagePreview ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -252,7 +276,6 @@ class ChatUserCard extends StatelessWidget {
                   ),
               ],
             )
-            // Badge tin nhắn chưa đọc
           ],
         ),
       ),

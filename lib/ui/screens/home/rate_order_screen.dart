@@ -63,7 +63,7 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
         centerTitle: true,
       ),
       body: Container(
-        color: Colors.grey[50],
+        color: Colors.grey[100],
         child: _isLoading
             ? const Center(
                 child: CircularProgressIndicator(color: Colors.blue),

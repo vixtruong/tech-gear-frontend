@@ -16,7 +16,7 @@ class DioClient {
       },
       onError: (DioException error, handler) async {
         if (error.response?.statusCode == 401) {
-          final refreshed = await _refreshToken();
+          final refreshed = await refreshToken();
           if (refreshed) {
             final newAccess = _sessionProvider.accessToken;
             final retryRequest = error.requestOptions;
@@ -41,7 +41,7 @@ class DioClient {
 
   bool _isRefreshing = false;
 
-  Future<bool> _refreshToken() async {
+  Future<bool> refreshToken() async {
     if (_isRefreshing) return false;
     _isRefreshing = true;
     try {
@@ -58,9 +58,10 @@ class DioClient {
       await _sessionProvider.saveSession(
           data['accessToken'], data['refreshToken']);
 
-      print("RefreshToken");
+      print("Token refreshed successfully");
       return true;
     } catch (e) {
+      print("Failed to refresh token: $e");
       await _sessionProvider.clearSession();
       return false;
     } finally {

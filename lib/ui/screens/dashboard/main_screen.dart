@@ -19,7 +19,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[100],
       key: _scaffoldKey,
       drawer: Responsive.isDesktop(context) ? null : SideMenu(),
       body: SafeArea(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:techgear/dtos/user_dto.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/user_service/user_service.dart';
 
@@ -21,6 +22,17 @@ class UserProvider with ChangeNotifier {
     _userId = id;
     notifyListeners();
     print('UserProvider: User ID set to $id');
+  }
+
+  Future<UserDto?> fetchUser(int userId) async {
+    try {
+      final data = await _userService.getUser(userId);
+
+      return UserDto.fromJson(data);
+    } catch (e) {
+      e.toString();
+    }
+    return null;
   }
 
   Future<String?> fetchUserName(int userId) async {

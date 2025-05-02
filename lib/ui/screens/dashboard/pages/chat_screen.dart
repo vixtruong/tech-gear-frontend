@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -61,9 +60,21 @@ class _ChatScreenState extends State<ChatScreen> {
         await _chatProvider.markAsRead(MarkAsReadDto(
             senderId: widget.customerId, receiverId: int.parse(userId!)));
       }
+      _chatProvider.setSupportScreenActive(true);
 
       setState(() {
         _isLoading = false;
+      });
+
+      // Cuộn xuống cuối sau khi tải tin nhắn
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
       });
     } catch (e) {
       print('Error loading information: $e');
@@ -75,10 +86,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    _chatProvider.disconnectWebSocket();
+    // Đặt trạng thái và đóng WebSocket mà không gọi notifyListeners()
+    _chatProvider.setSupportScreenActive(false);
+    if (_isWebSocketConnected) {
+      try {
+        _chatProvider.disconnectWebSocket();
+      } catch (e) {
+        print('Error disconnecting WebSocket: $e');
+      }
+      _isWebSocketConnected = false;
+    }
     _messageController.dispose();
     _scrollController.dispose();
-    _isWebSocketConnected = false;
     super.dispose();
   }
 
@@ -271,139 +290,165 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
+    return Consumer<ChatProvider>(
+      builder: (context, chatProvider, _) {
+        // Tự động cuộn xuống cuối khi danh sách tin nhắn thay đổi
+        if (chatProvider.messages.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+              final currentPosition = _scrollController.position.pixels;
+              final maxScrollExtent =
+                  _scrollController.position.maxScrollExtent;
+              // Chỉ cuộn nếu người dùng đang ở gần cuối danh sách
+              if ((maxScrollExtent - currentPosition).abs() < 200) {
+                _scrollController.animateTo(
+                  _scrollController.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              }
+            }
+          });
+        }
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        title: Text(
-          widget.userName,
-          style: TextStyle(fontSize: 18),
-        ),
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: Colors.blue,
-              ),
-            )
-          : userId == null
-              ? SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6,
-                  width: double.infinity,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Please log in to be supported.",
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => context.go('/login'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Login Now",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+        return Scaffold(
+          backgroundColor: Colors.grey[100],
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            title: Text(
+              widget.userName,
+              style: const TextStyle(fontSize: 18),
+            ),
+            centerTitle: true,
+          ),
+          body: _isLoading
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.blue,
                   ),
                 )
-              : Column(
-                  children: [
-                    Expanded(
-                      child: chatProvider.isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : chatProvider.error != null
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text('Error: ${chatProvider.error}'),
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          chatProvider.clearError();
-                                          _loadInformation(forceReload: true);
-                                        },
-                                        child: const Text('Retry'),
+              : userId == null
+                  ? SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      width: double.infinity,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Please log in to be supported.",
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => context.go('/login'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              "Login Now",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: chatProvider.isLoading
+                              ? const Center(child: CircularProgressIndicator())
+                              : chatProvider.error != null
+                                  ? Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text('Error: ${chatProvider.error}'),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              chatProvider.clearError();
+                                              _loadInformation(
+                                                  forceReload: true);
+                                            },
+                                            child: const Text('Retry'),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                )
-                              : ListView.builder(
-                                  controller: _scrollController,
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 8, horizontal: 12),
-                                  itemCount: _groupMessagesByDate(
-                                          chatProvider.messages)
-                                      .length,
-                                  itemBuilder: (context, groupIndex) {
-                                    final group = _groupMessagesByDate(
-                                        chatProvider.messages)[groupIndex];
-                                    final dateLabel =
-                                        group['dateLabel'] as String;
-                                    final messages =
-                                        group['messages'] as List<Message>;
+                                    )
+                                  : ListView.builder(
+                                      controller: _scrollController,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8, horizontal: 12),
+                                      itemCount: _groupMessagesByDate(
+                                              chatProvider.messages)
+                                          .length,
+                                      itemBuilder: (context, groupIndex) {
+                                        final group = _groupMessagesByDate(
+                                            chatProvider.messages)[groupIndex];
+                                        final dateLabel =
+                                            group['dateLabel'] as String;
+                                        final messages =
+                                            group['messages'] as List<Message>;
 
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          margin: const EdgeInsets.symmetric(
-                                              vertical: 8),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[300],
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            dateLabel,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.black54,
+                                        return Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Container(
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 8),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[300],
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                dateLabel,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                        ...messages.map((message) {
-                                          final isSentByUser =
-                                              message.senderId ==
-                                                  int.parse(userId ?? '0');
-                                          return _buildMessageBubble(
-                                              message, isSentByUser);
-                                        }),
-                                      ],
-                                    );
-                                  },
-                                ),
+                                            ...messages.map((message) {
+                                              final isSentByUser =
+                                                  message.senderId ==
+                                                      int.parse(userId ?? '0');
+                                              return _buildMessageBubble(
+                                                  message, isSentByUser);
+                                            }),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                        ),
+                        if (_selectedImage != null) _buildImagePreview(),
+                        _buildInputArea(),
+                      ],
                     ),
-                    if (_selectedImage != null) _buildImagePreview(),
-                    _buildInputArea(),
-                  ],
-                ),
+        );
+      },
     );
   }
 

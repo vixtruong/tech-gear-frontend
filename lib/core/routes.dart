@@ -17,6 +17,7 @@ import 'package:techgear/ui/screens/dashboard/pages/manage_variant_options_scree
 import 'package:techgear/ui/screens/dashboard/pages/manage_product_variants_screen.dart';
 import 'package:techgear/ui/screens/home/activity_screen.dart';
 import 'package:techgear/ui/screens/home/cart_screen.dart';
+import 'package:techgear/ui/screens/home/change_password_screen.dart';
 import 'package:techgear/ui/screens/home/support_center_screen.dart';
 import 'package:techgear/ui/screens/home/checkout_screen.dart';
 import 'package:techgear/ui/screens/home/home_screen.dart';
@@ -236,6 +237,16 @@ final GoRouter router = GoRouter(
         return isWeb
             ? UserWebLayout(child: RateOrderScreen(orderId: orderId))
             : RateOrderScreen(orderId: orderId);
+      },
+    ),
+
+    GoRoute(
+      path: '/change-password',
+      builder: (context, state) {
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        return isWeb
+            ? UserWebLayout(child: ChangePasswordScreen())
+            : ChangePasswordScreen();
       },
     ),
 
