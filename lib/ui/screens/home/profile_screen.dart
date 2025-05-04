@@ -324,8 +324,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _buildTile(
                           context,
                           icon: Icons.star_border,
-                          title: "Loyalty Program",
-                          onTap: () {},
+                          title: "Loyalty History",
+                          onTap: () {
+                            if (kIsWeb) {
+                              context.go('/loyalty');
+                            } else {
+                              context.push('/loyalty');
+                            }
+                          },
                         ),
                         _buildTile(
                           context,
@@ -339,10 +345,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             }
                           },
                         ),
-                        _buildTile(context,
-                            icon: Icons.card_giftcard_outlined,
-                            title: "My Coupons",
-                            onTap: () {}),
+                        // _buildTile(context,
+                        //     icon: Icons.card_giftcard_outlined,
+                        //     title: "My Coupons",
+                        //     onTap: () {}),
                       ]),
                       const SizedBox(height: 24),
                       _buildSectionTitle("Other"),

@@ -18,6 +18,7 @@ import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/providers/product_providers/rating_provider.dart';
 import 'package:techgear/providers/product_providers/variant_option_provider.dart';
 import 'package:techgear/providers/product_providers/variant_value_provider.dart';
+import 'package:techgear/providers/user_provider/loyalty_provider.dart';
 import 'package:techgear/providers/user_provider/user_address_provider.dart';
 import 'package:techgear/providers/user_provider/user_provider.dart';
 import 'package:techgear/services/order_service/cart_service.dart';
@@ -150,6 +151,13 @@ void main() async {
           ),
           update: (context, sessionProvider, userAddressProvider) =>
               userAddressProvider ?? UserAddressProvider(sessionProvider),
+        ),
+        ChangeNotifierProxyProvider<SessionProvider, LoyaltyProvider>(
+          create: (context) => LoyaltyProvider(
+            Provider.of<SessionProvider>(context, listen: false),
+          ),
+          update: (context, sessionProvider, userAddressProvider) =>
+              userAddressProvider ?? LoyaltyProvider(sessionProvider),
         ),
 
         // ChatProvider (depends on SessionProvider)
