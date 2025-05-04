@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:techgear/dtos/edit_profile_dto.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 
@@ -44,6 +46,29 @@ class UserService {
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? 'Create user failed';
       throw Exception(msg);
+    }
+  }
+
+  Future<bool> updateUser(EditProfileDto dto) async {
+    try {
+      final response = await _dioClient.instance.put(
+        '$apiUrl/edit',
+        data: dto.toJson(),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        debugPrint('Update failed with status: ${response.statusCode}');
+        return false;
+      }
+    } on DioException catch (e) {
+      final msg = e.response?.data['message'] ?? 'Lỗi kết nối máy chủ';
+      debugPrint('DioException: $msg');
+      throw Exception(msg);
+    } catch (e) {
+      debugPrint('Unexpected error: $e');
+      throw Exception('Đã xảy ra lỗi không xác định');
     }
   }
 

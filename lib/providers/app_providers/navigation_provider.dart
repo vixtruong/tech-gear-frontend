@@ -1,35 +1,53 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 class NavigationProvider with ChangeNotifier {
   int _selectedIndex = 0;
+  final _routeChangeController = StreamController<int>.broadcast();
 
   int get selectedIndex => _selectedIndex;
+  Stream<int> get routeChanges => _routeChangeController.stream;
 
   void setSelectedIndex(int index) {
-    _selectedIndex = index;
-    notifyListeners();
+    if (_selectedIndex != index) {
+      _selectedIndex = index;
+      _routeChangeController.add(index);
+      notifyListeners();
+    }
   }
 
   void syncWithRoute(String currentRoute) {
     final baseRoute = currentRoute.split('?').first;
     print('Syncing with route: $baseRoute');
 
+    int newIndex;
     switch (baseRoute) {
       case '/home':
-        _selectedIndex = 0;
+        newIndex = 0;
         break;
       case '/activity':
-        _selectedIndex = 1;
+        newIndex = 1;
         break;
       case '/support-center':
-        _selectedIndex = 2;
+        newIndex = 2;
         break;
       case '/profile':
-        _selectedIndex = 3;
+        newIndex = 3;
         break;
       default:
-        _selectedIndex = (kIsWeb) ? -1 : 0;
+        newIndex = kIsWeb ? -1 : 0;
     }
-    notifyListeners();
+
+    if (_selectedIndex != newIndex) {
+      _selectedIndex = newIndex;
+      _routeChangeController.add(newIndex);
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _routeChangeController.close();
+    super.dispose();
   }
 }

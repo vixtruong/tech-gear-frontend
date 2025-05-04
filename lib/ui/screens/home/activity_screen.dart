@@ -1,10 +1,13 @@
 // lib/ui/screens/activity_screen.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/dtos/order_dto.dart';
 import 'package:techgear/dtos/rating_review_dto.dart';
+import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/order_providers/order_provider.dart';
 import 'package:techgear/providers/product_providers/rating_provider.dart';
@@ -32,6 +35,8 @@ class _ActivityScreenState extends State<ActivityScreen>
 
   List<RatingReviewDto> ratings = [];
 
+  StreamSubscription<int>? _routeSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +46,7 @@ class _ActivityScreenState extends State<ActivityScreen>
 
   @override
   void dispose() {
+    _routeSubscription?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -52,15 +58,28 @@ class _ActivityScreenState extends State<ActivityScreen>
     _sessionProvider = Provider.of<SessionProvider>(context, listen: false);
     _ratingProvider = Provider.of<RatingProvider>(context, listen: false);
     _loadInformations();
+
+    // Đăng ký lắng nghe Stream trong lần đầu tiên
+    if (_routeSubscription == null) {
+      final navigationProvider =
+          Provider.of<NavigationProvider>(context, listen: false);
+      _routeSubscription = navigationProvider.routeChanges.listen((index) {
+        if (index == 1 && !_isLoading) {
+          _loadInformations();
+        }
+      });
+    }
   }
 
   Future<void> _loadInformations() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+    // if (_isLoading) return;
 
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
       await _sessionProvider.loadSession();
       userId = _sessionProvider.userId;
 

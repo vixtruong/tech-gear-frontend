@@ -7,6 +7,7 @@ class CustomTextField extends StatefulWidget {
   final bool isSearch;
   final FormFieldValidator<String>? validator;
   final bool enabled;
+  final String? value;
 
   const CustomTextField({
     super.key,
@@ -16,6 +17,7 @@ class CustomTextField extends StatefulWidget {
     required this.isSearch,
     this.validator,
     this.enabled = true,
+    this.value,
   });
 
   @override
@@ -24,6 +26,14 @@ class CustomTextField extends StatefulWidget {
 
 class _CustomTextFieldState extends State<CustomTextField> {
   String? errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.value != null) {
+      widget.controller.text = widget.value!;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

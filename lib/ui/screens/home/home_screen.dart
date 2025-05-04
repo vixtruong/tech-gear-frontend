@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/product/product.dart';
 import 'package:techgear/models/product/category.dart';
+import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
@@ -33,24 +35,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<Product> _promotionProducts = [];
 
   final TextEditingController _searchController = TextEditingController();
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   // Biến để lưu trạng thái bộ lọc
   String? _selectedCategoryId = '';
   String? _selectedPriceRange;
   String? _selectedSortOption = '';
 
+  StreamSubscription<int>? _routeSubscription;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this); // 4 tabs
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _searchController.dispose();
-    super.dispose();
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -60,14 +57,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     _cartProvider = Provider.of<CartProvider>(context, listen: false);
     _loadProducts();
+
+    // Đăng ký lắng nghe Stream trong lần đầu tiên
+    if (_routeSubscription == null) {
+      final navigationProvider =
+          Provider.of<NavigationProvider>(context, listen: false);
+      _routeSubscription = navigationProvider.routeChanges.listen((index) {
+        if (index == 0 && !_isLoading) {
+          _loadProducts();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _routeSubscription?.cancel();
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProducts() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
+    setState(() {
+      _isLoading = true;
+    });
 
+    try {
       await _categoryProvider.fetchCategories();
       await _productProvider.fetchProducts();
       await _productProvider.fetchBestSellerProducts();
@@ -75,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await _productProvider.fetchPromotionProducts();
       await _cartProvider.loadCart();
 
+      if (!mounted) return;
       setState(() {
         _categories = _categoryProvider.categories;
         _products = _productProvider.products;

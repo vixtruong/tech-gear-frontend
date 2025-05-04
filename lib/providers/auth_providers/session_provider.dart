@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:techgear/services/dio_client.dart';
 
 class SessionProvider with ChangeNotifier {
   static const _storage = FlutterSecureStorage();
@@ -33,6 +34,12 @@ class SessionProvider with ChangeNotifier {
       // Only set accessToken if it's valid and not expired
       if (accessToken != null && !JwtDecoder.isExpired(accessToken)) {
         _accessToken = accessToken;
+      } else if (refreshToken != null) {
+        final DioClient dioClient = DioClient(this);
+        final refreshed = await dioClient.refreshToken();
+        if (!refreshed) {
+          _accessToken = null;
+        }
       } else {
         _accessToken = null;
       }

@@ -36,7 +36,6 @@ class ChatService {
           ? Uri.parse('$wsUrl?userId=$userId&token=$token')
           : Uri.parse('$wsUrl?userId=$userId');
       _webSocketChannel = WebSocketChannel.connect(uri);
-      print('WebSocket connecting to: $uri');
 
       _webSocketChannel!.stream.listen(
         (data) {
@@ -46,28 +45,21 @@ class ChatService {
             final message = Message.fromSocketJson(messageJson);
             _messageController.add(message);
           } catch (e) {
-            print('Error parsing WebSocket message: $e');
+            e.toString();
           }
         },
         onError: (error) async {
-          print('WebSocket error: $error');
           if (!_isReconnecting) {
             await _handleWebSocketError(userId);
           }
         },
         onDone: () async {
-          print('WebSocket connection closed');
           if (!_isReconnecting) {
             await _handleWebSocketError(userId);
           }
         },
       );
-
-      if (isReconnect) {
-        print('WebSocket reconnected successfully for user $userId');
-      }
     } catch (e) {
-      print('Failed to connect to WebSocket: $e');
       _scheduleReconnect(userId);
     }
   }
@@ -77,25 +69,21 @@ class ChatService {
     _isReconnecting = true;
 
     try {
-      // Đóng kênh hiện tại nếu còn mở
       _webSocketChannel?.sink.close();
 
-      // Thử làm mới token
       final refreshed = await _dioClient.refreshToken();
       if (refreshed) {
+        await _sessionProvider.loadSession();
         final newToken = _sessionProvider.accessToken;
         if (newToken != null) {
           _connectWebSocket(userId, newToken, isReconnect: true);
         } else {
-          print('No access token available after refresh');
           _scheduleReconnect(userId);
         }
       } else {
-        print('Failed to refresh token');
         _scheduleReconnect(userId);
       }
     } catch (e) {
-      print('Error handling WebSocket error: $e');
       _scheduleReconnect(userId);
     } finally {
       _isReconnecting = false;

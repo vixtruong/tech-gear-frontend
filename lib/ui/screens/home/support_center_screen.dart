@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/dtos/mark_as_read_dto.dart';
 import 'package:techgear/models/chat/message.dart';
+import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:techgear/services/cloudinary/cloudinary_service.dart';
@@ -32,15 +34,32 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
   bool _isLoading = true;
   bool _isWebSocketConnected = false;
 
+  StreamSubscription<int>? _routeSubscription;
+
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _chatProvider = Provider.of<ChatProvider>(context, listen: false);
     _sessionProvider = Provider.of<SessionProvider>(context, listen: false);
     _loadInformation();
+
+    // Đăng ký lắng nghe Stream trong lần đầu tiên
+    if (_routeSubscription == null) {
+      final navigationProvider =
+          Provider.of<NavigationProvider>(context, listen: false);
+      _routeSubscription = navigationProvider.routeChanges.listen((index) {
+        if (index == 2 && !_isLoading) {
+          _loadInformation();
+        }
+      });
+    }
   }
 
   Future<void> _loadInformation({bool forceReload = false}) async {
+    setState(() {
+      _isLoading = true;
+      _isWebSocketConnected = false;
+    });
     try {
       await _sessionProvider.loadSession();
       userId = _sessionProvider.userId;
@@ -82,6 +101,7 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
 
   @override
   void dispose() {
+    _routeSubscription?.cancel();
     _chatProvider.setSupportScreenActive(false);
     if (_isWebSocketConnected) {
       try {
