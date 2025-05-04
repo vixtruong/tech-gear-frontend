@@ -45,6 +45,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadInformation({bool forceReload = false}) async {
+    setState(() {
+      _isWebSocketConnected = false;
+    });
     try {
       await _sessionProvider.loadSession();
       userId = _sessionProvider.userId;

@@ -18,6 +18,8 @@ import 'package:techgear/ui/screens/dashboard/pages/manage_product_variants_scre
 import 'package:techgear/ui/screens/home/activity_screen.dart';
 import 'package:techgear/ui/screens/home/cart_screen.dart';
 import 'package:techgear/ui/screens/home/change_password_screen.dart';
+import 'package:techgear/ui/screens/home/edit_profile_screen.dart';
+import 'package:techgear/ui/screens/home/manage_addresses.dart';
 import 'package:techgear/ui/screens/home/support_center_screen.dart';
 import 'package:techgear/ui/screens/home/checkout_screen.dart';
 import 'package:techgear/ui/screens/home/home_screen.dart';
@@ -247,6 +249,26 @@ final GoRouter router = GoRouter(
         return isWeb
             ? UserWebLayout(child: ChangePasswordScreen())
             : ChangePasswordScreen();
+      },
+    ),
+
+    GoRoute(
+      path: '/edit-profile',
+      builder: (context, state) {
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        return isWeb
+            ? UserWebLayout(child: EditProfileScreen())
+            : EditProfileScreen();
+      },
+    ),
+
+    GoRoute(
+      path: '/addresses',
+      builder: (context, state) {
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        return isWeb
+            ? UserWebLayout(child: ManageAddresses())
+            : ManageAddresses();
       },
     ),
 

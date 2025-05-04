@@ -45,4 +45,13 @@ class UserDto {
       'address': address,
     };
   }
+
+  UserDto copyWith({int? id, String? fullName, String? email, int? point}) {
+    return UserDto(
+      id: id ?? this.id,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      point: point ?? this.point,
+    );
+  }
 }

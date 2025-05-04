@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:techgear/dtos/user_dto.dart';
+import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/auth_providers/auth_provider.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/user_provider/user_provider.dart';
@@ -21,11 +22,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late SessionProvider _sessionProvider;
   late UserProvider _userProvider;
 
-  String? userId;
-  UserDto? user;
-  String? initial;
+  bool _isLoading = false;
+  StreamSubscription<int>? _routeSubscription;
 
-  bool _isLoading = true;
+  @override
+  void initState() {
+    super.initState();
+    // Không gọi fetchUser trong initState, sẽ xử lý trong _loadInfomation
+  }
 
   @override
   void didChangeDependencies() {
@@ -33,32 +37,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _authProvider = Provider.of<AuthProvider>(context, listen: false);
     _sessionProvider = Provider.of<SessionProvider>(context, listen: false);
     _userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    // Tải dữ liệu lần đầu
     _loadInfomation();
+
+    // Đăng ký lắng nghe Stream để tải lại dữ liệu khi điều hướng
+    if (_routeSubscription == null) {
+      final navigationProvider =
+          Provider.of<NavigationProvider>(context, listen: false);
+      _routeSubscription = navigationProvider.routeChanges.listen((index) {
+        if (index == 3 && !_isLoading) {
+          _loadInfomation();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _routeSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadInfomation() async {
-    try {
-      _sessionProvider.loadSession();
+    if (_isLoading) return;
 
-      setState(() {
-        userId = _sessionProvider.userId;
-      });
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _sessionProvider.loadSession();
+      final userId = _sessionProvider.userId;
 
       if (userId != null) {
-        final fetchUser = await _userProvider.fetchUser(int.parse(userId!));
-
-        setState(() {
-          user = fetchUser;
-          initial =
-              user!.fullName.isNotEmpty ? user!.fullName[0].toUpperCase() : "?";
-        });
+        await _userProvider.fetchUser(int.parse(userId));
+      } else {
+        // Chuyển hướng đến login nếu không có userId
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please log in to view your profile.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        context.go('/login');
       }
 
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
     } catch (e) {
-      e.toString();
+      print('Error loading profile: $e');
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load profile: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -83,139 +124,242 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: Colors.blue,
-              ),
-            )
-          : ListView(
-              children: [
-                Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        // ignore: deprecated_member_use
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: Row(
+          ? const Center(child: CircularProgressIndicator(color: Colors.blue))
+          : Consumer<UserProvider>(
+              builder: (context, userProvider, child) {
+                final user = userProvider.user;
+
+                if (user == null && !_sessionProvider.isLoggedIn) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "You are not logged in.",
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => context.go('/login'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Login Now",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (user == null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Unable to load profile.",
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadInfomation,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Try Again",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final initial = user.fullName.isNotEmpty
+                    ? user.fullName[0].toUpperCase()
+                    : "?";
+
+                return RefreshIndicator(
+                  onRefresh: _loadInfomation,
+                  color: Colors.blue,
+                  child: ListView(
                     children: [
-                      Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.black,
-                            child: Text(
-                              initial!,
-                              style: const TextStyle(
-                                  fontSize: 24, color: Colors.white),
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.amber[600],
-                                borderRadius: BorderRadius.circular(10),
-                                border:
-                                    Border.all(color: Colors.white, width: 1),
-                              ),
-                              child: Text(
-                                "${user?.point ?? 0} pts",
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          ],
+                        ),
+                        child: Row(
                           children: [
-                            Text(
-                              user!.fullName,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
+                            Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: Colors.black,
+                                  child: Text(
+                                    initial,
+                                    style: const TextStyle(
+                                        fontSize: 24, color: Colors.white),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber[600],
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          color: Colors.white, width: 1),
+                                    ),
+                                    child: Text(
+                                      "${user.point} pts",
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Email: ${user!.email}",
-                              style: const TextStyle(
-                                  fontSize: 13, color: Colors.grey),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user.fullName,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Email: ${user.email}",
+                                    style: const TextStyle(
+                                        fontSize: 13, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      _buildSectionTitle("My Services"),
+                      _buildGrabSection(
+                        [
+                          _buildTile(context,
+                              icon: Icons.person_outline,
+                              title: "Edit Profile", onTap: () {
+                            if (kIsWeb) {
+                              context.go('/edit-profile');
+                            } else {
+                              context.push('/edit-profile');
+                            }
+                          }),
+                          _buildTile(
+                            context,
+                            icon: Icons.lock_outline,
+                            title: "Change Password",
+                            onTap: () {
+                              if (kIsWeb) {
+                                context.go('/change-password');
+                              } else {
+                                context.push('/change-password');
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSectionTitle("Rewards & Preferences"),
+                      _buildGrabSection([
+                        _buildTile(
+                          context,
+                          icon: Icons.star_border,
+                          title: "Loyalty Program",
+                          onTap: () {},
+                        ),
+                        _buildTile(
+                          context,
+                          icon: Icons.location_on_outlined,
+                          title: "Manage Addresses",
+                          onTap: () {
+                            if (kIsWeb) {
+                              context.go('/addresses');
+                            } else {
+                              context.push('/addresses');
+                            }
+                          },
+                        ),
+                        _buildTile(context,
+                            icon: Icons.card_giftcard_outlined,
+                            title: "My Coupons",
+                            onTap: () {}),
+                      ]),
+                      const SizedBox(height: 24),
+                      _buildSectionTitle("Other"),
+                      _buildGrabSection([
+                        _buildTile(
+                          context,
+                          icon: Icons.logout,
+                          title: "Logout",
+                          iconColor: Colors.redAccent,
+                          textColor: Colors.redAccent,
+                          onTap: () => _logout(context),
+                        ),
+                      ]),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildSectionTitle("My Services"),
-                _buildGrabSection([
-                  _buildTile(context,
-                      icon: Icons.person_outline,
-                      title: "Edit Profile", onTap: () {
-                    if (kIsWeb) {
-                    } else {}
-                  }),
-                  _buildTile(context,
-                      icon: Icons.lock_outline,
-                      title: "Change Password", onTap: () {
-                    if (kIsWeb) {
-                      context.go('/change-password');
-                    } else {
-                      context.push('/change-password');
-                    }
-                  }),
-                ]),
-                const SizedBox(height: 24),
-                _buildSectionTitle("Rewards & Preferences"),
-                _buildGrabSection([
-                  _buildTile(context,
-                      icon: Icons.star_border,
-                      title: "Loyalty Program",
-                      onTap: () {}),
-                  _buildTile(context,
-                      icon: Icons.location_on_outlined,
-                      title: "Manage Addresses",
-                      onTap: () {}),
-                  _buildTile(context,
-                      icon: Icons.card_giftcard_outlined,
-                      title: "My Coupons",
-                      onTap: () {}),
-                ]),
-                const SizedBox(height: 24),
-                _buildSectionTitle("Other"),
-                _buildGrabSection([
-                  _buildTile(
-                    context,
-                    icon: Icons.logout,
-                    title: "Logout",
-                    iconColor: Colors.redAccent,
-                    textColor: Colors.redAccent,
-                    onTap: () => _logout(context),
-                  ),
-                ]),
-              ],
+                );
+              },
             ),
     );
   }
@@ -245,7 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -299,16 +443,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             showDialog(
               context: outerContext,
               barrierDismissible: false,
-              // ignore: deprecated_member_use
               barrierColor: Colors.black.withOpacity(0.3),
               builder: (context) => const Center(
-                child: CircularProgressIndicator(
-                  color: Colors.blue,
-                ),
+                child: CircularProgressIndicator(color: Colors.blue),
               ),
             );
 
             await _authProvider.logout();
+            _userProvider.resetUser(); // Xóa dữ liệu người dùng
 
             if (outerContext.mounted) {
               outerContext.go('/login');
@@ -316,7 +458,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           } catch (e) {
             debugPrint('Logout error: ${e.toString()}');
             SchedulerBinding.instance.addPostFrameCallback((_) {
-              context.go('/login');
+              outerContext.go('/login');
             });
           }
         },

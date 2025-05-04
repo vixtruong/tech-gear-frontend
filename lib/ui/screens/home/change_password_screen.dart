@@ -116,12 +116,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
         centerTitle: true,
       ),
-      body: Container(
-        padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
+      body: Padding(
+        padding: EdgeInsets.all(16),
         child: Form(
           key: _key,
           child: Column(
-            spacing: 10,
+            spacing: 20,
             children: [
               CustomTextField(
                 controller: _passwordController,
