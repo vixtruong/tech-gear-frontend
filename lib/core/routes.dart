@@ -16,9 +16,11 @@ import 'package:techgear/ui/screens/dashboard/pages/manage_product_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_variant_options_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_product_variants_screen.dart';
 import 'package:techgear/ui/screens/home/activity_screen.dart';
+import 'package:techgear/ui/screens/home/add_address_screen.dart';
 import 'package:techgear/ui/screens/home/cart_screen.dart';
 import 'package:techgear/ui/screens/home/change_password_screen.dart';
 import 'package:techgear/ui/screens/home/edit_profile_screen.dart';
+import 'package:techgear/ui/screens/home/loyalty_screen.dart';
 import 'package:techgear/ui/screens/home/manage_addresses.dart';
 import 'package:techgear/ui/screens/home/support_center_screen.dart';
 import 'package:techgear/ui/screens/home/checkout_screen.dart';
@@ -269,6 +271,24 @@ final GoRouter router = GoRouter(
         return isWeb
             ? UserWebLayout(child: ManageAddresses())
             : ManageAddresses();
+      },
+    ),
+
+    GoRoute(
+      path: '/add-address',
+      builder: (context, state) {
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        return isWeb
+            ? UserWebLayout(child: AddAddressScreen())
+            : AddAddressScreen();
+      },
+    ),
+
+    GoRoute(
+      path: '/loyalty',
+      builder: (context, state) {
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        return isWeb ? UserWebLayout(child: LoyaltyScreen()) : LoyaltyScreen();
       },
     ),
 

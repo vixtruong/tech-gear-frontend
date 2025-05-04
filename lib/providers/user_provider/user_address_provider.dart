@@ -101,6 +101,26 @@ class UserAddressProvider with ChangeNotifier {
     }
   }
 
+  /// Đặt một địa chỉ làm mặc định
+  Future<void> setDefaultAddress(int userId, int addressId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _addressService.setDefaultAddress(
+          userId: userId, addressId: addressId);
+
+      // Gọi lại fetch để cập nhật UI
+      await fetchUserAddresses();
+    } catch (e) {
+      print('UserAddressProvider: Failed to set default address: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Clear all user data on logout
   void resetAddresses() {
     _addresses = [];
