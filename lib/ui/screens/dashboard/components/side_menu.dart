@@ -17,7 +17,7 @@ class SideMenu extends StatelessWidget {
           children: [
             InkWell(
               onTap: () {
-                context.go('/dashboard');
+                context.pushReplacement('/dashboard');
               },
               child: DrawerHeader(
                 margin: EdgeInsets.zero,
@@ -61,7 +61,7 @@ class SideMenu extends StatelessWidget {
               route: '/chats',
               currentRoute: currentRoute,
               onTap: () {
-                context.go('/chats');
+                context.pushReplacement('/chats');
               },
             ),
             DrawListTile(
@@ -77,7 +77,7 @@ class SideMenu extends StatelessWidget {
               route: '/manage-product',
               currentRoute: currentRoute,
               onTap: () {
-                context.go('/manage-product');
+                context.pushReplacement('/manage-product');
               },
             ),
             DrawListTile(
@@ -86,7 +86,7 @@ class SideMenu extends StatelessWidget {
               route: '/manage-variant-options',
               currentRoute: currentRoute,
               onTap: () {
-                context.go('/manage-variant-options');
+                context.pushReplacement('/manage-variant-options');
               },
             ),
             DrawListTile(
@@ -94,14 +94,18 @@ class SideMenu extends StatelessWidget {
               iconPath: "assets/icons/menu_brand.svg",
               route: '/brands',
               currentRoute: currentRoute,
-              onTap: () {},
+              onTap: () {
+                context.pushReplacement('/brands');
+              },
             ),
             DrawListTile(
               title: "Categories",
               iconPath: "assets/icons/menu_category.svg",
               route: '/categories',
               currentRoute: currentRoute,
-              onTap: () {},
+              onTap: () {
+                context.pushReplacement('/categories');
+              },
             ),
             DrawListTile(
               title: "Transactions",

@@ -11,7 +11,9 @@ import 'package:techgear/ui/screens/dashboard/pages/add_category_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_product_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_product_variants_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_variant_option_screen.dart';
-import 'package:techgear/ui/screens/dashboard/pages/manage_chats.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_brands_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_categories_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_chats_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_product_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_variant_options_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_product_variants_screen.dart';
@@ -248,6 +250,17 @@ final GoRouter router = GoRouter(
       path: '/change-password',
       builder: (context, state) {
         final isWeb = MediaQuery.of(context).size.width > 800;
+        final sessionProvider =
+            Provider.of<SessionProvider>(context, listen: false);
+        sessionProvider.loadSession();
+
+        final role = sessionProvider.role;
+
+        if (role == "Admin") {
+          return MainScreen(
+              screen: ChangePasswordScreen(), title: "Change Password");
+        }
+
         return isWeb
             ? UserWebLayout(child: ChangePasswordScreen())
             : ChangePasswordScreen();
@@ -390,6 +403,26 @@ final GoRouter router = GoRouter(
         return MainScreen(
           screen: ChatScreen(customerId: userId, userName: userName),
           title: "Messages",
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/brands',
+      builder: (context, state) {
+        return MainScreen(
+          screen: ManageBrandsScreen(),
+          title: "Brands",
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/categories',
+      builder: (context, state) {
+        return MainScreen(
+          screen: ManageCategoriesScreen(),
+          title: "Categories",
         );
       },
     ),

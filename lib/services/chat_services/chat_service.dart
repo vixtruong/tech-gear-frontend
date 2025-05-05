@@ -13,15 +13,22 @@ class ChatService {
   final String wsUrl = Environment.wsUrl;
   final DioClient _dioClient;
   WebSocketChannel? _webSocketChannel;
-  final StreamController<Message> _messageController =
-      StreamController.broadcast();
+  StreamController<Message>? _messageController;
   final SessionProvider _sessionProvider;
   bool _isReconnecting = false;
   Timer? _reconnectTimer;
 
-  ChatService(this._sessionProvider) : _dioClient = DioClient(_sessionProvider);
+  ChatService(this._sessionProvider)
+      : _dioClient = DioClient(_sessionProvider) {
+    _initializeStreamController();
+  }
 
-  Stream<Message> get messageStream => _messageController.stream;
+  void _initializeStreamController() {
+    _messageController?.close(); // Close any existing controller
+    _messageController = StreamController<Message>.broadcast();
+  }
+
+  Stream<Message> get messageStream => _messageController!.stream;
 
   void connectWebSocket(String userId, String? token) {
     _connectWebSocket(userId, token, isReconnect: false);
@@ -32,6 +39,11 @@ class ChatService {
     if (_isReconnecting) return;
 
     try {
+      // Reinitialize StreamController if this is a reconnect
+      if (isReconnect) {
+        _initializeStreamController();
+      }
+
       final uri = token != null
           ? Uri.parse('$wsUrl?userId=$userId&token=$token')
           : Uri.parse('$wsUrl?userId=$userId');
@@ -43,9 +55,9 @@ class ChatService {
             final messageJson =
                 jsonDecode(data as String) as Map<String, dynamic>;
             final message = Message.fromSocketJson(messageJson);
-            _messageController.add(message);
+            _messageController?.add(message);
           } catch (e) {
-            e.toString();
+            print('Error processing WebSocket message: $e');
           }
         },
         onError: (error) async {
@@ -60,6 +72,7 @@ class ChatService {
         },
       );
     } catch (e) {
+      print('Error connecting WebSocket: $e');
       _scheduleReconnect(userId);
     }
   }
@@ -84,6 +97,7 @@ class ChatService {
         _scheduleReconnect(userId);
       }
     } catch (e) {
+      print('Error handling WebSocket error: $e');
       _scheduleReconnect(userId);
     } finally {
       _isReconnecting = false;
@@ -103,7 +117,7 @@ class ChatService {
   void disconnectWebSocket() {
     _reconnectTimer?.cancel();
     _webSocketChannel?.sink.close();
-    _messageController.close();
+    // Do not close _messageController to allow reuse
     print('WebSocket disconnected');
   }
 
@@ -174,5 +188,11 @@ class ChatService {
           : 'Network error: ${e.message}';
       throw Exception(errorMessage);
     }
+  }
+
+  void dispose() {
+    _reconnectTimer?.cancel();
+    _webSocketChannel?.sink.close();
+    _messageController?.close();
   }
 }

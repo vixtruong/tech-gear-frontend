@@ -13,7 +13,7 @@ class ChatProvider with ChangeNotifier {
   String? _error;
   int _unreadCount = 0;
   bool _isSupportScreenActive = false;
-  bool _isDisposed = false; // Thêm biến để kiểm tra trạng thái dispose
+  bool _isDisposed = false;
 
   ChatProvider(SessionProvider sessionProvider)
       : _chatService = ChatService(sessionProvider) {
@@ -61,8 +61,9 @@ class ChatProvider with ChangeNotifier {
 
   void setSupportScreenActive(bool active) {
     _isSupportScreenActive = active;
-    if (!_isDisposed)
-      notifyListeners(); // Chỉ gọi notifyListeners nếu chưa dispose
+    if (!_isDisposed) {
+      notifyListeners();
+    }
   }
 
   Future<void> _updateUnreadCount(int senderId, int receiverId) async {
@@ -102,15 +103,8 @@ class ChatProvider with ChangeNotifier {
           await _chatService.fetchMessages(senderId, receiverId);
       final newMessages = data.map((e) => Message.fromJson(e)).toList();
 
-      final updatedMessages = [..._messages];
-      for (var newMessage in newMessages) {
-        if (!updatedMessages
-            .any((m) => m.id == newMessage.id && m.id != null)) {
-          updatedMessages.add(newMessage);
-        }
-      }
-      updatedMessages.sort((a, b) => a.sentAt.compareTo(b.sentAt));
-      _messages = updatedMessages;
+      // Replace the existing messages with the new ones
+      _messages = newMessages..sort((a, b) => a.sentAt.compareTo(b.sentAt));
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -181,7 +175,8 @@ class ChatProvider with ChangeNotifier {
 
   @override
   void dispose() {
-    _isDisposed = true; // Đánh dấu provider đã bị dispose
+    _isDisposed = true;
+    _chatService.dispose(); // Ensure ChatService resources are cleaned up
     super.dispose();
   }
 }

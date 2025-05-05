@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -69,7 +70,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         ),
       );
 
-      context.pop();
+      if (kIsWeb) {
+        context.pushReplacement('/categories');
+      } else {
+        context.pop();
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -94,7 +99,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,

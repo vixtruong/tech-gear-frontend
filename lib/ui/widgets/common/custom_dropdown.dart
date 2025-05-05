@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CustomDropdown extends StatefulWidget {
   final String label;
-  final List<Map<String, String>> items;
+  final List<Map<String, String?>> items;
   final ValueChanged<String?>? onChanged;
   final FormFieldValidator<String>? validator;
   final String? value;
@@ -30,15 +30,14 @@ class _CustomDropdownState extends State<CustomDropdown> {
   Widget build(BuildContext context) {
     return ConstrainedBox(
       constraints: const BoxConstraints(
-        maxHeight: 50, // Giới hạn chiều cao tối đa để loại bỏ khoảng trống
+        maxHeight: 50, // Limit max height to remove extra space
       ),
       child: DropdownButtonFormField<String>(
         key: _dropdownKey,
         value: widget.value != null &&
                 widget.items.any((item) => item['id'] == widget.value)
             ? widget.value
-            : widget
-                .items.first['id'], // Giá trị mặc định nếu value không hợp lệ
+            : widget.items.first['id'], // Default value if invalid
         hint: Text(widget.hint ?? "",
             style: const TextStyle(color: Colors.black54)),
         validator: widget.validator,
@@ -46,25 +45,35 @@ class _CustomDropdownState extends State<CustomDropdown> {
           labelText: widget.label,
           labelStyle: const TextStyle(color: Colors.black),
           contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12, vertical: 4), // Giảm padding dọc
+              horizontal: 12, vertical: 4), // Reduced vertical padding
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: Colors.grey[300]!, // Light grey border
+              width: 1.0, // Thin border
+            ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.black, width: 0),
             borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: Colors.grey[300]!, // Light grey border
+              width: 1.0, // Thin border
+            ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.black, width: 1),
             borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: Colors.grey[300]!, // Light grey border
+              width: 1.0, // Thin border
+            ),
           ),
         ),
         style: const TextStyle(color: Colors.black, fontSize: 14),
         iconEnabledColor: Colors.black,
         dropdownColor: Colors.white,
-        isDense: true, // Làm cho giao diện gọn gàng hơn
+        isDense: true, // Compact layout
         items: widget.items
             .map((e) => DropdownMenuItem(
                   value: e['id'],

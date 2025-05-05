@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/product/product.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
@@ -54,9 +55,12 @@ class _WishListScreenState extends State<WishListScreen> {
 
         setState(() {
           _favoriteProducts = _productProvider.productByIds;
-          _isLoading = false;
         });
       }
+
+      setState(() {
+        _isLoading = false;
+      });
     } catch (e) {
       e.toString();
     }
@@ -76,16 +80,58 @@ class _WishListScreenState extends State<WishListScreen> {
         ),
         centerTitle: true,
       ),
-      body: _isLoading
+      body: userId == null && !_isLoading
           ? Center(
-              child: CircularProgressIndicator(
-                color: Colors.blue,
+              child: Container(
+                color: Colors.grey[50],
+                height: MediaQuery.of(context).size.height * 0.6,
+                width: double.infinity,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      "You are not logged in.",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.go('/login'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Login Now",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: _buildProductList(_favoriteProducts),
-            ),
+          : _isLoading
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.blue,
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: _buildProductList(_favoriteProducts),
+                ),
     );
   }
 

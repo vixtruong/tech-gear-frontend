@@ -72,16 +72,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (userId != null) {
         await _userProvider.fetchUser(int.parse(userId));
-      } else {
-        // Chuyển hướng đến login nếu không có userId
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please log in to view your profile.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        context.go('/login');
       }
 
       if (!mounted) return;
@@ -109,7 +99,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0.8,
         centerTitle: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),

@@ -115,6 +115,7 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     _isWebSocketConnected = false;
+    _chatProvider.dispose();
     super.dispose();
   }
 
@@ -307,6 +308,7 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isWeb = MediaQuery.of(context).size.width >= 800;
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, _) {
         // Tự động cuộn xuống cuối khi danh sách tin nhắn thay đổi
@@ -329,7 +331,7 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
         }
 
         return Scaffold(
-          backgroundColor: Colors.grey[50],
+          backgroundColor: Colors.grey[100],
           appBar: AppBar(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.white,
@@ -348,123 +350,139 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
                   ),
                 )
               : userId == null
-                  ? SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.6,
-                      width: double.infinity,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Please log in to be supported.",
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () => context.go('/login'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              "Login Now",
+                  ? Center(
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        width: double.infinity,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Please log in to be supported.",
                               style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
+                                fontSize: 20,
+                                color: Colors.grey[600],
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => context.go('/login'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                "Login Now",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
-                  : Column(
-                      children: [
-                        Expanded(
-                          child: chatProvider.isLoading
-                              ? const Center(child: CircularProgressIndicator())
-                              : chatProvider.error != null
-                                  ? Center(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text('Error: ${chatProvider.error}'),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              chatProvider.clearError();
-                                              _loadInformation(
-                                                  forceReload: true);
-                                            },
-                                            child: const Text('Retry'),
+                  : Center(
+                      child: Container(
+                        color: isWeb ? Colors.white : null,
+                        width: isWeb
+                            ? MediaQuery.of(context).size.width * 0.5
+                            : double.infinity,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: chatProvider.isLoading
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
+                                  : chatProvider.error != null
+                                      ? Center(
+                                          child: SizedBox(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                    'Error: ${chatProvider.error}'),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    chatProvider.clearError();
+                                                    _loadInformation(
+                                                        forceReload: true);
+                                                  },
+                                                  child: const Text('Retry'),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ],
-                                      ),
-                                    )
-                                  : ListView.builder(
-                                      controller: _scrollController,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8, horizontal: 12),
-                                      itemCount: _groupMessagesByDate(
-                                              chatProvider.messages)
-                                          .length,
-                                      itemBuilder: (context, groupIndex) {
-                                        final group = _groupMessagesByDate(
-                                            chatProvider.messages)[groupIndex];
-                                        final dateLabel =
-                                            group['dateLabel'] as String;
-                                        final messages =
-                                            group['messages'] as List<Message>;
+                                        )
+                                      : ListView.builder(
+                                          controller: _scrollController,
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          itemCount: _groupMessagesByDate(
+                                                  chatProvider.messages)
+                                              .length,
+                                          itemBuilder: (context, groupIndex) {
+                                            final group = _groupMessagesByDate(
+                                                chatProvider
+                                                    .messages)[groupIndex];
+                                            final dateLabel =
+                                                group['dateLabel'] as String;
+                                            final messages = group['messages']
+                                                as List<Message>;
 
-                                        return Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Container(
-                                              margin:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 8),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
+                                            return Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Container(
+                                                  margin: const EdgeInsets
+                                                      .symmetric(vertical: 8),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
                                                       horizontal: 12,
                                                       vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey[300],
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                dateLabel,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.black54,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[300],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            12),
+                                                  ),
+                                                  child: Text(
+                                                    dateLabel,
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.black54,
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
-                                            ...messages.map((message) {
-                                              final isSentByUser =
-                                                  message.senderId ==
+                                                ...messages.map((message) {
+                                                  final isSentByUser = message
+                                                          .senderId ==
                                                       int.parse(userId ?? '0');
-                                              return _buildMessageBubble(
-                                                  message, isSentByUser);
-                                            }),
-                                          ],
-                                        );
-                                      },
-                                    ),
+                                                  return _buildMessageBubble(
+                                                      message, isSentByUser);
+                                                }),
+                                              ],
+                                            );
+                                          },
+                                        ),
+                            ),
+                            if (_selectedImage != null) _buildImagePreview(),
+                            _buildInputArea(),
+                          ],
                         ),
-                        if (_selectedImage != null) _buildImagePreview(),
-                        _buildInputArea(),
-                      ],
+                      ),
                     ),
         );
       },
