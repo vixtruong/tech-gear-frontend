@@ -12,6 +12,7 @@ import 'package:techgear/models/product/product.dart';
 import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/models/product/product_specification.dart';
 import 'package:techgear/models/product/variant_value.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
@@ -21,6 +22,7 @@ import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/providers/product_providers/rating_provider.dart';
 import 'package:techgear/providers/product_providers/variant_option_provider.dart';
 import 'package:techgear/providers/product_providers/variant_value_provider.dart';
+import 'package:techgear/providers/user_provider/favorite_provider.dart';
 import 'package:techgear/ui/widgets/product/color_variant_box.dart';
 import 'package:techgear/ui/widgets/product/rating_card_simple.dart';
 import 'package:techgear/ui/widgets/product/specs_variant_box.dart';
@@ -48,6 +50,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late VariantValueProvider _variantValueProvider;
   late CartProvider _cartProvider;
   late RatingProvider _ratingProvider;
+  late FavoriteProvider _favoriteProvider;
+  late SessionProvider _sessionProvider;
 
   late CategoryProvider _categoryProvider;
   late BrandProvider _brandProvider;
@@ -79,6 +83,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   bool _isExpandedRatings = false;
 
+  bool _isFavorite = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -96,6 +102,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     _brandProvider = Provider.of<BrandProvider>(context, listen: false);
     _ratingProvider = Provider.of<RatingProvider>(context, listen: false);
+    _favoriteProvider = Provider.of<FavoriteProvider>(context, listen: false);
+    _sessionProvider = Provider.of<SessionProvider>(context, listen: false);
     _scrollController.addListener(() {
       if (_scrollController.position.pixels > 10) {
         if (!_isExpanded) {
@@ -116,6 +124,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Future<void> _loadProducts() async {
     try {
+      await _sessionProvider.loadSession();
+      final userId = _sessionProvider.userId;
+
+      if (userId != null) {
+        final status =
+            await _favoriteProvider.checkIsFavorite(userId, widget.productId);
+
+        setState(() {
+          _isFavorite = status;
+        });
+      }
+
       final productFuture = _productProvider.fetchProductById(widget.productId);
       final categoryFuture = productFuture
           .then((p) => _categoryProvider.fetchCategoryById(p!.categoryId));
@@ -288,6 +308,37 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  Future<void> _toggleFavorite() async {
+    try {
+      await _sessionProvider.loadSession();
+
+      final userId = _sessionProvider.userId;
+
+      if (userId != null) {
+        if (_isFavorite == false) {
+          final success =
+              await _favoriteProvider.addFavorite(userId, widget.productId);
+
+          if (success) {
+            setState(() {
+              _isFavorite = true;
+            });
+          }
+        } else {
+          final success =
+              await _favoriteProvider.removeFavorite(userId, widget.productId);
+          if (success) {
+            setState(() {
+              _isFavorite = false;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      e.toString();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -307,14 +358,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 buildCircleButton(
                   icon: Icon(Icons.arrow_back_outlined),
                   onTaped: () {
-                    context.pop();
+                    context.pop(true);
                   },
                 ),
               Spacer(),
               if (!widget.isAdmin)
                 buildCircleButton(
-                  icon: Icon(Icons.favorite_outline),
-                  onTaped: () {},
+                  icon: Icon(
+                    _isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: _isFavorite ? Colors.red[300] : Colors.white,
+                  ),
+                  onTaped: () {
+                    _toggleFavorite();
+                  },
                 ),
               SizedBox(
                 width: 5,
