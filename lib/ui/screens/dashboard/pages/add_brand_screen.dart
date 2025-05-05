@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/product/brand.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
@@ -18,6 +20,8 @@ class _AddBrandScreenState extends State<AddBrandScreen> {
 
   late BrandProvider _brandProvider;
 
+  bool _isLoading = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -27,6 +31,10 @@ class _AddBrandScreenState extends State<AddBrandScreen> {
   void _handleSubmit() async {
     if (_key.currentState!.validate()) {
       String brandName = _brandController.text.trim();
+
+      setState(() {
+        _isLoading = true;
+      });
 
       if (brandName.isEmpty) return;
 
@@ -52,7 +60,11 @@ class _AddBrandScreenState extends State<AddBrandScreen> {
       await _brandProvider.addBrand(brandName);
 
       if (!mounted) return;
-
+      if (kIsWeb) {
+        context.pushReplacement('/brands');
+      } else {
+        context.pop();
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -62,13 +74,19 @@ class _AddBrandScreenState extends State<AddBrandScreen> {
           backgroundColor: Colors.green[400],
         ),
       );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,
@@ -79,45 +97,55 @@ class _AddBrandScreenState extends State<AddBrandScreen> {
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: Form(
-          key: _key,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              CustomTextField(
-                controller: _brandController,
-                hint: "Name",
-                inputType: TextInputType.text,
-                isSearch: false,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Please enter brand name";
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 15),
-              ElevatedButton(
-                onPressed: _handleSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Form(
+              key: _key,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  CustomTextField(
+                    controller: _brandController,
+                    hint: "Name",
+                    inputType: TextInputType.text,
+                    isSearch: false,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please enter brand name";
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                child: Text(
-                  "Submit",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                  SizedBox(height: 15),
+                  ElevatedButton(
+                    onPressed: _handleSubmit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                    ),
+                    child: Text(
+                      "Submit",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+            ),
+        ],
       ),
     );
   }

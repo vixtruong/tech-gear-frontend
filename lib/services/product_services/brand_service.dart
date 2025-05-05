@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
@@ -38,7 +40,7 @@ class BrandService {
   Future<void> addBrand(String brandName) async {
     final response = await _dioClient.instance.post(
       '$apiUrl/add',
-      data: brandName,
+      data: jsonEncode(brandName),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {

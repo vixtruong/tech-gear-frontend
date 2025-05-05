@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -5,7 +6,6 @@ import 'package:techgear/models/product/product.dart';
 import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/providers/product_providers/product_item_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
-import 'package:techgear/ui/widgets/common/custom_text_field.dart';
 import 'package:techgear/ui/widgets/product/product_item_card.dart';
 
 class ManageProductVariantsScreen extends StatefulWidget {
@@ -81,7 +81,12 @@ class _ManageProductVariantsScreenState
         actions: [
           IconButton(
             onPressed: () {
-              context.push('/add-product-variants/${widget.productId}');
+              if (kIsWeb) {
+                context.pushReplacement(
+                    '/add-product-variants/${widget.productId}');
+              } else {
+                context.push('/add-product-variants/${widget.productId}');
+              }
             },
             icon: Icon(Icons.add_outlined),
           ),
@@ -102,13 +107,13 @@ class _ManageProductVariantsScreenState
             padding: EdgeInsets.all(15.0),
             child: Column(
               children: [
-                CustomTextField(
-                  controller: TextEditingController(),
-                  hint: "Search",
-                  inputType: TextInputType.text,
-                  isSearch: true,
-                ),
-                SizedBox(height: 15),
+                // CustomTextField(
+                //   controller: TextEditingController(),
+                //   hint: "Search",
+                //   inputType: TextInputType.text,
+                //   isSearch: true,
+                // ),
+                // SizedBox(height: 15),
                 ListView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),

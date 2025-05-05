@@ -135,58 +135,19 @@ class _ActivityScreenState extends State<ActivityScreen>
 
   @override
   Widget build(BuildContext context) {
-    return userId == null && !_isLoading
-        ? Container(
-            color: Colors.grey[100],
-            height: MediaQuery.of(context).size.height * 0.6,
-            width: double.infinity,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  "You are not logged in.",
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.go('/login'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    "Login Now",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+    return Consumer<OrderProvider>(
+      builder: (context, orderProvider, child) {
+        return Scaffold(
+          backgroundColor: Colors.grey[100],
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            title: const Text(
+              "Activities",
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
-          )
-        : Consumer<OrderProvider>(
-            builder: (context, orderProvider, child) {
-              return Scaffold(
-                backgroundColor: Colors.grey[100],
-                appBar: AppBar(
-                  backgroundColor: Colors.white,
-                  surfaceTintColor: Colors.white,
-                  title: const Text(
-                    "Activities",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  bottom: TabBar(
+            bottom: userId != null
+                ? TabBar(
                     labelPadding: const EdgeInsets.symmetric(horizontal: 20),
                     tabAlignment: TabAlignment.start,
                     controller: _tabController,
@@ -204,51 +165,94 @@ class _ActivityScreenState extends State<ActivityScreen>
                       Tab(text: "Delivered"),
                       Tab(text: "Rated"),
                     ],
-                  ),
-                ),
-                body: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.blue,
+                  )
+                : null,
+          ),
+          body: userId == null && !_isLoading
+              ? Center(
+                  child: Container(
+                    color: Colors.grey[100],
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    width: double.infinity,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "You are not logged in.",
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      )
-                    : _errorMessage != null
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _errorMessage!,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.red[700],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: _loadInformations,
-                                  child: const Text("Try again"),
-                                ),
-                              ],
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => context.go('/login'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          )
-                        : TabBarView(
-                            controller: _tabController,
+                          ),
+                          child: const Text(
+                            "Login Now",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.blue,
+                      ),
+                    )
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              _buildTabContent(orderProvider, "Pending",
-                                  context), // Pending tab
-                              _buildTabContent(orderProvider, "Confirmed",
-                                  context), // Confirmed tab
-                              _buildTabContent(orderProvider, "Shipped",
-                                  context), // Shipped tab
-                              _buildTabContent(
-                                  orderProvider, "Delivered", context),
-                              _buildRatedTab(context), // Delivered tab
+                              Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.red[700],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadInformations,
+                                child: const Text("Try again"),
+                              ),
                             ],
                           ),
-              );
-            },
-          );
+                        )
+                      : TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildTabContent(orderProvider, "Pending",
+                                context), // Pending tab
+                            _buildTabContent(orderProvider, "Confirmed",
+                                context), // Confirmed tab
+                            _buildTabContent(orderProvider, "Shipped",
+                                context), // Shipped tab
+                            _buildTabContent(
+                                orderProvider, "Delivered", context),
+                            _buildRatedTab(context), // Delivered tab
+                          ],
+                        ),
+        );
+      },
+    );
   }
 
   Widget _buildTabContent(

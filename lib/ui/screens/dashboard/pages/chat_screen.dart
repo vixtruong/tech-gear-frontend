@@ -15,8 +15,11 @@ class ChatScreen extends StatefulWidget {
   final int customerId;
   final String userName;
 
-  const ChatScreen(
-      {super.key, required this.customerId, required this.userName});
+  const ChatScreen({
+    super.key,
+    required this.customerId,
+    required this.userName,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -46,8 +49,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _loadInformation({bool forceReload = false}) async {
     setState(() {
+      _isLoading = true;
       _isWebSocketConnected = false;
     });
+
     try {
       await _sessionProvider.loadSession();
       userId = _sessionProvider.userId;
@@ -61,15 +66,18 @@ class _ChatScreenState extends State<ChatScreen> {
         await _chatProvider.fetchMessages(
             int.parse(userId!), widget.customerId);
         await _chatProvider.markAsRead(MarkAsReadDto(
-            senderId: widget.customerId, receiverId: int.parse(userId!)));
+          senderId: widget.customerId,
+          receiverId: int.parse(userId!),
+        ));
       }
+
       _chatProvider.setSupportScreenActive(true);
 
       setState(() {
         _isLoading = false;
       });
 
-      // Cuộn xuống cuối sau khi tải tin nhắn
+      // Scroll to bottom after loading messages
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -89,7 +97,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    // Đặt trạng thái và đóng WebSocket mà không gọi notifyListeners()
     _chatProvider.setSupportScreenActive(false);
     if (_isWebSocketConnected) {
       try {
@@ -99,6 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       _isWebSocketConnected = false;
     }
+
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -295,14 +303,14 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, _) {
-        // Tự động cuộn xuống cuối khi danh sách tin nhắn thay đổi
+        // Auto-scroll to bottom when message list changes
         if (chatProvider.messages.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (_scrollController.hasClients) {
               final currentPosition = _scrollController.position.pixels;
               final maxScrollExtent =
                   _scrollController.position.maxScrollExtent;
-              // Chỉ cuộn nếu người dùng đang ở gần cuối danh sách
+              // Scroll only if user is near the bottom
               if ((maxScrollExtent - currentPosition).abs() < 200) {
                 _scrollController.animateTo(
                   _scrollController.position.maxScrollExtent,
@@ -315,13 +323,15 @@ class _ChatScreenState extends State<ChatScreen> {
         }
 
         return Scaffold(
-          backgroundColor: Colors.grey[100],
+          backgroundColor: Colors.grey[50],
           appBar: AppBar(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.white,
             title: Text(
               widget.userName,
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             centerTitle: true,
           ),

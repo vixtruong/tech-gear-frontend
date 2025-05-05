@@ -130,6 +130,26 @@ class ChatUserCard extends StatelessWidget {
 
   const ChatUserCard({super.key, required this.user});
 
+  // List of colors that contrast well with white text
+  static const List<Color> _avatarColors = [
+    Color(0xFF0068FF), // Blue
+    Color(0xFFD32F2F), // Red
+    Color(0xFF388E3C), // Green
+    Color(0xFF7B1FA2), // Purple
+    Color(0xFFF57C00), // Orange
+    Color(0xFF0288D1), // Light Blue
+    Color(0xFFC2185B), // Pink
+    Color(0xFF00796B), // Teal
+    Color(0xFF8E24AA), // Deep Purple
+    Color(0xFF455A64), // Blue Grey
+  ];
+
+  // Get a consistent color based on user ID
+  Color _getAvatarColor() {
+    final index = user.id.hashCode.abs() % _avatarColors.length;
+    return _avatarColors[index];
+  }
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -147,7 +167,7 @@ class ChatUserCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: const Color(0xFF0068FF),
+              backgroundColor: _getAvatarColor(),
               child: Text(
                 user.userName.isNotEmpty ? user.userName[0].toUpperCase() : '?',
                 style: const TextStyle(

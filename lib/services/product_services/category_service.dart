@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
@@ -37,7 +39,7 @@ class CategoryService {
   Future<void> addCategory(String name) async {
     final response = await _dioClient.instance.post(
       '$apiUrl/add',
-      data: name,
+      data: jsonEncode(name),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {

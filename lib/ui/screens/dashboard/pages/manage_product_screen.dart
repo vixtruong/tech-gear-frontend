@@ -10,7 +10,6 @@ import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/ui/widgets/common/custom_dropdown.dart';
-import 'package:techgear/ui/widgets/common/custom_text_field.dart';
 import 'package:techgear/ui/widgets/product/product_admin_card.dart';
 
 class ManageProductScreen extends StatefulWidget {
@@ -30,6 +29,9 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
   List<Brand> _brands = [];
 
   bool _isLoading = true;
+  String? _selectedBrandId;
+  String? _selectedCategoryId;
+  String? _selectedSortOption;
 
   @override
   void didChangeDependencies() {
@@ -37,10 +39,10 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
     _productProvider = Provider.of<ProductProvider>(context, listen: false);
     _categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     _brandProvider = Provider.of<BrandProvider>(context, listen: false);
-    _loadProducts();
+    _loadData();
   }
 
-  Future<void> _loadProducts() async {
+  Future<void> _loadData() async {
     try {
       await _productProvider.fetchProducts();
       await _categoryProvider.fetchCategories();
@@ -61,8 +63,6 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
             backgroundColor: Colors.red[400],
           ),
         );
-      }
-      if (mounted) {
         setState(() {
           _isLoading = false;
         });
@@ -72,20 +72,50 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
 
   final TextEditingController _searchController = TextEditingController();
 
+  // Filter and sort products based on selected brand, category, and sort option
+  List<Product> _getFilteredAndSortedProducts() {
+    List<Product> filtered = _products;
+
+    // Apply brand filter
+    if (_selectedBrandId != null) {
+      filtered = filtered
+          .where((product) => product.brandId == _selectedBrandId)
+          .toList();
+    }
+
+    // Apply category filter
+    if (_selectedCategoryId != null) {
+      filtered = filtered
+          .where((product) => product.categoryId == _selectedCategoryId)
+          .toList();
+    }
+
+    // Apply sorting
+    switch (_selectedSortOption) {
+      case 'name_asc':
+        filtered.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case 'name_desc':
+        filtered.sort((a, b) => b.name.compareTo(a.name));
+        break;
+      case 'price_asc':
+        filtered.sort((a, b) => a.price.compareTo(b.price));
+        break;
+      case 'price_desc':
+        filtered.sort((a, b) => b.price.compareTo(a.price));
+        break;
+      default:
+        // Default order (no sorting, use original order)
+        break;
+    }
+
+    return filtered;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      // appBar: AppBar(
-      //   surfaceTintColor: Colors.white,
-      //   backgroundColor: Colors.white,
-      //   shadowColor: Colors.white,
-      //   title: Text(
-      //     "Manage Product (${_products.length})",
-      //     style: const TextStyle(fontWeight: FontWeight.w600),
-      //   ),
-      //   centerTitle: true,
-      // ),
       floatingActionButton: SpeedDial(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -95,15 +125,6 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
         ),
         elevation: 10.0,
         children: [
-          // SpeedDialChild(
-          //   child: const Icon(Icons.settings, color: Colors.white),
-          //   backgroundColor: Colors.blueGrey,
-          //   label: 'Manage Variant Option',
-          //   labelStyle: const TextStyle(fontSize: 16),
-          //   onTap: () {
-          //     context.push('/manage-variant-options');
-          //   },
-          // ),
           SpeedDialChild(
             child: const Icon(Icons.add_circle, color: Colors.white),
             backgroundColor: Colors.green,
@@ -138,59 +159,120 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
             );
           }
           _products = productProvider.products;
+          final filteredProducts = _getFilteredAndSortedProducts();
+
+          if (filteredProducts.isEmpty) {
+            return const Center(
+              child: Text(
+                'No products available for the selected filters.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            );
+          }
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(15.0),
             child: Column(
               children: [
-                CustomTextField(
-                  controller: _searchController,
-                  hint: "Search",
-                  isSearch: true,
-                  inputType: TextInputType.text,
-                ),
-                const SizedBox(height: 15),
                 Row(
                   children: [
                     Expanded(
                       child: CustomDropdown(
-                        label: "Brands",
-                        hint: "Select a brand",
-                        items: _brands
-                            .map(
-                                (brand) => {'id': brand.id, 'name': brand.name})
-                            .toList(),
-                        validator: (value) {
-                          return null; // Optional selection
+                        label: 'Brands',
+                        hint: 'Select a brand',
+                        items: [
+                          {'id': null, 'name': 'All Brands'},
+                          ..._brands.map(
+                              (brand) => {'id': brand.id, 'name': brand.name}),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedBrandId = value;
+                          });
                         },
+                        validator: (value) => null,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: CustomDropdown(
-                        label: "Categories",
-                        hint: "Select a category",
-                        items: _categories
-                            .map((category) =>
-                                {'id': category.id, 'name': category.name})
-                            .toList(),
-                        validator: (value) {
-                          return null; // Optional selection
+                        label: 'Categories',
+                        hint: 'Select a category',
+                        items: [
+                          {'id': null, 'name': 'All Categories'},
+                          ..._categories.map((category) =>
+                              {'id': category.id, 'name': category.name}),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCategoryId = value;
+                          });
                         },
+                        validator: (value) => null,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 15),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _products.length,
-                  itemBuilder: (context, index) {
-                    return ProductAdminCard(
-                      product: _products[index],
-                    );
+                const SizedBox(height: 10),
+                CustomDropdown(
+                  label: 'Sort By',
+                  hint: 'Select sort option',
+                  items: [
+                    {'id': null, 'name': 'Default'},
+                    {'id': 'name_asc', 'name': 'Name (A-Z)'},
+                    {'id': 'name_desc', 'name': 'Name (Z-A)'},
+                    {'id': 'price_asc', 'name': 'Price (Low to High)'},
+                    {'id': 'price_desc', 'name': 'Price (High to Low)'},
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSortOption = value;
+                    });
                   },
+                  validator: (value) => null,
                 ),
+                const SizedBox(height: 15),
+                // Group products by category
+                ..._categories.map((category) {
+                  // Filter products for the current category
+                  final categoryProducts = filteredProducts
+                      .where((product) => product.categoryId == category.id)
+                      .toList();
+
+                  // Only display categories with products
+                  if (categoryProducts.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Category Header
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10.0),
+                        child: Text(
+                          category.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      // Products under this category
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: categoryProducts.length,
+                        itemBuilder: (context, index) {
+                          return ProductAdminCard(
+                            product: categoryProducts[index],
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                }),
               ],
             ),
           );

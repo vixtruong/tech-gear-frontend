@@ -6,10 +6,12 @@ import 'package:techgear/ui/widgets/common/custom_text_field.dart';
 
 class Header extends StatefulWidget {
   final String title;
+  final Widget profileCard;
 
   const Header({
     super.key,
     required this.title,
+    required this.profileCard,
   });
 
   @override
@@ -27,11 +29,11 @@ class _HeaderState extends State<Header> with SingleTickerProviderStateMixin {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300), // Thời gian hiệu ứng
+      duration: const Duration(milliseconds: 300),
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0), // Bắt đầu từ bên phải
-      end: Offset.zero, // Kết thúc ở vị trí bình thường
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
@@ -42,10 +44,9 @@ class _HeaderState extends State<Header> with SingleTickerProviderStateMixin {
     setState(() {
       _isSearchActive = !_isSearchActive;
       if (_isSearchActive) {
-        _animationController
-            .forward(); // Chạy animation khi TextField xuất hiện
+        _animationController.forward();
       } else {
-        _animationController.reverse(); // Chạy ngược khi TextField ẩn
+        _animationController.reverse();
         _searchController.clear();
       }
     });
@@ -54,9 +55,8 @@ class _HeaderState extends State<Header> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16.0, vertical: 8.0), // Giữ kích thước gốc
-      color: const Color(0xFF0068FF), // Màu xanh Zalo
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      color: const Color(0xFF0068FF),
       child: Row(
         children: [
           // Icon menu trên mobile
@@ -67,8 +67,7 @@ class _HeaderState extends State<Header> with SingleTickerProviderStateMixin {
                 context.read<MenuAppController>().openDrawer(context);
               },
             ),
-          if (!Responsive.isDesktop(context))
-            const SizedBox(width: 10), // Giữ kích thước gốc
+          if (!Responsive.isDesktop(context)) const SizedBox(width: 10),
           // Title hoặc TextField
           Expanded(
             child: _isSearchActive && Responsive.isMobile(context)
@@ -85,7 +84,7 @@ class _HeaderState extends State<Header> with SingleTickerProviderStateMixin {
                     widget.title,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 22, // Giữ kích thước gốc
+                      fontSize: 22,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -93,7 +92,7 @@ class _HeaderState extends State<Header> with SingleTickerProviderStateMixin {
           // TextField trên desktop/tablet khi không tìm kiếm
           if (!_isSearchActive && !Responsive.isMobile(context))
             SizedBox(
-              width: 300, // Giữ kích thước gốc
+              width: 300,
               child: CustomTextField(
                 controller: _searchController,
                 hint: "Search users",
@@ -112,7 +111,7 @@ class _HeaderState extends State<Header> with SingleTickerProviderStateMixin {
             ),
           // ProfileCard
           if (!Responsive.isMobile(context)) SizedBox(width: 16),
-          const ProfileCard(),
+          widget.profileCard, // Use the passed ProfileCard
         ],
       ),
     );
@@ -123,46 +122,5 @@ class _HeaderState extends State<Header> with SingleTickerProviderStateMixin {
     _animationController.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-}
-
-class ProfileCard extends StatelessWidget {
-  const ProfileCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16.0, vertical: 8.0), // Giữ kích thước gốc
-      decoration: BoxDecoration(
-        // ignore: deprecated_member_use
-        color: Colors.white.withOpacity(0.1), // Nền trắng mờ giống Zalo
-        borderRadius:
-            const BorderRadius.all(Radius.circular(10)), // Giữ kích thước gốc
-        border: Border.all(color: Colors.white10), // Giữ border gốc
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            child: Image.asset(
-              "assets/images/tech_gear_logo.png",
-              height: 38,
-              // Giữ kích thước gốc
-            ),
-          ),
-          if (!Responsive.isMobile(context))
-            const Padding(
-              padding:
-                  EdgeInsets.symmetric(horizontal: 8.0), // Giữ kích thước gốc
-              child: Text(
-                "Admin",
-                style: TextStyle(color: Colors.white, fontSize: 14),
-              ),
-            ),
-          const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-        ],
-      ),
-    );
   }
 }
