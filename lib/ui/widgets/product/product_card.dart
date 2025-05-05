@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/dtos/average_rating_dto.dart';
 import 'package:techgear/models/product/product.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/product_providers/rating_provider.dart';
+import 'package:techgear/providers/user_provider/favorite_provider.dart';
 // import 'package:techgear/services/cart_service/cart_service.dart';
 import 'package:techgear/ui/widgets/review/star_rating.dart';
 
@@ -26,6 +28,8 @@ class ProductCard extends StatefulWidget {
 
 class _ProductCardState extends State<ProductCard> {
   late RatingProvider _ratingProvider;
+  late SessionProvider _sessionProvider;
+  late FavoriteProvider _favoriteProvider;
 
   AverageRatingDto? averageRating;
   bool isFavorite = false;
@@ -36,6 +40,8 @@ class _ProductCardState extends State<ProductCard> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _ratingProvider = Provider.of<RatingProvider>(context, listen: false);
+    _sessionProvider = Provider.of<SessionProvider>(context, listen: false);
+    _favoriteProvider = Provider.of<FavoriteProvider>(context, listen: false);
     _loadInformations();
   }
 
@@ -44,10 +50,54 @@ class _ProductCardState extends State<ProductCard> {
       final result = await _ratingProvider
           .fetchProductAvarageRating(int.parse(widget.product.id));
 
+      await _sessionProvider.loadSession();
+
+      final userId = _sessionProvider.userId;
+
+      if (userId != null) {
+        final fetchData =
+            await _favoriteProvider.checkIsFavorite(userId, widget.product.id);
+
+        setState(() {
+          isFavorite = fetchData;
+        });
+      }
+
       setState(() {
         averageRating = result;
         _isLoading = false;
       });
+    } catch (e) {
+      e.toString();
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    try {
+      await _sessionProvider.loadSession();
+
+      final userId = _sessionProvider.userId;
+
+      if (userId != null) {
+        if (isFavorite == false) {
+          final success =
+              await _favoriteProvider.addFavorite(userId, widget.product.id);
+
+          if (success) {
+            setState(() {
+              isFavorite = true;
+            });
+          }
+        } else {
+          final success =
+              await _favoriteProvider.removeFavorite(userId, widget.product.id);
+          if (success) {
+            setState(() {
+              isFavorite = false;
+            });
+          }
+        }
+      }
     } catch (e) {
       e.toString();
     }
@@ -64,13 +114,17 @@ class _ProductCardState extends State<ProductCard> {
     }
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         if (kIsWeb) {
           context.go(
               '/product-detail?productId=${widget.product.id}&isAdmin=false');
         } else {
-          context.push(
+          final result = await context.push(
               '/product-detail?productId=${widget.product.id}&isAdmin=false');
+
+          if (result == true) {
+            _loadInformations();
+          }
         }
       },
       child: Container(
@@ -186,9 +240,7 @@ class _ProductCardState extends State<ProductCard> {
         right: 8,
         child: GestureDetector(
           onTap: () {
-            setState(() {
-              isFavorite = !isFavorite;
-            });
+            _toggleFavorite();
           },
           child: CircleAvatar(
             radius: 20,
@@ -204,27 +256,4 @@ class _ProductCardState extends State<ProductCard> {
       ),
     );
   }
-
-  // Widget _buttonAddToCart(bool visible, VoidCallback onPressed) {
-  //   return Visibility(
-  //     visible: visible,
-  //     child: Positioned(
-  //       top: 8,
-  //       right: 8,
-  //       child: CircleAvatar(
-  //         radius: 20,
-  //         // ignore: deprecated_member_use
-  //         backgroundColor: Colors.grey.withOpacity(0.4),
-  //         child: IconButton(
-  //           onPressed: onPressed,
-  //           iconSize: 20,
-  //           icon: const Icon(
-  //             Icons.add_shopping_cart_outlined,
-  //             color: Colors.black54,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 }

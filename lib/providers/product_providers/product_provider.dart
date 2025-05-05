@@ -15,11 +15,13 @@ class ProductProvider with ChangeNotifier {
   List<Product> _newProducts = [];
   List<Product> _bestSellerProducts = [];
   List<Product> _promotionProducts = [];
+  List<Product> _productByIds = [];
 
   List<Product> get products => _products;
   List<Product> get newProducts => _newProducts;
   List<Product> get bestSellerProducts => _bestSellerProducts;
   List<Product> get promotionProducts => _promotionProducts;
+  List<Product> get productByIds => _productByIds;
 
   Future<void> fetchProducts() async {
     try {
@@ -60,6 +62,17 @@ class ProductProvider with ChangeNotifier {
           await _service.fetchPromotionProducts();
       _promotionProducts =
           fetchedData.map((data) => Product.fromMap(data)).toList();
+      notifyListeners();
+    } catch (e) {
+      e.toString();
+    }
+  }
+
+  Future<void> fetchProductsByIds(List<int> ids) async {
+    try {
+      List<Map<String, dynamic>> fetchedData =
+          await _service.fetchProductsByIds(ids);
+      _productByIds = fetchedData.map((data) => Product.fromMap(data)).toList();
       notifyListeners();
     } catch (e) {
       e.toString();

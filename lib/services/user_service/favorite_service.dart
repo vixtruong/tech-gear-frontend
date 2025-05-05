@@ -2,16 +2,16 @@ import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 
 class FavoriteService {
-  final String apiUrl = 'api/v1/favorites';
+  final String apiUrl = '/api/v1/favorites';
   final DioClient _dioClient;
 
   FavoriteService(SessionProvider sessionProvider)
       : _dioClient = DioClient(sessionProvider);
 
-  Future<List<Map<String, dynamic>>> fetchProductFavorite(String userId) async {
-    final response = await _dioClient.instance.get('$apiUrl/user/$userId');
+  Future<List<int>> fetchProductFavorite(String userId) async {
+    final response = await _dioClient.instance.get('$apiUrl/$userId');
     final List data = response.data;
-    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+    return data.whereType<int>().toList(); // đảm bảo là List<int>
   }
 
   Future<bool> addFavorite(String userId, String productId) async {
@@ -53,6 +53,22 @@ class FavoriteService {
       } else {
         return false;
       }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isProductFavorite(String userId, String productId) async {
+    try {
+      final response = await _dioClient.instance.put(
+        '$apiUrl/is-favorite',
+        data: {
+          'userId': int.parse(userId),
+          'productId': int.parse(productId),
+        },
+      );
+
+      return response.statusCode == 200;
     } catch (e) {
       return false;
     }
