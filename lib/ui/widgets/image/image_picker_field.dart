@@ -72,14 +72,16 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
               ),
             const SizedBox(height: 15),
             if (_imageBytes != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                    ),
+                    child: Image.memory(_imageBytes!,
+                        fit: BoxFit.cover), // Dùng memory cho Web
                   ),
-                  child: Image.memory(_imageBytes!,
-                      fit: BoxFit.cover), // Dùng memory cho Web
                 ),
               ),
           ],

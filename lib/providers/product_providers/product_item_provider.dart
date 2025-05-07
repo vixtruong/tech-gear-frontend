@@ -83,4 +83,16 @@ class ProductItemProvider with ChangeNotifier {
     }
     return null;
   }
+
+  Future<bool> setDiscount(int productItemId, int discount) async {
+    try {
+      final success = await _service.setDiscount(productItemId, discount);
+
+      return success;
+    } catch (e) {
+      e.toString();
+    }
+
+    return false;
+  }
 }

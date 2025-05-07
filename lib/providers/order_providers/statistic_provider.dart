@@ -1,0 +1,104 @@
+import 'package:flutter/material.dart';
+import 'package:techgear/dtos/mock_data_dto.dart';
+import 'package:techgear/dtos/best_selling_dto.dart';
+import 'package:techgear/dtos/payment_dto.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
+import 'package:techgear/services/order_service/statistic_service.dart';
+
+class StatisticProvider with ChangeNotifier {
+  final StatisticService _statisticService;
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
+
+  MockDataDto? _currentStats;
+  MockDataDto? get currentStats => _currentStats;
+
+  List<BestSellingDto> _bestSelling = [];
+  List<BestSellingDto> get bestSelling => _bestSelling;
+
+  List<PaymentDto> _payments = [];
+  List<PaymentDto> get payments => _payments;
+
+  StatisticProvider(SessionProvider sessionProvider)
+      : _statisticService = StatisticService(sessionProvider);
+
+  Future<void> fetchPayments() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _payments = await _statisticService.fetchPayments();
+    } catch (e) {
+      _errorMessage = e.toString();
+      _payments = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchAnnualStats() async {
+    await _fetch(() => _statisticService.fetchAnnualStats());
+  }
+
+  Future<void> fetchQuarterStats() async {
+    await _fetch(() => _statisticService.fetchQuarterStats());
+  }
+
+  Future<void> fetchMonthlyStats() async {
+    await _fetch(() => _statisticService.fetchMonthlyStats());
+  }
+
+  Future<void> fetchWeeklyStats() async {
+    await _fetch(() => _statisticService.fetchWeeklyStats());
+  }
+
+  Future<void> fetchCustomStats(DateTime start, DateTime end) async {
+    await _fetch(() => _statisticService.fetchCustomStats(start, end));
+  }
+
+  Future<void> fetchBestSelling() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _bestSelling = await _statisticService.fetchBestSelling();
+    } catch (e) {
+      _errorMessage = e.toString();
+      _bestSelling = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _fetch(Future<MockDataDto> Function() fetchFunction) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _currentStats = await fetchFunction();
+    } catch (e) {
+      _errorMessage = e.toString();
+      _currentStats = null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void clearStats() {
+    _currentStats = null;
+    _bestSelling = [];
+    _errorMessage = null;
+    _isLoading = false;
+    notifyListeners();
+  }
+}

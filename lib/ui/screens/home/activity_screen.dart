@@ -41,7 +41,7 @@ class _ActivityScreenState extends State<ActivityScreen>
   void initState() {
     super.initState();
     // Khởi tạo TabController với 4 tab
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -163,6 +163,7 @@ class _ActivityScreenState extends State<ActivityScreen>
                       Tab(text: "Confirmed"),
                       Tab(text: "Shipped"),
                       Tab(text: "Delivered"),
+                      Tab(text: "Canceled"),
                       Tab(text: "Rated"),
                     ],
                   )
@@ -247,6 +248,8 @@ class _ActivityScreenState extends State<ActivityScreen>
                                 context), // Shipped tab
                             _buildTabContent(
                                 orderProvider, "Delivered", context),
+                            _buildTabContent(
+                                orderProvider, "Canceled", context),
                             _buildRatedTab(context), // Delivered tab
                           ],
                         ),

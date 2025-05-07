@@ -211,7 +211,11 @@ class _CartScreenState extends State<CartScreen> {
     double total = 0;
     for (int i = 0; i < _cartItems.length; i++) {
       if (_selectedItems[i] ?? false) {
-        total += _productItemInfos[i].price * _cartItems[i].quantity;
+        final product = _productItemInfos[i];
+        final discountedPrice = product.discount > 0
+            ? product.price * (1 - product.discount / 100)
+            : product.price;
+        total += discountedPrice * _cartItems[i].quantity;
       }
     }
     return total;
@@ -617,7 +621,7 @@ class _CartScreenState extends State<CartScreen> {
                                       Expanded(
                                         flex: 1,
                                         child: Text(
-                                          "${vndFormat.format(product.price * cartItem.quantity)}đ",
+                                          "${vndFormat.format((product.price - (product.price * (product.discount / 100))) * cartItem.quantity)}đ",
                                           style: const TextStyle(fontSize: 14),
                                         ),
                                       ),

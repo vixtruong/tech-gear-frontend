@@ -22,6 +22,8 @@ class OrderCard extends StatelessWidget {
         return Colors.purple.shade100;
       case 'Delivered':
         return Colors.green.shade100;
+      case 'Canceled':
+        return Colors.red.shade100;
       default:
         return Colors.grey.shade100;
     }
@@ -38,6 +40,8 @@ class OrderCard extends StatelessWidget {
         return Icons.local_shipping;
       case 'Delivered':
         return Icons.check_circle;
+      case 'Canceled':
+        return Icons.cancel_outlined;
       default:
         return Icons.info;
     }
@@ -46,7 +50,8 @@ class OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-    final formattedDate = DateFormat('dd/MM/yyyy').format(order.createdAt);
+    final formattedDate =
+        DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.createdAt);
 
     final bool canRate = order.deliveredDate != null &&
         DateTime.now().difference(order.deliveredDate!).inDays <= 14;
@@ -56,109 +61,152 @@ class OrderCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Order #${order.id}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+      child: InkWell(
+        onTap: () {
+          if (kIsWeb) {
+            context.pushReplacement('/orders/${order.id}/detail');
+          } else {
+            context.push('/orders/${order.id}/detail');
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Order #${order.id}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          formattedDate,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
+                          const SizedBox(width: 8),
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Product: ${order.orderItems?.length ?? 0}',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    Text(
-                      'Payment: ${formatter.format(order.paymentAmount)}',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    Text(
-                      'Method: ${order.paymentMethod}',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    if (order.status == "Delivered" &&
-                        order.deliveredDate != null)
+                        ],
+                      ),
+                      const SizedBox(height: 8),
                       Text(
-                        'Delivered Date: ${DateFormat('dd/MM/yyyy').format(order.deliveredDate!)}',
+                        'Product: ${order.orderItems?.length ?? 0}',
                         style: const TextStyle(fontSize: 14),
                       ),
+                      Text(
+                        'Payment: ${formatter.format(order.paymentAmount)}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      Text(
+                        'Method: ${order.paymentMethod}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      if (order.confirmedDate != null)
+                        Text(
+                          'Confirmed Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.confirmedDate!)}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      if (order.shippedDate != null)
+                        Text(
+                          'Shipped Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.shippedDate!)}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      if (order.deliveredDate != null)
+                        Text(
+                          'Delivered Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.deliveredDate!)}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      if (order.canceledDate != null)
+                        Text(
+                          'Canceled Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.canceledDate!)}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      if (order.cancelReason != null &&
+                          order.cancelReason != '')
+                        Text(
+                          'Canceled Reason: ${order.cancelReason}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                    ],
+                  ),
+                  if (order.status != null && order.status!.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(order.status),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _getStatusIcon(order.status),
+                            size: 16,
+                            color: Colors.black54,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            order.status!,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              if (order.status == "Delivered" && canRate)
+                const SizedBox(height: 1),
+              if (order.status == "Delivered" && canRate)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SizedBox(
+                      height: 40,
+                      width: 90,
+                      child: CustomButton(
+                        text: "Rate",
+                        onPressed: () {
+                          if (kIsWeb) {
+                            context.go('/rate-order/${order.id}');
+                          } else {
+                            context.push('/rate-order/${order.id}');
+                          }
+                        },
+                        color: Colors.orange,
+                      ),
+                    ),
                   ],
                 ),
-                if (order.status != null && order.status!.isNotEmpty)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(order.status),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _getStatusIcon(order.status),
-                          size: 16,
-                          color: Colors.black54,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          order.status!,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-            if (order.status == "Delivered" && canRate)
-              const SizedBox(height: 1),
-            if (order.status == "Delivered" && canRate)
+              // Action buttons based on status
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  SizedBox(
-                    height: 40,
-                    width: 90,
-                    child: CustomButton(
-                      text: "Rate",
-                      onPressed: () {
-                        if (kIsWeb) {
-                          context.go('/rate-order/${order.id}');
-                        } else {
-                          context.push('/rate-order/${order.id}');
-                        }
-                      },
-                      color: Colors.orange,
+                  if (order.status == 'Pending') ...[
+                    SizedBox(
+                      height: 40,
+                      width: 105,
+                      child: CustomButton(
+                          text: "Cancel", onPressed: () {}, color: Colors.red),
                     ),
-                  ),
+                  ],
                 ],
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

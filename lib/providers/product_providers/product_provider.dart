@@ -23,6 +23,17 @@ class ProductProvider with ChangeNotifier {
   List<Product> get promotionProducts => _promotionProducts;
   List<Product> get productByIds => _productByIds;
 
+  Future<void> fetchProductsForAdmin() async {
+    try {
+      List<Map<String, dynamic>> fetchedData =
+          await _service.fetchProductsForAdmin();
+      _products = fetchedData.map((data) => Product.fromMap(data)).toList();
+      notifyListeners();
+    } catch (e) {
+      e.toString();
+    }
+  }
+
   Future<void> fetchProducts() async {
     try {
       List<Map<String, dynamic>> fetchedData = await _service.fetchProducts();
@@ -87,5 +98,17 @@ class ProductProvider with ChangeNotifier {
   Future<void> addProduct(Product product) async {
     await _service.addProduct(product);
     await fetchProducts();
+  }
+
+  Future<void> updateProduct(Product product) async {
+    await _service.updateProduct(product);
+    await fetchProducts();
+  }
+
+  Future<bool> toggleProductStatus(int productId) async {
+    final success = await _service.toggleProductStatus(productId);
+    await fetchProducts();
+
+    return success;
   }
 }

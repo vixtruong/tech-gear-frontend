@@ -58,6 +58,16 @@ class CouponService {
     }
   }
 
+  Future<bool> deleteCoupon(int id) async {
+    try {
+      final response = await _dioClient.instance.delete('$apiUrl/delete/$id');
+      return response.statusCode == 200;
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'Unknown error';
+      throw Exception('Update coupon failed: $msg');
+    }
+  }
+
   Future<bool> removeCouponUsage(String code) async {
     try {
       final response =

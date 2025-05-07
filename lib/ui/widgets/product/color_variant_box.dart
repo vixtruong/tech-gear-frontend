@@ -19,6 +19,12 @@ class ColorVariantBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate discounted price if discount > 0
+    final bool hasDiscount = selectedProductItem.discount > 0;
+    final double discountedPrice = hasDiscount
+        ? selectedProductItem.price * (1 - selectedProductItem.discount / 100)
+        : selectedProductItem.price;
+
     return GestureDetector(
       onTap: onTap,
       child: Stack(
@@ -39,16 +45,38 @@ class ColorVariantBox extends StatelessWidget {
               children: [
                 Text(
                   color.name,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
                 ),
-                Text(
-                  "${NumberFormat("#,###", "vi_VN").format(selectedProductItem.price)} đ",
-                  style: const TextStyle(fontSize: 12),
-                ),
+                if (hasDiscount) ...[
+                  // Original price (strikethrough)
+                  Text(
+                    "${NumberFormat("#,###", "vi_VN").format(selectedProductItem.price)} đ",
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey,
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                  ),
+                  // Discounted price
+                  Text(
+                    "${NumberFormat("#,###", "vi_VN").format(discountedPrice)} đ",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ] else ...[
+                  // Price without discount
+                  Text(
+                    "${NumberFormat("#,###", "vi_VN").format(selectedProductItem.price)} đ",
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
               ],
             ),
           ),
@@ -66,6 +94,27 @@ class ColorVariantBox extends StatelessWidget {
                   Icons.check,
                   color: Colors.white,
                   size: 12,
+                ),
+              ),
+            ),
+          // Discount badge (optional, for extra prominence)
+          if (hasDiscount)
+            Positioned(
+              top: -5,
+              left: -5,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "-${selectedProductItem.discount}%",
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

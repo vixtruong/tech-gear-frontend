@@ -69,7 +69,9 @@ class SideMenu extends StatelessWidget {
               iconPath: "assets/icons/menu_store.svg",
               route: '/orders',
               currentRoute: currentRoute,
-              onTap: () {},
+              onTap: () {
+                context.pushReplacement('/orders');
+              },
             ),
             DrawListTile(
               title: "Products",
@@ -87,6 +89,15 @@ class SideMenu extends StatelessWidget {
               currentRoute: currentRoute,
               onTap: () {
                 context.pushReplacement('/manage-variant-options');
+              },
+            ),
+            DrawListTile(
+              title: "Coupons",
+              iconPath: "assets/icons/menu_coupon.svg",
+              route: '/coupons',
+              currentRoute: currentRoute,
+              onTap: () {
+                context.pushReplacement('/coupons');
               },
             ),
             DrawListTile(
@@ -108,11 +119,13 @@ class SideMenu extends StatelessWidget {
               },
             ),
             DrawListTile(
-              title: "Transactions",
+              title: "Payments",
               iconPath: "assets/icons/menu_tran.svg",
-              route: '/transactions',
+              route: '/payments',
               currentRoute: currentRoute,
-              onTap: () {},
+              onTap: () {
+                context.pushReplacement('/payments');
+              },
             ),
           ],
         ),

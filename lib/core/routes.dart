@@ -11,28 +11,33 @@ import 'package:techgear/ui/screens/dashboard/pages/add_category_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_product_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_product_variants_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/add_variant_option_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/edit_product_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_brands_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_categories_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_chats_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_coupons_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_orders_screen.dart';
+import 'package:techgear/ui/screens/dashboard/pages/manage_payments_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_product_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_variant_options_screen.dart';
 import 'package:techgear/ui/screens/dashboard/pages/manage_product_variants_screen.dart';
 import 'package:techgear/ui/screens/home/activity_screen.dart';
 import 'package:techgear/ui/screens/home/add_address_screen.dart';
 import 'package:techgear/ui/screens/home/cart_screen.dart';
-import 'package:techgear/ui/screens/home/change_password_screen.dart';
+import 'package:techgear/ui/screens/shared/change_password_screen.dart';
 import 'package:techgear/ui/screens/home/edit_profile_screen.dart';
 import 'package:techgear/ui/screens/home/loyalty_screen.dart';
 import 'package:techgear/ui/screens/home/manage_addresses.dart';
 import 'package:techgear/ui/screens/home/support_center_screen.dart';
 import 'package:techgear/ui/screens/home/checkout_screen.dart';
 import 'package:techgear/ui/screens/home/home_screen.dart';
-import 'package:techgear/ui/screens/home/product_detail_web_screen.dart';
+import 'package:techgear/ui/screens/shared/order_detail_screen.dart';
+import 'package:techgear/ui/screens/shared/product_detail_web_screen.dart';
 import 'package:techgear/ui/layouts/user_web_layout.dart';
 import 'package:techgear/ui/screens/home/rate_order_screen.dart';
 import 'package:techgear/ui/screens/home/wish_list_screen.dart';
 import 'package:techgear/ui/screens/auth/login_screen.dart';
-import 'package:techgear/ui/screens/home/product_detail_screen.dart';
+import 'package:techgear/ui/screens/shared/product_detail_screen.dart';
 import 'package:techgear/ui/screens/auth/recover_password_screen.dart';
 import 'package:techgear/ui/screens/auth/register_screen.dart';
 import 'package:techgear/ui/screens/auth/welcome_screen.dart';
@@ -325,12 +330,14 @@ final GoRouter router = GoRouter(
         return MainScreen(screen: AddCategoryScreen(), title: "Add Category");
       },
     ),
+
     GoRoute(
       path: '/add-product',
       builder: (context, state) {
         return MainScreen(screen: AddProductScreen(), title: "Add Product");
       },
     ),
+
     GoRoute(
       path: '/manage-product',
       builder: (context, state) {
@@ -340,6 +347,19 @@ final GoRouter router = GoRouter(
         );
       },
     ),
+
+    GoRoute(
+      path: '/edit-product/:productId',
+      builder: (context, state) {
+        final String productId = state.pathParameters['productId']!;
+
+        return MainScreen(
+          screen: EditProductScreen(productId: int.parse(productId)),
+          title: "Products",
+        );
+      },
+    ),
+
     GoRoute(
       path: '/manage-product-variants/:productId',
       builder: (context, state) {
@@ -351,6 +371,7 @@ final GoRouter router = GoRouter(
         );
       },
     ),
+
     GoRoute(
       path: '/add-product-variants/:productId',
       builder: (context, state) {
@@ -362,6 +383,7 @@ final GoRouter router = GoRouter(
         );
       },
     ),
+
     GoRoute(
       path: '/manage-variant-options',
       builder: (context, state) {
@@ -423,6 +445,64 @@ final GoRouter router = GoRouter(
         return MainScreen(
           screen: ManageCategoriesScreen(),
           title: "Categories",
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/orders',
+      builder: (context, state) {
+        return MainScreen(
+          screen: ManageOrdersScreen(),
+          title: "Orders",
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/orders/:orderId/detail',
+      builder: (context, state) {
+        final orderId = int.parse(state.pathParameters['orderId']!);
+
+        final isWeb = MediaQuery.of(context).size.width > 800;
+        final sessionProvider =
+            Provider.of<SessionProvider>(context, listen: false);
+        sessionProvider.loadSession();
+
+        final role = sessionProvider.role;
+
+        if (role == "Admin") {
+          return MainScreen(
+            screen: OrderDetailScreen(
+              orderId: orderId,
+              isAdmin: true,
+            ),
+            title: "Order Detail",
+          );
+        }
+
+        return isWeb
+            ? UserWebLayout(child: OrderDetailScreen(orderId: orderId))
+            : OrderDetailScreen(orderId: orderId);
+      },
+    ),
+
+    GoRoute(
+      path: '/coupons',
+      builder: (context, state) {
+        return MainScreen(
+          screen: ManageCouponsScreen(),
+          title: "Coupons",
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/payments',
+      builder: (context, state) {
+        return MainScreen(
+          screen: ManagePaymentsScreen(),
+          title: "Payments",
         );
       },
     ),

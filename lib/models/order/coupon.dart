@@ -27,7 +27,6 @@ class Coupon {
     );
   }
 
-  // ✅ TO JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
