@@ -61,12 +61,19 @@ final GoRouter router = GoRouter(
       '/add-category',
       '/add-product',
       '/manage-product',
+      '/edit-product/:productId',
       '/manage-product-variants/:productId',
       '/add-product-variants/:productId',
       '/manage-variant-options',
       '/add-variant-option',
       '/chats',
       '/chats/:userId',
+      '/brands',
+      '/categories',
+      '/orders',
+      '/orders/:orderId/detail',
+      '/coupons',
+      '/payments',
     ];
 
     // Kiểm tra nếu route hiện tại là route admin
