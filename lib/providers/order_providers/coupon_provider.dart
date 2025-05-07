@@ -63,6 +63,18 @@ class CouponProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> deleteCoupon(int id) async {
+    try {
+      final result = await _couponService.deleteCoupon(id);
+      if (result) await fetchCoupons();
+      return result;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   // ✅ Áp dụng / trừ lượt dùng coupon
   Future<bool> removeCouponUsage(String code) async {
     try {

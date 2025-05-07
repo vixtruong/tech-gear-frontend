@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/dtos/edit_profile_dto.dart';
+import 'package:techgear/dtos/total_user_dto.dart';
 import 'package:techgear/dtos/user_dto.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/user_service/user_service.dart';
@@ -64,6 +65,19 @@ class UserProvider with ChangeNotifier {
       return _user;
     } catch (e) {
       print('UserProvider: Failed to fetch user: $e');
+      rethrow; // Để ProfileScreen xử lý lỗi
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<TotalUserDto?> fetchTotalUser() async {
+    try {
+      final data = await _userService.getTotalUser();
+
+      return TotalUserDto.fromJson(data);
+    } catch (e) {
       rethrow; // Để ProfileScreen xử lý lỗi
     } finally {
       _isLoading = false;

@@ -10,12 +10,14 @@ import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/order_providers/coupon_provider.dart';
 import 'package:techgear/providers/order_providers/order_provider.dart';
+import 'package:techgear/providers/order_providers/statistic_provider.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_config_provider.dart';
 import 'package:techgear/providers/product_providers/product_item_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
 import 'package:techgear/providers/product_providers/rating_provider.dart';
+import 'package:techgear/providers/product_providers/search_provider.dart';
 import 'package:techgear/providers/product_providers/variant_option_provider.dart';
 import 'package:techgear/providers/product_providers/variant_value_provider.dart';
 import 'package:techgear/providers/user_provider/favorite_provider.dart';
@@ -137,6 +139,13 @@ void main() async {
           update: (context, sessionProvider, orderProvider) =>
               orderProvider ?? CouponProvider(sessionProvider),
         ),
+        ChangeNotifierProxyProvider<SessionProvider, StatisticProvider>(
+          create: (context) => StatisticProvider(
+            Provider.of<SessionProvider>(context, listen: false),
+          ),
+          update: (context, sessionProvider, orderProvider) =>
+              orderProvider ?? StatisticProvider(sessionProvider),
+        ),
 
         // UserProvider (depends on SessionProvider)
         ChangeNotifierProxyProvider<SessionProvider, UserProvider>(
@@ -181,6 +190,7 @@ void main() async {
         ChangeNotifierProvider(
           create: (context) => MenuAppController(),
         ),
+        ChangeNotifierProvider(create: (_) => SearchProvider()),
       ],
       child: const App(),
     ),

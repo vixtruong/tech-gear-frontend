@@ -89,4 +89,16 @@ class ProductItemService {
       return null;
     }
   }
+
+  Future<bool> setDiscount(int productItemId, int discount) async {
+    try {
+      final response = await _dioClient.instance.post('$apiUrl/set-discount',
+          data: {'productItemId': productItemId, 'discount': discount});
+
+      return response.data as bool;
+    } catch (e) {
+      e.toString();
+    }
+    return false;
+  }
 }

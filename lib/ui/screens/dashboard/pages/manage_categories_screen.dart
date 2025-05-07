@@ -102,7 +102,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                 color: Colors.white,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(

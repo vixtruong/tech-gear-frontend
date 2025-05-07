@@ -8,6 +8,7 @@ import 'package:badges/badges.dart' as badges;
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/providers/chat_providers/chat_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
+import 'package:techgear/providers/product_providers/search_provider.dart';
 
 class HomeWebNavBar extends StatefulWidget {
   const HomeWebNavBar({super.key});
@@ -19,6 +20,7 @@ class HomeWebNavBar extends StatefulWidget {
 class _HomeWebNavBarState extends State<HomeWebNavBar> {
   late CartProvider _cartProvider;
   late ChatProvider _chatProvider;
+  late TextEditingController _searchController; // Thêm controller cho TextField
   bool _isCartLoaded = false;
   bool _isUnreadCountLoaded = false;
   Timer? _pollingTimer;
@@ -26,7 +28,12 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
   @override
   void initState() {
     super.initState();
-    // Defer syncWithRoute until after the first frame
+    _searchController = TextEditingController();
+    // Đồng bộ TextField với SearchProvider
+    _searchController.addListener(() {
+      Provider.of<SearchProvider>(context, listen: false)
+          .setSearchQuery(_searchController.text);
+    });
     SchedulerBinding.instance.addPostFrameCallback((_) {
       final currentRoute = GoRouter.of(context)
           .routerDelegate
@@ -36,8 +43,6 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
       Provider.of<NavigationProvider>(context, listen: false)
           .syncWithRoute(currentRoute);
     });
-
-    // Start polling for unread count updates (optional)
     _startPolling();
   }
 
@@ -68,10 +73,8 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
     try {
       final sessionProvider =
           Provider.of<SessionProvider>(context, listen: false);
-
       await sessionProvider.loadSession();
       final userId = sessionProvider.userId;
-
       if (userId != null) {
         await _chatProvider.fetchUnreadMessageCount(1, int.parse(userId));
       }
@@ -80,7 +83,6 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
     }
   }
 
-  // Optional: Poll for unread count updates every 30 seconds
   void _startPolling() {
     _pollingTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
       if (!mounted) {
@@ -98,6 +100,7 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     _pollingTimer?.cancel();
     super.dispose();
   }
@@ -115,7 +118,7 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
       ),
       child: Row(
         children: [
-          GestureDetector(
+          InkWell(
             onTap: () => context.go('/home'),
             child: Row(
               children: [
@@ -140,6 +143,7 @@ class _HomeWebNavBarState extends State<HomeWebNavBar> {
                 padding: const EdgeInsets.symmetric(horizontal: 100),
                 height: 40,
                 child: TextField(
+                  controller: _searchController, // Gắn controller
                   cursorColor: Colors.black,
                   style: const TextStyle(fontSize: 14),
                   decoration: InputDecoration(

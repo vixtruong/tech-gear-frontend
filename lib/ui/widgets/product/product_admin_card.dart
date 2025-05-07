@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:techgear/models/product/product.dart';
+import 'package:techgear/providers/product_providers/product_provider.dart';
 
 class ProductAdminCard extends StatefulWidget {
   final Product product;
@@ -29,7 +32,7 @@ class _ProductAdminCardState extends State<ProductAdminCard> {
           ),
         ],
       ),
-      child: GestureDetector(
+      child: InkWell(
         onTap: () {
           context.pushReplacement(
               '/product-detail?productId=${widget.product.id}&isAdmin=true');
@@ -73,12 +76,27 @@ class _ProductAdminCardState extends State<ProductAdminCard> {
                 PopupMenuItem(
                   value: 'edit',
                   child: Text('Edit'),
+                  onTap: () {
+                    if (kIsWeb) {
+                      context.pushReplacement(
+                          '/edit-product/${widget.product.id}');
+                    } else {
+                      context.push('/edit-product/${widget.product.id}');
+                    }
+                  },
                 ),
                 PopupMenuItem(
                   value: (widget.product.available) ? 'Disable' : "Enable",
                   child: (widget.product.available)
                       ? Text('Disable')
                       : Text('Enable'),
+                  onTap: () async {
+                    final productProvider =
+                        Provider.of<ProductProvider>(context, listen: false);
+
+                    await productProvider
+                        .toggleProductStatus(int.parse(widget.product.id));
+                  },
                 ),
                 PopupMenuItem(
                   onTap: () {

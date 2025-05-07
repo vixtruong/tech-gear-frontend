@@ -9,6 +9,7 @@ import 'package:techgear/providers/app_providers/navigation_provider.dart';
 import 'package:techgear/providers/order_providers/cart_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
+import 'package:techgear/providers/product_providers/search_provider.dart';
 import 'package:techgear/ui/widgets/common/custom_dropdown.dart';
 import 'package:techgear/ui/widgets/common/custom_text_field.dart';
 import 'package:techgear/ui/widgets/product/product_card.dart';
@@ -48,6 +49,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    // Đồng bộ _searchController với SearchProvider
+    _searchController.addListener(() {
+      Provider.of<SearchProvider>(context, listen: false)
+          .setSearchQuery(_searchController.text);
+    });
   }
 
   @override
@@ -336,6 +342,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<Product> _filterAndSortProducts(List<Product> products) {
     List<Product> filteredProducts = products;
 
+    // Lọc theo từ khóa tìm kiếm từ SearchProvider
+    final searchQuery =
+        Provider.of<SearchProvider>(context, listen: true).searchQuery;
+    if (searchQuery.isNotEmpty) {
+      filteredProducts = filteredProducts.where((product) {
+        final searchLower = searchQuery.toLowerCase();
+        final productNameLower = product.name.toLowerCase();
+        final productDescriptionLower = (product.description).toLowerCase();
+        final category = _categories.firstWhere(
+          (cate) => cate.id == product.categoryId,
+          orElse: () => Category(id: '', name: ''),
+        );
+        final categoryNameLower = category.name.toLowerCase();
+        return productNameLower.contains(searchLower) ||
+            productDescriptionLower.contains(searchLower) ||
+            categoryNameLower.contains(searchLower);
+      }).toList();
+    }
+
+    // Lọc theo danh mục
+    if (_selectedCategoryId != null && _selectedCategoryId!.isNotEmpty) {
+      filteredProducts = filteredProducts
+          .where((product) => product.categoryId == _selectedCategoryId)
+          .toList();
+    }
+
     // Lọc theo giá
     if (_selectedPriceRange != null) {
       filteredProducts = filteredProducts.where((product) {
@@ -359,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
 
     // Sắp xếp
-    if (_selectedSortOption != null) {
+    if (_selectedSortOption != null && _selectedSortOption!.isNotEmpty) {
       if (_selectedSortOption == 'price_low_to_high') {
         filteredProducts.sort((a, b) => a.price.compareTo(b.price));
       } else if (_selectedSortOption == 'price_high_to_low') {

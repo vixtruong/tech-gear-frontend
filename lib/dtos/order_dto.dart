@@ -13,6 +13,10 @@ class OrderDto {
   final bool isUsePoint;
   final DateTime createdAt;
   final DateTime? deliveredDate;
+  final DateTime? confirmedDate;
+  final DateTime? shippedDate;
+  final DateTime? canceledDate;
+  final String? cancelReason;
   final List<OrderItemDto>? orderItems;
 
   OrderDto({
@@ -27,6 +31,10 @@ class OrderDto {
     this.status,
     required this.createdAt,
     this.deliveredDate,
+    this.confirmedDate,
+    this.shippedDate,
+    this.canceledDate,
+    this.cancelReason,
     required this.isUsePoint,
     this.orderItems,
   });
@@ -46,6 +54,16 @@ class OrderDto {
       deliveredDate: json['deliveredDate'] != null
           ? DateTime.parse(json['deliveredDate'])
           : null,
+      confirmedDate: json['confirmedDate'] != null
+          ? DateTime.parse(json['confirmedDate'])
+          : null,
+      shippedDate: json['shippedDate'] != null
+          ? DateTime.parse(json['shippedDate'])
+          : null,
+      canceledDate: json['canceledDate'] != null
+          ? DateTime.parse(json['canceledDate'])
+          : null,
+      cancelReason: json['cancelReason'] ?? '',
       isUsePoint: json['isUsePoint'],
       orderItems: json['orderItems'] != null
           ? (json['orderItems'] as List)

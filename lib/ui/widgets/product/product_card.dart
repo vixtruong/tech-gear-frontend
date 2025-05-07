@@ -113,7 +113,7 @@ class _ProductCardState extends State<ProductCard> {
       );
     }
 
-    return GestureDetector(
+    return InkWell(
       onTap: () async {
         if (kIsWeb) {
           context.go(

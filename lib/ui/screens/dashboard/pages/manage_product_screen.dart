@@ -19,10 +19,12 @@ class ManageProductScreen extends StatefulWidget {
   State<ManageProductScreen> createState() => _ManageProductScreenState();
 }
 
-class _ManageProductScreenState extends State<ManageProductScreen> {
+class _ManageProductScreenState extends State<ManageProductScreen>
+    with SingleTickerProviderStateMixin {
   late ProductProvider _productProvider;
   late CategoryProvider _categoryProvider;
   late BrandProvider _brandProvider;
+  late TabController _tabController;
 
   List<Product> _products = [];
   List<Category> _categories = [];
@@ -32,6 +34,12 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
   String? _selectedBrandId;
   String? _selectedCategoryId;
   String? _selectedSortOption;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
 
   @override
   void didChangeDependencies() {
@@ -44,7 +52,7 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
 
   Future<void> _loadData() async {
     try {
-      await _productProvider.fetchProducts();
+      await _productProvider.fetchProductsForAdmin();
       await _categoryProvider.fetchCategories();
       await _brandProvider.fetchBrands();
       if (mounted) {
@@ -72,9 +80,10 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
 
   final TextEditingController _searchController = TextEditingController();
 
-  // Filter and sort products based on selected brand, category, and sort option
-  List<Product> _getFilteredAndSortedProducts() {
-    List<Product> filtered = _products;
+  // Filter and sort products based on selected brand, category, sort option, and availability
+  List<Product> _getFilteredAndSortedProducts({required bool isAvailable}) {
+    List<Product> filtered =
+        _products.where((product) => product.available == isAvailable).toList();
 
     // Apply brand filter
     if (_selectedBrandId != null) {
@@ -144,7 +153,7 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
             label: 'Disabled Products',
             labelStyle: const TextStyle(fontSize: 16),
             onTap: () {
-              // TODO: Implement navigation to disabled products screen
+              _tabController.animateTo(1); // Switch to Unavailable tab
             },
           ),
         ],
@@ -159,124 +168,152 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
             );
           }
           _products = productProvider.products;
-          final filteredProducts = _getFilteredAndSortedProducts();
 
-          if (filteredProducts.isEmpty) {
-            return const Center(
-              child: Text(
-                'No products available for the selected filters.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+          return Column(
+            children: [
+              // TabBar for Available and Unavailable
+              TabBar(
+                controller: _tabController,
+                labelColor: Colors.blue,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Colors.blue,
+                tabs: const [
+                  Tab(text: 'Available'),
+                  Tab(text: 'Unavailable'),
+                ],
               ),
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(15.0),
-            child: Column(
-              children: [
-                Row(
+              // Filters
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: CustomDropdown(
-                        label: 'Brands',
-                        hint: 'Select a brand',
-                        items: [
-                          {'id': null, 'name': 'All Brands'},
-                          ..._brands.map(
-                              (brand) => {'id': brand.id, 'name': brand.name}),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedBrandId = value;
-                          });
-                        },
-                        validator: (value) => null,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: CustomDropdown(
-                        label: 'Categories',
-                        hint: 'Select a category',
-                        items: [
-                          {'id': null, 'name': 'All Categories'},
-                          ..._categories.map((category) =>
-                              {'id': category.id, 'name': category.name}),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedCategoryId = value;
-                          });
-                        },
-                        validator: (value) => null,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                CustomDropdown(
-                  label: 'Sort By',
-                  hint: 'Select sort option',
-                  items: [
-                    {'id': null, 'name': 'Default'},
-                    {'id': 'name_asc', 'name': 'Name (A-Z)'},
-                    {'id': 'name_desc', 'name': 'Name (Z-A)'},
-                    {'id': 'price_asc', 'name': 'Price (Low to High)'},
-                    {'id': 'price_desc', 'name': 'Price (High to Low)'},
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedSortOption = value;
-                    });
-                  },
-                  validator: (value) => null,
-                ),
-                const SizedBox(height: 15),
-                // Group products by category
-                ..._categories.map((category) {
-                  // Filter products for the current category
-                  final categoryProducts = filteredProducts
-                      .where((product) => product.categoryId == category.id)
-                      .toList();
-
-                  // Only display categories with products
-                  if (categoryProducts.isEmpty) {
-                    return const SizedBox.shrink();
-                  }
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Category Header
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10.0),
-                        child: Text(
-                          category.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomDropdown(
+                            label: 'Brands',
+                            hint: 'Select a brand',
+                            items: [
+                              {'id': null, 'name': 'All Brands'},
+                              ..._brands.map((brand) =>
+                                  {'id': brand.id, 'name': brand.name}),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedBrandId = value;
+                              });
+                            },
+                            validator: (value) => null,
                           ),
                         ),
-                      ),
-                      // Products under this category
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: categoryProducts.length,
-                        itemBuilder: (context, index) {
-                          return ProductAdminCard(
-                            product: categoryProducts[index],
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                }),
-              ],
-            ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: CustomDropdown(
+                            label: 'Categories',
+                            hint: 'Select a category',
+                            items: [
+                              {'id': null, 'name': 'All Categories'},
+                              ..._categories.map((category) =>
+                                  {'id': category.id, 'name': category.name}),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedCategoryId = value;
+                              });
+                            },
+                            validator: (value) => null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    CustomDropdown(
+                      label: 'Sort By',
+                      hint: 'Select sort option',
+                      items: [
+                        {'id': null, 'name': 'Default'},
+                        {'id': 'name_asc', 'name': 'Name (A-Z)'},
+                        {'id': 'name_desc', 'name': 'Name (Z-A)'},
+                        {'id': 'price_asc', 'name': 'Price (Low to High)'},
+                        {'id': 'price_desc', 'name': 'Price (High to Low)'},
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSortOption = value;
+                        });
+                      },
+                      validator: (value) => null,
+                    ),
+                  ],
+                ),
+              ),
+              // TabBarView for content
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Available Products Tab
+                    _buildProductList(isAvailable: true),
+                    // Unavailable Products Tab
+                    _buildProductList(isAvailable: false),
+                  ],
+                ),
+              ),
+            ],
           );
         },
+      ),
+    );
+  }
+
+  // Widget to build the product list for each tab
+  Widget _buildProductList({required bool isAvailable}) {
+    final filteredProducts =
+        _getFilteredAndSortedProducts(isAvailable: isAvailable);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+      child: Column(
+        children: _categories.map((category) {
+          // Filter products for the current category and availability
+          final categoryProducts = filteredProducts
+              .where((product) => product.categoryId == category.id)
+              .toList();
+
+          // Only display categories with products
+          if (categoryProducts.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Category Header
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                child: Text(
+                  category.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              // Products under this category
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: categoryProducts.length,
+                itemBuilder: (context, index) {
+                  return ProductAdminCard(
+                    product: categoryProducts[index],
+                  );
+                },
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -284,6 +321,7 @@ class _ManageProductScreenState extends State<ManageProductScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 }
