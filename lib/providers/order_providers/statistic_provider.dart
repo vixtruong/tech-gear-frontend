@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:techgear/dtos/mock_data_dto.dart';
 import 'package:techgear/dtos/best_selling_dto.dart';
 import 'package:techgear/dtos/payment_dto.dart';
+import 'package:techgear/dtos/comparative_revenue_dto.dart';
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/order_service/statistic_service.dart';
 
@@ -22,6 +23,23 @@ class StatisticProvider with ChangeNotifier {
 
   List<PaymentDto> _payments = [];
   List<PaymentDto> get payments => _payments;
+
+  // New properties for comparative revenue data
+  ComparativeRevenueDto? _annualRevenueComparison;
+  ComparativeRevenueDto? get annualRevenueComparison =>
+      _annualRevenueComparison;
+
+  ComparativeRevenueDto? _quarterlyRevenueComparison;
+  ComparativeRevenueDto? get quarterlyRevenueComparison =>
+      _quarterlyRevenueComparison;
+
+  ComparativeRevenueDto? _monthlyRevenueComparison;
+  ComparativeRevenueDto? get monthlyRevenueComparison =>
+      _monthlyRevenueComparison;
+
+  ComparativeRevenueDto? _weeklyRevenueComparison;
+  ComparativeRevenueDto? get weeklyRevenueComparison =>
+      _weeklyRevenueComparison;
 
   StatisticProvider(SessionProvider sessionProvider)
       : _statisticService = StatisticService(sessionProvider);
@@ -78,6 +96,35 @@ class StatisticProvider with ChangeNotifier {
     }
   }
 
+  // New methods for fetching comparative revenue data
+  Future<void> fetchAnnualRevenueComparison() async {
+    await _fetchComparative(
+      () => _statisticService.fetchAnnualRevenueComparison(),
+      (data) => _annualRevenueComparison = data,
+    );
+  }
+
+  Future<void> fetchQuarterlyRevenueComparison() async {
+    await _fetchComparative(
+      () => _statisticService.fetchQuarterlyRevenueComparison(),
+      (data) => _quarterlyRevenueComparison = data,
+    );
+  }
+
+  Future<void> fetchMonthlyRevenueComparison() async {
+    await _fetchComparative(
+      () => _statisticService.fetchMonthlyRevenueComparison(),
+      (data) => _monthlyRevenueComparison = data,
+    );
+  }
+
+  Future<void> fetchWeeklyRevenueComparison() async {
+    await _fetchComparative(
+      () => _statisticService.fetchWeeklyRevenueComparison(),
+      (data) => _weeklyRevenueComparison = data,
+    );
+  }
+
   Future<void> _fetch(Future<MockDataDto> Function() fetchFunction) async {
     _isLoading = true;
     _errorMessage = null;
@@ -94,9 +141,34 @@ class StatisticProvider with ChangeNotifier {
     }
   }
 
+  Future<void> _fetchComparative(
+    Future<ComparativeRevenueDto> Function() fetchFunction,
+    void Function(ComparativeRevenueDto) setData,
+  ) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final data = await fetchFunction();
+      setData(data);
+    } catch (e) {
+      _errorMessage = e.toString();
+      setData(ComparativeRevenueDto(currentPeriod: [], previousPeriod: []));
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void clearStats() {
     _currentStats = null;
     _bestSelling = [];
+    _payments = [];
+    _annualRevenueComparison = null;
+    _quarterlyRevenueComparison = null;
+    _monthlyRevenueComparison = null;
+    _weeklyRevenueComparison = null;
     _errorMessage = null;
     _isLoading = false;
     notifyListeners();

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:techgear/dtos/mock_data_dto.dart';
 import 'package:techgear/dtos/best_selling_dto.dart';
 import 'package:techgear/dtos/payment_dto.dart';
+import 'package:techgear/dtos/comparative_revenue_dto.dart'; // Import DTO mới
 import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/dio_client.dart';
 
@@ -19,9 +20,9 @@ class StatisticService {
 
       return data.map((item) => PaymentDto.fromJson(item)).toList();
     } catch (e) {
-      e.toString();
+      print(e.toString());
+      return [];
     }
-    return [];
   }
 
   Future<MockDataDto> fetchAnnualStats() async {
@@ -68,12 +69,40 @@ class StatisticService {
     }
   }
 
+  // New methods for comparative revenue
+  Future<ComparativeRevenueDto> fetchAnnualRevenueComparison() async {
+    return _fetchComparativeData('$apiUrl/annual-comparison');
+  }
+
+  Future<ComparativeRevenueDto> fetchQuarterlyRevenueComparison() async {
+    return _fetchComparativeData('$apiUrl/quarter-comparison');
+  }
+
+  Future<ComparativeRevenueDto> fetchMonthlyRevenueComparison() async {
+    return _fetchComparativeData('$apiUrl/month-comparison');
+  }
+
+  Future<ComparativeRevenueDto> fetchWeeklyRevenueComparison() async {
+    return _fetchComparativeData('$apiUrl/week-comparison');
+  }
+
   Future<MockDataDto> _fetchStatData(String url) async {
     try {
       final response = await _dioClient.instance.get(url);
       return MockDataDto.fromJson(response.data);
     } on DioException catch (e) {
       final msg = e.response?.data['message'] ?? 'Failed to load statistics';
+      throw Exception(msg);
+    }
+  }
+
+  Future<ComparativeRevenueDto> _fetchComparativeData(String url) async {
+    try {
+      final response = await _dioClient.instance.get(url);
+      return ComparativeRevenueDto.fromJson(response.data);
+    } on DioException catch (e) {
+      final msg =
+          e.response?.data['message'] ?? 'Failed to load comparative data';
       throw Exception(msg);
     }
   }

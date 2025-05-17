@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:techgear/models/product/product_item.dart';
 import 'package:techgear/providers/product_providers/product_item_provider.dart';
-import 'package:techgear/ui/screens/dashboard/pages/manage_coupons_screen.dart';
+import 'package:techgear/ui/widgets/common/custom_text_field.dart';
 
 class ProductItemCard extends StatefulWidget {
   final ProductItem productItem;

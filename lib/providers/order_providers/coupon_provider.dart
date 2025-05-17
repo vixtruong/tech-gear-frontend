@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:techgear/models/order/coupon.dart';
-import 'package:techgear/providers/auth_providers/session_provider.dart';
 import 'package:techgear/services/order_service/coupon_service.dart';
+import 'package:techgear/providers/auth_providers/session_provider.dart';
 
 class CouponProvider with ChangeNotifier {
   final CouponService _couponService;
@@ -15,6 +15,20 @@ class CouponProvider with ChangeNotifier {
   List<Coupon> get coupons => _coupons;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  // Valid coupons: usageLimit > 0 and not expired
+  List<Coupon> get validCoupons => _coupons.where((coupon) {
+        return coupon.usageLimit > 0 &&
+            (coupon.expirationDate == null ||
+                coupon.expirationDate!.isAfter(DateTime.now()));
+      }).toList();
+
+  // Expired coupons: usageLimit <= 0 or expired
+  List<Coupon> get expiredCoupons => _coupons.where((coupon) {
+        return coupon.usageLimit <= 0 ||
+            (coupon.expirationDate != null &&
+                coupon.expirationDate!.isBefore(DateTime.now()));
+      }).toList();
 
   Future<void> fetchCoupons() async {
     _isLoading = true;
@@ -75,7 +89,6 @@ class CouponProvider with ChangeNotifier {
     }
   }
 
-  // ✅ Áp dụng / trừ lượt dùng coupon
   Future<bool> removeCouponUsage(String code) async {
     try {
       final result = await _couponService.removeCouponUsage(code);

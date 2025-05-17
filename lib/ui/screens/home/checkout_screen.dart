@@ -124,7 +124,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final fetchPrices = await _productItemProvider.getPrice(productItemIds);
 
     await _couponProvider.fetchCoupons();
-    final fetchCoupons = _couponProvider.coupons;
+    final fetchCoupons = _couponProvider.validCoupons;
 
     if (checkUserId != null) {
       final userIdInt = int.parse(checkUserId!);

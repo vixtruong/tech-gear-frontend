@@ -335,7 +335,7 @@ class _ProductDetailScreenWebState extends State<ProductDetailScreenWeb> {
             );
           }
 
-          productItemProvider.fetchProductItemsByProductId(widget.productId);
+          // productItemProvider.fetchProductItemsByProductId(widget.productId);
           _productItems = productItemProvider.productItems;
           colorSpecsList = getColorsForSelectedSpecs();
 

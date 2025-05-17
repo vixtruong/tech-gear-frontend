@@ -118,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return SafeArea(
       child: Container(
-        color: Colors.grey[100],
+        color: Colors.grey[50],
         child: Column(
           children: [
             Container(
@@ -543,18 +543,26 @@ class _AdvancedDashboardContentState extends State<AdvancedDashboardContent> {
   }
 
   Future<void> _fetchStats() async {
+    // Fetch best-selling data for all intervals
+    await _statisticProvider.fetchBestSelling();
+
+    // Fetch stats and comparative revenue based on selected interval
     switch (_selectedInterval) {
       case 'Annually':
         await _statisticProvider.fetchAnnualStats();
+        await _statisticProvider.fetchAnnualRevenueComparison();
         break;
       case 'Quarterly':
         await _statisticProvider.fetchQuarterStats();
+        await _statisticProvider.fetchQuarterlyRevenueComparison();
         break;
       case 'Monthly':
         await _statisticProvider.fetchMonthlyStats();
+        await _statisticProvider.fetchMonthlyRevenueComparison();
         break;
       case 'Weekly':
         await _statisticProvider.fetchWeeklyStats();
+        await _statisticProvider.fetchWeeklyRevenueComparison();
         break;
       case 'Custom':
         if (_startDate != null && _endDate != null) {
@@ -645,14 +653,7 @@ class _AdvancedDashboardContentState extends State<AdvancedDashboardContent> {
               ),
             );
           }
-          if (statisticProvider.currentStats == null) {
-            return const Center(
-              child: Text('No data available',
-                  style: TextStyle(color: Colors.grey, fontSize: 16)),
-            );
-          }
 
-          final stats = statisticProvider.currentStats!;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -718,8 +719,73 @@ class _AdvancedDashboardContentState extends State<AdvancedDashboardContent> {
                 ],
               ),
               const SizedBox(height: 24),
-              _buildAdvancedMetricCards(
-                  context, widget.isMobile, stats, vndFormat),
+              _buildAdvancedMetricCards(context, widget.isMobile,
+                  statisticProvider.currentStats, vndFormat),
+              const SizedBox(height: 24),
+              if (_selectedInterval == 'Annually' &&
+                  statisticProvider.annualRevenueComparison != null) ...[
+                _buildRevenueChart(
+                  context,
+                  statisticProvider.annualRevenueComparison!.currentPeriod,
+                  'Current Year Revenue',
+                  Colors.blue.shade900,
+                ),
+                const SizedBox(height: 24),
+                _buildRevenueChart(
+                  context,
+                  statisticProvider.annualRevenueComparison!.previousPeriod,
+                  'Previous Year Revenue',
+                  Colors.blue,
+                ),
+              ],
+              if (_selectedInterval == 'Quarterly' &&
+                  statisticProvider.quarterlyRevenueComparison != null) ...[
+                _buildRevenueChart(
+                  context,
+                  statisticProvider.quarterlyRevenueComparison!.currentPeriod,
+                  'Current Quarter Revenue',
+                  Colors.blue.shade900,
+                ),
+                const SizedBox(height: 24),
+                _buildRevenueChart(
+                  context,
+                  statisticProvider.quarterlyRevenueComparison!.previousPeriod,
+                  'Previous Quarter Revenue',
+                  Colors.blue,
+                ),
+              ],
+              if (_selectedInterval == 'Monthly' &&
+                  statisticProvider.monthlyRevenueComparison != null) ...[
+                _buildRevenueChart(
+                  context,
+                  statisticProvider.monthlyRevenueComparison!.currentPeriod,
+                  'Current Month Revenue',
+                  Colors.blue.shade900,
+                ),
+                const SizedBox(height: 24),
+                _buildRevenueChart(
+                  context,
+                  statisticProvider.monthlyRevenueComparison!.previousPeriod,
+                  'Previous Month Revenue',
+                  Colors.blue,
+                ),
+              ],
+              if (_selectedInterval == 'Weekly' &&
+                  statisticProvider.weeklyRevenueComparison != null) ...[
+                _buildRevenueChart(
+                  context,
+                  statisticProvider.weeklyRevenueComparison!.currentPeriod,
+                  'Current Week Revenue',
+                  Colors.blue.shade900,
+                ),
+                const SizedBox(height: 24),
+                _buildRevenueChart(
+                  context,
+                  statisticProvider.weeklyRevenueComparison!.previousPeriod,
+                  'Previous Week Revenue',
+                  Colors.blue,
+                ),
+              ],
             ],
           );
         },
@@ -728,7 +794,11 @@ class _AdvancedDashboardContentState extends State<AdvancedDashboardContent> {
   }
 
   Widget _buildAdvancedMetricCards(BuildContext context, bool isMobile,
-      MockDataDto stats, NumberFormat vndFormat) {
+      MockDataDto? stats, NumberFormat vndFormat) {
+    if (stats == null) {
+      return const SizedBox.shrink();
+    }
+
     final metrics = [
       {
         'title': 'Orders',
@@ -816,6 +886,171 @@ class _AdvancedDashboardContentState extends State<AdvancedDashboardContent> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildRevenueChart(
+      BuildContext context, List data, String title, Color color) {
+    final maxY =
+        data.map((e) => e.revenue).reduce((a, b) => a > b ? a : b) + 10;
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 220,
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: maxY,
+                  gridData: FlGridData(
+                    show: true,
+                    drawHorizontalLine: true,
+                    horizontalInterval: maxY / 5,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: Colors.grey.withOpacity(0.3),
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final period = data[group.x.toInt()];
+
+                        String formatNumber(double val) {
+                          if (val >= 1e9) {
+                            return '${(val / 1e9).toStringAsFixed(1)}B'; // Tỷ
+                          } else if (val >= 1e6) {
+                            return '${(val / 1e6).toStringAsFixed(1)}M'; // Triệu
+                          } else if (val >= 1e3) {
+                            return '${(val / 1e3).toStringAsFixed(1)}K'; // Nghìn
+                          } else {
+                            return val.toInt().toString();
+                          }
+                        }
+
+                        return BarTooltipItem(
+                          '${period.periodName}\n',
+                          const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: [
+                            TextSpan(
+                              text:
+                                  'Revenue: ${formatNumber(rod.toY.toInt() as double)}',
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        interval: maxY / 5,
+                        getTitlesWidget: (value, meta) {
+                          // Format số để ngắn gọn hơn, ví dụ 1000000 -> 1M
+                          String formatNumber(double val) {
+                            if (val >= 1e9) {
+                              return '${(val / 1e9).toStringAsFixed(1)}B'; // Tỷ
+                            } else if (val >= 1e6) {
+                              return '${(val / 1e6).toStringAsFixed(1)}M'; // Triệu
+                            } else if (val >= 1e3) {
+                              return '${(val / 1e3).toStringAsFixed(1)}K'; // Nghìn
+                            } else {
+                              return val.toInt().toString();
+                            }
+                          }
+
+                          return SizedBox(
+                            width:
+                                50, // Giới hạn chiều ngang để text không xuống dòng
+                            child: Text(
+                              formatNumber(value),
+                              style: const TextStyle(fontSize: 10),
+                              textAlign: TextAlign.right, // Căn phải cho đẹp
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 36,
+                        getTitlesWidget: (value, _) {
+                          final index = value.toInt();
+                          if (index >= 0 && index < data.length) {
+                            final label = data[index].periodName;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                label.length > 6
+                                    ? label.substring(0, 6).toUpperCase()
+                                    : label.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                    rightTitles: AxisTitles(),
+                    topTitles: AxisTitles(),
+                  ),
+                  barGroups: data.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: item.revenue,
+                          width: 16,
+                          borderRadius: BorderRadius.circular(8),
+                          gradient: LinearGradient(
+                            colors: [
+                              color.withOpacity(0.4),
+                              color,
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

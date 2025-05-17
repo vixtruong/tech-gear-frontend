@@ -9,9 +9,9 @@ import 'package:techgear/models/product/product.dart';
 import 'package:techgear/providers/product_providers/brand_provider.dart';
 import 'package:techgear/providers/product_providers/category_provider.dart';
 import 'package:techgear/providers/product_providers/product_provider.dart';
-import 'package:techgear/ui/screens/dashboard/pages/manage_coupons_screen.dart';
 import 'package:techgear/ui/widgets/common/custom_button.dart';
 import 'package:techgear/ui/widgets/common/custom_dropdown.dart';
+import 'package:techgear/ui/widgets/common/custom_text_field.dart';
 import 'package:techgear/ui/widgets/image/image_picker_field.dart';
 
 class EditProductScreen extends StatefulWidget {

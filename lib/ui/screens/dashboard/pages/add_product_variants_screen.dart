@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -200,7 +201,11 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
         ),
       );
 
-      context.pop();
+      if (kIsWeb) {
+        context.go('/manage-product');
+      } else {
+        context.pop();
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -222,7 +227,7 @@ class _AddProductVariantsScreenState extends State<AddProductVariantsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,
