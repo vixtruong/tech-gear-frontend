@@ -97,7 +97,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     return Consumer<OrderProvider>(
       builder: (context, orderProvider, child) {
         return Scaffold(
-          backgroundColor: Colors.grey[100],
+          backgroundColor: Colors.grey[50],
           appBar: AppBar(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.white,

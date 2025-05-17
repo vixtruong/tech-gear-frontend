@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
@@ -321,7 +322,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       children: [
                         const Text("Already have an account? "),
                         GestureDetector(
-                          onTap: () => context.pop(),
+                          onTap: () {
+                            if (kIsWeb) {
+                              context.pushReplacement('/login');
+                            } else {
+                              context.pop();
+                            }
+                          },
                           child: const Text(
                             "Log in",
                             style: TextStyle(

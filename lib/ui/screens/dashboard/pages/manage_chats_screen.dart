@@ -66,7 +66,7 @@ class _ManageChatsState extends State<ManageChats> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
