@@ -67,7 +67,7 @@ class SideMenu extends StatelessWidget {
             DrawListTile(
               title: "Orders",
               iconPath: "assets/icons/menu_store.svg",
-              route: '/orders',
+              route: '/manage-orders',
               currentRoute: currentRoute,
               onTap: () {
                 context.pushReplacement('/orders');
