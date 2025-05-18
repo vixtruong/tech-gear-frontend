@@ -70,8 +70,7 @@ final GoRouter router = GoRouter(
       '/chats/:userId',
       '/brands',
       '/categories',
-      '/orders',
-      '/orders/:orderId/detail',
+      '/manage-orders',
       '/coupons',
       '/payments',
     ];

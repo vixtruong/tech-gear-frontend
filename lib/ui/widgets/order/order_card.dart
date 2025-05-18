@@ -77,68 +77,82 @@ class OrderCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Order #${order.id}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Order #${order.id}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            formattedDate,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                formattedDate,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Product: ${order.orderItems?.length ?? 0}',
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Payment: ${formatter.format(order.paymentAmount)}',
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Method: ${order.paymentMethod}',
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (order.confirmedDate != null)
+                          Text(
+                            'Confirmed Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.confirmedDate!)}',
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Product: ${order.orderItems?.length ?? 0}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      Text(
-                        'Payment: ${formatter.format(order.paymentAmount)}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      Text(
-                        'Method: ${order.paymentMethod}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      if (order.confirmedDate != null)
-                        Text(
-                          'Confirmed Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.confirmedDate!)}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      if (order.shippedDate != null)
-                        Text(
-                          'Shipped Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.shippedDate!)}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      if (order.deliveredDate != null)
-                        Text(
-                          'Delivered Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.deliveredDate!)}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      if (order.canceledDate != null)
-                        Text(
-                          'Canceled Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.canceledDate!)}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      if (order.cancelReason != null &&
-                          order.cancelReason != '')
-                        Text(
-                          'Canceled Reason: ${order.cancelReason}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                    ],
+                        if (order.shippedDate != null)
+                          Text(
+                            'Shipped Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.shippedDate!)}',
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        if (order.deliveredDate != null)
+                          Text(
+                            'Delivered Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.deliveredDate!)}',
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        if (order.canceledDate != null)
+                          Text(
+                            'Canceled Date: ${DateFormat('dd/MM/yyyy' ' - ' 'HH:mm').format(order.canceledDate!)}',
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        if (order.cancelReason != null &&
+                            order.cancelReason != '')
+                          Text(
+                            'Canceled Reason: ${order.cancelReason}',
+                            style: const TextStyle(fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                          ),
+                      ],
+                    ),
                   ),
                   if (order.status != null && order.status!.isNotEmpty)
                     Container(
